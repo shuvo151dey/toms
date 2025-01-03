@@ -1,25 +1,27 @@
-2025-01-01T16:54:23.936Z  INFO 5632 --- [toms] [main] .TradingOrderManagementSystemApplication : Starting TradingOrderManagementSystemApplication using Java 17.0.12 with PID 5632 (C:\Projects\toms\target\classes started by shuvo151dey in C:\Projects\toms)
-2025-01-01T16:54:23.940Z  INFO 5632 --- [toms] [main] .TradingOrderManagementSystemApplication : No active profile set, falling back to 1 default profile: "default"
-2025-01-01T16:54:24.985Z  INFO 5632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2025-01-01T16:54:24.989Z  INFO 5632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-01-01T16:54:25.028Z  INFO 5632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 17 ms. Found 0 JPA repository interfaces.
-2025-01-01T16:54:25.060Z  INFO 5632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2025-01-01T16:54:25.064Z  INFO 5632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2025-01-01T16:54:25.093Z  INFO 5632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
-2025-01-01T16:54:26.314Z  INFO 5632 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-01-01T16:54:26.340Z  INFO 5632 --- [toms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-01-01T16:54:26.341Z  INFO 5632 --- [toms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
-2025-01-01T16:54:26.445Z  INFO 5632 --- [toms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-01-01T16:54:26.446Z  INFO 5632 --- [toms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2416 ms
-2025-01-01T16:54:26.673Z  INFO 5632 --- [toms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-01-01T16:54:26.765Z  INFO 5632 --- [toms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
-2025-01-01T16:54:26.816Z  INFO 5632 --- [toms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-01-01T16:54:27.251Z  INFO 5632 --- [toms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-01-01T16:54:27.306Z  INFO 5632 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-01-01T16:54:27.621Z  INFO 5632 --- [toms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2d6a0766
-2025-01-01T16:54:27.624Z  INFO 5632 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-01-01T16:54:27.689Z  WARN 5632 --- [toms] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-01-01T16:54:27.727Z  INFO 5632 --- [toms] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+2025-01-03T14:18:14.836Z  INFO 6428 --- [toms] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-01-03T14:18:14.903Z  INFO 6428 --- [toms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-01-03T14:18:14.943Z  INFO 6428 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-01-03T14:18:14.950Z  INFO 6428 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-01-03T14:18:14.963Z  INFO 6428 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-01-03T14:22:08.069Z  INFO 472 --- [toms] [main] ingOrderManagementSystemApplicationTests : Starting TradingOrderManagementSystemApplicationTests using Java 17.0.12 with PID 472 (started by shuvo151dey in C:\Projects\toms)
+2025-01-03T14:22:08.073Z  INFO 472 --- [toms] [main] ingOrderManagementSystemApplicationTests : No active profile set, falling back to 1 default profile: "default"
+2025-01-03T14:22:08.154Z DEBUG 472 --- [toms] [main] o.s.w.c.s.GenericWebApplicationContext   : Refreshing org.springframework.web.context.support.GenericWebApplicationContext@6d2260db
+2025-01-03T14:22:09.978Z  INFO 472 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-03T14:22:09.982Z  INFO 472 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-01-03T14:22:10.312Z  INFO 472 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 305 ms. Found 1 JPA repository interface.
+2025-01-03T14:22:10.353Z  INFO 472 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-03T14:22:10.356Z  INFO 472 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-01-03T14:22:10.391Z  INFO 472 --- [toms] [main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.smdey.toms.repository.OrderRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-01-03T14:22:10.393Z  INFO 472 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 14 ms. Found 0 Redis repository interfaces.
+2025-01-03T14:22:11.658Z  INFO 472 --- [toms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-01-03T14:22:11.833Z  INFO 472 --- [toms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
+2025-01-03T14:22:11.950Z  INFO 472 --- [toms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-01-03T14:22:12.711Z  INFO 472 --- [toms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-01-03T14:22:12.792Z  INFO 472 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-01-03T14:22:13.242Z  INFO 472 --- [toms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@4af70b83
+2025-01-03T14:22:13.248Z  INFO 472 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-01-03T14:22:13.351Z  WARN 472 --- [toms] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-01-03T14:22:13.425Z  INFO 472 --- [toms] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
 	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
 	Database driver: undefined/unknown
 	Database version: 17.2
@@ -27,70 +29,42 @@
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2025-01-01T16:54:28.314Z  INFO 5632 --- [toms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-01-01T16:54:28.325Z  INFO 5632 --- [toms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-01-01T16:54:28.412Z  WARN 5632 --- [toms] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2025-01-01T16:54:28.586Z DEBUG 5632 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 2 mappings in 'requestMappingHandlerMapping'
-2025-01-01T16:54:28.762Z DEBUG 5632 --- [toms] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
-2025-01-01T16:54:28.831Z DEBUG 5632 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
-2025-01-01T16:54:28.921Z DEBUG 5632 --- [toms] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
-2025-01-01T16:54:29.576Z  INFO 5632 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-01-01T16:54:29.604Z  INFO 5632 --- [toms] [main] .TradingOrderManagementSystemApplication : Started TradingOrderManagementSystemApplication in 6.366 seconds (process running for 6.88)
-2025-01-01T16:57:05.615Z  INFO 5632 --- [toms] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-01-01T16:57:05.617Z  INFO 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-01-01T16:57:05.618Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
-2025-01-01T16:57:05.619Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
-2025-01-01T16:57:05.619Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
-2025-01-01T16:57:05.622Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@549d14fe
-2025-01-01T16:57:05.625Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@470c4229
-2025-01-01T16:57:05.627Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
-2025-01-01T16:57:05.634Z  INFO 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 16 ms
-2025-01-01T16:57:05.668Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/", parameters={}
-2025-01-01T16:57:05.693Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
-2025-01-01T16:57:05.810Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
-2025-01-01T16:57:05.823Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource .]
-2025-01-01T16:57:05.827Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
-2025-01-01T16:57:05.842Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
-2025-01-01T16:57:05.851Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#errorHtml(HttpServletRequest, HttpServletResponse)
-2025-01-01T16:57:05.927Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.w.s.v.ContentNegotiatingViewResolver : Selected 'text/html' given [text/html, text/html;q=0.8]
-2025-01-01T16:57:05.968Z DEBUG 5632 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
-2025-01-01T16:57:06.052Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/favicon.ico", parameters={}
-2025-01-01T16:57:06.056Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
-2025-01-01T16:57:06.061Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
-2025-01-01T16:57:06.062Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource favicon.ico.]
-2025-01-01T16:57:06.063Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
-2025-01-01T16:57:06.064Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
-2025-01-01T16:57:06.069Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
-2025-01-01T16:57:06.108Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json;q=0.8', given [image/avif, image/webp, image/apng, image/svg+xml, image/*, */*;q=0.8] and supported [application/json, application/*+json]
-2025-01-01T16:57:06.115Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Wed Jan 01 16:57:06 GMT 2025, status=404, error=Not Found, path=/favicon.ico}]
-2025-01-01T16:57:06.201Z DEBUG 5632 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
-2025-01-01T17:06:31.764Z  INFO 5632 --- [toms] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
-2025-01-01T17:06:31.805Z  INFO 5632 --- [toms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
-2025-01-01T17:06:31.829Z  INFO 5632 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
-2025-01-01T17:06:31.835Z  INFO 5632 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
-2025-01-01T17:06:31.858Z  INFO 5632 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
-2025-01-01T17:06:53.766Z  INFO 10084 --- [toms] [main] .TradingOrderManagementSystemApplication : Starting TradingOrderManagementSystemApplication using Java 17.0.12 with PID 10084 (C:\Projects\toms\target\classes started by shuvo151dey in C:\Projects\toms)
-2025-01-01T17:06:53.771Z  INFO 10084 --- [toms] [main] .TradingOrderManagementSystemApplication : No active profile set, falling back to 1 default profile: "default"
-2025-01-01T17:06:54.848Z  INFO 10084 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2025-01-01T17:06:54.851Z  INFO 10084 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-01-01T17:06:54.888Z  INFO 10084 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 22 ms. Found 0 JPA repository interfaces.
-2025-01-01T17:06:54.923Z  INFO 10084 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2025-01-01T17:06:54.926Z  INFO 10084 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2025-01-01T17:06:54.950Z  INFO 10084 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 2 ms. Found 0 Redis repository interfaces.
-2025-01-01T17:06:55.844Z  INFO 10084 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-01-01T17:06:55.866Z  INFO 10084 --- [toms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-01-01T17:06:55.868Z  INFO 10084 --- [toms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
-2025-01-01T17:06:55.988Z  INFO 10084 --- [toms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-01-01T17:06:55.991Z  INFO 10084 --- [toms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2101 ms
-2025-01-01T17:06:56.270Z  INFO 10084 --- [toms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-01-01T17:06:56.403Z  INFO 10084 --- [toms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
-2025-01-01T17:06:56.457Z  INFO 10084 --- [toms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-01-01T17:06:56.954Z  INFO 10084 --- [toms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-01-01T17:06:57.004Z  INFO 10084 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-01-01T17:06:57.301Z  INFO 10084 --- [toms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@726a8729
-2025-01-01T17:06:57.304Z  INFO 10084 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-01-01T17:06:57.358Z  WARN 10084 --- [toms] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-01-01T17:06:57.392Z  INFO 10084 --- [toms] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+2025-01-03T14:22:15.564Z  INFO 472 --- [toms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-01-03T14:22:15.669Z  INFO 472 --- [toms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-01-03T14:22:16.447Z  WARN 472 --- [toms] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-01-03T14:22:16.567Z  INFO 472 --- [toms] [main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-01-03T14:22:16.699Z DEBUG 472 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 5 mappings in 'requestMappingHandlerMapping'
+2025-01-03T14:22:17.050Z DEBUG 472 --- [toms] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-01-03T14:22:17.120Z DEBUG 472 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-01-03T14:22:17.235Z DEBUG 472 --- [toms] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-01-03T14:22:18.148Z  INFO 472 --- [toms] [main] ingOrderManagementSystemApplicationTests : Started TradingOrderManagementSystemApplicationTests in 10.792 seconds (process running for 13.22)
+2025-01-03T14:22:19.629Z DEBUG 472 --- [toms] [SpringApplicationShutdownHook] o.s.w.c.s.GenericWebApplicationContext   : Closing org.springframework.web.context.support.GenericWebApplicationContext@6d2260db, started on Fri Jan 03 14:22:08 GMT 2025
+2025-01-03T14:22:19.711Z  INFO 472 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-01-03T14:22:19.715Z  INFO 472 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-01-03T14:22:19.746Z  INFO 472 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-01-03T15:15:42.444Z  INFO 552 --- [toms] [main] .TradingOrderManagementSystemApplication : Starting TradingOrderManagementSystemApplication using Java 17.0.12 with PID 552 (C:\Projects\toms\target\classes started by shuvo151dey in C:\Projects\toms)
+2025-01-03T15:15:42.449Z  INFO 552 --- [toms] [main] .TradingOrderManagementSystemApplication : No active profile set, falling back to 1 default profile: "default"
+2025-01-03T15:15:43.576Z  INFO 552 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-03T15:15:43.580Z  INFO 552 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-01-03T15:15:43.873Z  INFO 552 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 270 ms. Found 1 JPA repository interface.
+2025-01-03T15:15:43.905Z  INFO 552 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-03T15:15:43.908Z  INFO 552 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-01-03T15:15:43.933Z  INFO 552 --- [toms] [main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.smdey.toms.repository.OrderRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-01-03T15:15:43.935Z  INFO 552 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-01-03T15:15:44.735Z  INFO 552 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-01-03T15:15:44.762Z  INFO 552 --- [toms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-01-03T15:15:44.763Z  INFO 552 --- [toms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
+2025-01-03T15:15:44.865Z  INFO 552 --- [toms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-01-03T15:15:44.867Z  INFO 552 --- [toms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2323 ms
+2025-01-03T15:15:45.141Z  INFO 552 --- [toms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-01-03T15:15:45.243Z  INFO 552 --- [toms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
+2025-01-03T15:15:45.311Z  INFO 552 --- [toms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-01-03T15:15:45.795Z  INFO 552 --- [toms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-01-03T15:15:45.865Z  INFO 552 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-01-03T15:15:46.164Z  INFO 552 --- [toms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@118cbded
+2025-01-03T15:15:46.167Z  INFO 552 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-01-03T15:15:46.224Z  WARN 552 --- [toms] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-01-03T15:15:46.260Z  INFO 552 --- [toms] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
 	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
 	Database driver: undefined/unknown
 	Database version: 17.2
@@ -98,53 +72,93 @@
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2025-01-01T17:06:57.951Z  INFO 10084 --- [toms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-01-01T17:06:57.963Z  INFO 10084 --- [toms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-01-01T17:06:58.049Z  WARN 10084 --- [toms] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2025-01-01T17:06:58.232Z DEBUG 10084 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 3 mappings in 'requestMappingHandlerMapping'
-2025-01-01T17:06:58.409Z DEBUG 10084 --- [toms] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
-2025-01-01T17:06:58.467Z DEBUG 10084 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
-2025-01-01T17:06:58.566Z DEBUG 10084 --- [toms] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
-2025-01-01T17:06:59.179Z  INFO 10084 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-01-01T17:06:59.203Z  INFO 10084 --- [toms] [main] .TradingOrderManagementSystemApplication : Started TradingOrderManagementSystemApplication in 6.257 seconds (process running for 6.939)
-2025-01-01T17:07:11.603Z  INFO 10084 --- [toms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-01-01T17:07:11.604Z  INFO 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-01-01T17:07:11.605Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
-2025-01-01T17:07:11.606Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
-2025-01-01T17:07:11.607Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
-2025-01-01T17:07:11.609Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@53d87b2d
-2025-01-01T17:07:11.610Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@3be46d9c
-2025-01-01T17:07:11.611Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
-2025-01-01T17:07:11.612Z  INFO 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 7 ms
-2025-01-01T17:07:11.642Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/hello", parameters={}
-2025-01-01T17:07:11.664Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
-2025-01-01T17:07:11.748Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
-2025-01-01T17:07:11.756Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource hello.]
-2025-01-01T17:07:11.761Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
-2025-01-01T17:07:11.775Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
-2025-01-01T17:07:11.779Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#errorHtml(HttpServletRequest, HttpServletResponse)
-2025-01-01T17:07:11.820Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.w.s.v.ContentNegotiatingViewResolver : Selected 'text/html' given [text/html, text/html;q=0.8]
-2025-01-01T17:07:11.828Z DEBUG 10084 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
-2025-01-01T17:07:15.043Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/hello", parameters={}
-2025-01-01T17:07:15.045Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
-2025-01-01T17:07:15.048Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
-2025-01-01T17:07:15.048Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource hello.]
-2025-01-01T17:07:15.049Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
-2025-01-01T17:07:15.050Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
-2025-01-01T17:07:15.055Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#errorHtml(HttpServletRequest, HttpServletResponse)
-2025-01-01T17:07:15.058Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] o.s.w.s.v.ContentNegotiatingViewResolver : Selected 'text/html' given [text/html, text/html;q=0.8]
-2025-01-01T17:07:15.058Z DEBUG 10084 --- [toms] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
-2025-01-01T17:07:23.531Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/hello", parameters={}
-2025-01-01T17:07:23.534Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
-2025-01-01T17:07:23.538Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
-2025-01-01T17:07:23.540Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource hello.]
-2025-01-01T17:07:23.543Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
-2025-01-01T17:07:23.545Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
-2025-01-01T17:07:23.547Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#errorHtml(HttpServletRequest, HttpServletResponse)
-2025-01-01T17:07:23.551Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] o.s.w.s.v.ContentNegotiatingViewResolver : Selected 'text/html' given [text/html, text/html;q=0.8]
-2025-01-01T17:07:23.557Z DEBUG 10084 --- [toms] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
-2025-01-01T17:07:54.680Z DEBUG 10084 --- [toms] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/hello", parameters={}
-2025-01-01T17:07:54.682Z DEBUG 10084 --- [toms] [http-nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to tech.smdey.toms.controller.HelloController#sayHello()
-2025-01-01T17:07:54.712Z DEBUG 10084 --- [toms] [http-nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Using 'text/html', given [text/html, application/xhtml+xml, image/avif, image/webp, image/apng, application/xml;q=0.9, */*;q=0.8, application/signed-exchange;v=b3;q=0.7] and supported [text/plain, */*, application/json, application/*+json]
-2025-01-01T17:07:54.718Z DEBUG 10084 --- [toms] [http-nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Writing ["Hello, TOMS!"]
-2025-01-01T17:07:54.728Z DEBUG 10084 --- [toms] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-03T15:15:47.730Z  INFO 552 --- [toms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-01-03T15:15:47.822Z  INFO 552 --- [toms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-01-03T15:15:48.148Z  WARN 552 --- [toms] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-01-03T15:15:48.224Z  INFO 552 --- [toms] [main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-01-03T15:15:48.308Z DEBUG 552 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 6 mappings in 'requestMappingHandlerMapping'
+2025-01-03T15:15:48.429Z DEBUG 552 --- [toms] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-01-03T15:15:48.475Z DEBUG 552 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-01-03T15:15:48.561Z DEBUG 552 --- [toms] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-01-03T15:15:49.244Z  INFO 552 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-01-03T15:15:49.264Z  INFO 552 --- [toms] [main] .TradingOrderManagementSystemApplication : Started TradingOrderManagementSystemApplication in 7.811 seconds (process running for 8.338)
+2025-01-03T15:16:32.982Z  INFO 552 --- [toms] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-01-03T15:16:32.983Z  INFO 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-01-03T15:16:32.984Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-01-03T15:16:32.985Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-01-03T15:16:32.986Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-01-03T15:16:32.987Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@58be583e
+2025-01-03T15:16:32.988Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@6c3a7b84
+2025-01-03T15:16:32.989Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-01-03T15:16:32.990Z  INFO 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+2025-01-03T15:16:33.015Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/orders", parameters={}
+2025-01-03T15:16:33.037Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to tech.smdey.toms.controller.OrderController#creatOrder(TradeOrder)
+2025-01-03T15:16:33.197Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [tech.smdey.toms.entity.TradeOrder@13a62878]
+2025-01-03T15:16:33.359Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-01-03T15:16:33.361Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [tech.smdey.toms.entity.TradeOrder@13a62878]
+2025-01-03T15:16:33.386Z DEBUG 552 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-03T15:23:28.713Z  INFO 552 --- [toms] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-01-03T15:23:28.749Z  INFO 552 --- [toms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-01-03T15:23:28.793Z  INFO 552 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-01-03T15:23:28.802Z  INFO 552 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-01-03T15:23:28.821Z  INFO 552 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-01-03T15:23:41.848Z  INFO 2260 --- [toms] [main] .TradingOrderManagementSystemApplication : Starting TradingOrderManagementSystemApplication using Java 17.0.12 with PID 2260 (C:\Projects\toms\target\classes started by shuvo151dey in C:\Projects\toms)
+2025-01-03T15:23:41.852Z  INFO 2260 --- [toms] [main] .TradingOrderManagementSystemApplication : No active profile set, falling back to 1 default profile: "default"
+2025-01-03T15:23:42.978Z  INFO 2260 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-03T15:23:42.981Z  INFO 2260 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-01-03T15:23:43.231Z  INFO 2260 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 229 ms. Found 1 JPA repository interface.
+2025-01-03T15:23:43.259Z  INFO 2260 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-03T15:23:43.261Z  INFO 2260 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-01-03T15:23:43.286Z  INFO 2260 --- [toms] [main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.smdey.toms.repository.OrderRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-01-03T15:23:43.287Z  INFO 2260 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2025-01-03T15:23:44.075Z  INFO 2260 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-01-03T15:23:44.098Z  INFO 2260 --- [toms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-01-03T15:23:44.099Z  INFO 2260 --- [toms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
+2025-01-03T15:23:44.201Z  INFO 2260 --- [toms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-01-03T15:23:44.202Z  INFO 2260 --- [toms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2260 ms
+2025-01-03T15:23:44.431Z  INFO 2260 --- [toms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-01-03T15:23:44.532Z  INFO 2260 --- [toms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
+2025-01-03T15:23:44.588Z  INFO 2260 --- [toms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-01-03T15:23:44.994Z  INFO 2260 --- [toms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-01-03T15:23:45.044Z  INFO 2260 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-01-03T15:23:45.352Z  INFO 2260 --- [toms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@40cf6254
+2025-01-03T15:23:45.355Z  INFO 2260 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-01-03T15:23:45.411Z  WARN 2260 --- [toms] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-01-03T15:23:45.446Z  INFO 2260 --- [toms] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.2
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-01-03T15:23:46.814Z  INFO 2260 --- [toms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-01-03T15:23:46.912Z  INFO 2260 --- [toms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-01-03T15:23:47.347Z  WARN 2260 --- [toms] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-01-03T15:23:47.421Z  INFO 2260 --- [toms] [main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-01-03T15:23:47.500Z DEBUG 2260 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 7 mappings in 'requestMappingHandlerMapping'
+2025-01-03T15:23:47.641Z DEBUG 2260 --- [toms] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-01-03T15:23:47.686Z DEBUG 2260 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-01-03T15:23:47.763Z DEBUG 2260 --- [toms] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-01-03T15:23:48.358Z  INFO 2260 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-01-03T15:23:48.379Z  INFO 2260 --- [toms] [main] .TradingOrderManagementSystemApplication : Started TradingOrderManagementSystemApplication in 7.248 seconds (process running for 7.962)
+2025-01-03T15:25:25.768Z  INFO 2260 --- [toms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-01-03T15:25:25.769Z  INFO 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-01-03T15:25:25.770Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-01-03T15:25:25.770Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-01-03T15:25:25.771Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-01-03T15:25:25.773Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@401002ce
+2025-01-03T15:25:25.774Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@1f6ba47b
+2025-01-03T15:25:25.778Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-01-03T15:25:25.779Z  INFO 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 9 ms
+2025-01-03T15:25:25.801Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : PUT "/api/v1/orders/1", parameters={}
+2025-01-03T15:25:25.827Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to tech.smdey.toms.controller.OrderController#updateOrder(Long, TradeOrder)
+2025-01-03T15:25:25.975Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [tech.smdey.toms.entity.TradeOrder@5b66ad4b]
+2025-01-03T15:25:26.173Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-01-03T15:25:26.175Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [tech.smdey.toms.entity.TradeOrder@c501491]
+2025-01-03T15:25:26.196Z DEBUG 2260 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-03T15:29:31.333Z  INFO 2260 --- [toms] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-01-03T15:29:31.375Z  INFO 2260 --- [toms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-01-03T15:29:31.397Z  INFO 2260 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-01-03T15:29:31.402Z  INFO 2260 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-01-03T15:29:31.421Z  INFO 2260 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
