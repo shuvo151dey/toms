@@ -1,6 +1,10 @@
 package tech.smdey.toms.entity;
 
+import org.springframework.data.redis.connection.SortParameters.Order;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,6 +25,9 @@ public class TradeOrder {
     @NotNull(message = "Quantity cannot be Null")
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status = OrderStatus.PENDING;
 
     // Getters and setters
     public Long getId() {
@@ -45,5 +52,13 @@ public class TradeOrder {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
     }
 }
