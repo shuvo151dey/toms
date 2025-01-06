@@ -456,3 +456,48 @@ org.postgresql.util.PSQLException: ERROR: new row for relation "trade_order" vio
 2025-01-06T06:17:22.039Z DEBUG 2252 --- [toms] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
 2025-01-06T06:17:22.040Z DEBUG 2252 --- [toms] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [tech.smdey.toms.entity.Trade@771a8eb1]
 2025-01-06T06:17:22.042Z DEBUG 2252 --- [toms] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-06T20:22:55.283Z  INFO 2252 --- [toms] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-01-06T20:22:55.457Z  INFO 2252 --- [toms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-01-06T20:22:55.601Z  INFO 2252 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-01-06T20:22:55.624Z  INFO 2252 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-01-06T20:22:55.663Z  INFO 2252 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-01-06T20:23:30.613Z  INFO 12632 --- [toms] [main] ingOrderManagementSystemApplicationTests : Starting TradingOrderManagementSystemApplicationTests using Java 17.0.12 with PID 12632 (started by shuvo151dey in C:\Projects\toms)
+2025-01-06T20:23:30.617Z  INFO 12632 --- [toms] [main] ingOrderManagementSystemApplicationTests : No active profile set, falling back to 1 default profile: "default"
+2025-01-06T20:23:30.695Z DEBUG 12632 --- [toms] [main] o.s.w.c.s.GenericWebApplicationContext   : Refreshing org.springframework.web.context.support.GenericWebApplicationContext@31198ceb
+2025-01-06T20:23:32.268Z  INFO 12632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-06T20:23:32.272Z  INFO 12632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-01-06T20:23:32.600Z  INFO 12632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 310 ms. Found 2 JPA repository interfaces.
+2025-01-06T20:23:32.722Z  INFO 12632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-06T20:23:32.725Z  INFO 12632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-01-06T20:23:32.785Z  INFO 12632 --- [toms] [main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.smdey.toms.repository.OrderRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-01-06T20:23:32.786Z  INFO 12632 --- [toms] [main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.smdey.toms.repository.TradeRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-01-06T20:23:32.824Z  INFO 12632 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 52 ms. Found 0 Redis repository interfaces.
+2025-01-06T20:23:34.130Z  INFO 12632 --- [toms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-01-06T20:23:34.292Z  INFO 12632 --- [toms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
+2025-01-06T20:23:34.377Z  INFO 12632 --- [toms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-01-06T20:23:35.380Z  INFO 12632 --- [toms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-01-06T20:23:35.457Z  INFO 12632 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-01-06T20:23:35.918Z  INFO 12632 --- [toms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@43fd77d8
+2025-01-06T20:23:35.923Z  INFO 12632 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-01-06T20:23:36.003Z  WARN 12632 --- [toms] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-01-06T20:23:36.079Z  INFO 12632 --- [toms] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.2
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-01-06T20:23:38.160Z  INFO 12632 --- [toms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-01-06T20:23:38.316Z  INFO 12632 --- [toms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-01-06T20:23:39.801Z  WARN 12632 --- [toms] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-01-06T20:23:40.010Z  INFO 12632 --- [toms] [main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-01-06T20:23:40.163Z DEBUG 12632 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 11 mappings in 'requestMappingHandlerMapping'
+2025-01-06T20:23:40.659Z DEBUG 12632 --- [toms] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-01-06T20:23:40.731Z DEBUG 12632 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-01-06T20:23:40.864Z DEBUG 12632 --- [toms] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-01-06T20:23:41.394Z  INFO 12632 --- [toms] [main] ingOrderManagementSystemApplicationTests : Started TradingOrderManagementSystemApplicationTests in 11.597 seconds (process running for 13.917)
+2025-01-06T20:23:42.843Z DEBUG 12632 --- [toms] [SpringApplicationShutdownHook] o.s.w.c.s.GenericWebApplicationContext   : Closing org.springframework.web.context.support.GenericWebApplicationContext@31198ceb, started on Mon Jan 06 20:23:30 GMT 2025
+2025-01-06T20:23:42.931Z  INFO 12632 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-01-06T20:23:42.950Z  INFO 12632 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-01-06T20:23:42.979Z  INFO 12632 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
