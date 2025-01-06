@@ -3,5 +3,6 @@ package tech.smdey.toms.entity;
 public enum OrderStatus {
     PENDING,
     COMPLETED,
-    CANCELED
+    CANCELED,
+    PARTIALLY_COMPLETED
 }
