@@ -3,6 +3,8 @@ package tech.smdey.toms.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 @Entity
 public class Trade {
 
@@ -11,8 +13,12 @@ public class Trade {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "order_id", nullable = false)
-    private TradeOrder tradeOrder;
+    @JoinColumn(name = "buy_order_id", nullable = false)
+    private TradeOrder buyOrder;
+
+    @ManyToOne
+    @JoinColumn(name = "sell_order_id", nullable = false)
+    private TradeOrder sellOrder;
 
     private String symbol;
 
@@ -20,6 +26,7 @@ public class Trade {
 
     private Double price;
 
+    @CreationTimestamp
     private LocalDateTime executedAt;
 
     // Getters and Setters
@@ -31,12 +38,20 @@ public class Trade {
         this.id = id;
     }
 
-    public TradeOrder getTradeOrder() {
-        return tradeOrder;
+    public TradeOrder getBuyOrder() {
+        return buyOrder;
     }
 
-    public void setTradeOrder(TradeOrder tradeOrder) {
-        this.tradeOrder = tradeOrder;
+    public void setBuyOrder(TradeOrder tradeOrder) {
+        this.buyOrder = tradeOrder;
+    }
+
+    public TradeOrder getSellOrder() {
+        return sellOrder;
+    }
+
+    public void setSellOrder(TradeOrder tradeOrder) {
+        this.sellOrder = tradeOrder;
     }
 
     public String getSymbol() {
@@ -67,7 +82,4 @@ public class Trade {
         return executedAt;
     }
 
-    public void setExecutedAt(LocalDateTime executedAt) {
-        this.executedAt = executedAt;
-    }
 }

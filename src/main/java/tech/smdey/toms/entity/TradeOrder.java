@@ -1,5 +1,8 @@
 package tech.smdey.toms.entity;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.redis.connection.SortParameters.Order;
 
 import jakarta.persistence.Entity;
@@ -28,6 +31,15 @@ public class TradeOrder {
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING;
+
+    @NotNull(message = "Type cannot be Null")
+    private String type;
+
+    @NotNull(message = "Price cannot be Null")
+    private double price;
+    
+    @CreationTimestamp
+    private LocalDateTime timestamp;
 
     // Getters and setters
     public Long getId() {
@@ -60,5 +72,25 @@ public class TradeOrder {
 
     public void setStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 }
