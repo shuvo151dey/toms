@@ -1751,3 +1751,592 @@ Caused by: java.nio.channels.ClosedChannelException: null
 2025-01-08T19:30:40.037Z  INFO 4100 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
 2025-01-08T19:30:40.066Z  INFO 4100 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
 2025-01-08T19:30:40.133Z  INFO 4100 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-01-08T19:30:58.688Z  INFO 10368 --- [toms] [main] .TradingOrderManagementSystemApplication : Starting TradingOrderManagementSystemApplication using Java 17.0.12 with PID 10368 (C:\Projects\toms\target\classes started by shuvo151dey in C:\Projects\toms)
+2025-01-08T19:30:58.693Z  INFO 10368 --- [toms] [main] .TradingOrderManagementSystemApplication : No active profile set, falling back to 1 default profile: "default"
+2025-01-08T19:30:59.774Z  INFO 10368 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-08T19:30:59.778Z  INFO 10368 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-01-08T19:31:00.056Z  INFO 10368 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 260 ms. Found 2 JPA repository interfaces.
+2025-01-08T19:31:00.094Z  INFO 10368 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-08T19:31:00.098Z  INFO 10368 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-01-08T19:31:00.137Z  INFO 10368 --- [toms] [main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.smdey.toms.repository.OrderRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-01-08T19:31:00.139Z  INFO 10368 --- [toms] [main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface tech.smdey.toms.repository.TradeRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-01-08T19:31:00.141Z  INFO 10368 --- [toms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 22 ms. Found 0 Redis repository interfaces.
+2025-01-08T19:31:01.150Z  INFO 10368 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-01-08T19:31:01.176Z  INFO 10368 --- [toms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-01-08T19:31:01.179Z  INFO 10368 --- [toms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
+2025-01-08T19:31:01.299Z  INFO 10368 --- [toms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-01-08T19:31:01.300Z  INFO 10368 --- [toms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2514 ms
+2025-01-08T19:31:01.535Z  INFO 10368 --- [toms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-01-08T19:31:01.624Z  INFO 10368 --- [toms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
+2025-01-08T19:31:01.677Z  INFO 10368 --- [toms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-01-08T19:31:02.172Z  INFO 10368 --- [toms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-01-08T19:31:02.272Z  INFO 10368 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-01-08T19:31:02.605Z  INFO 10368 --- [toms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@146f3d22
+2025-01-08T19:31:02.608Z  INFO 10368 --- [toms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-01-08T19:31:02.670Z  WARN 10368 --- [toms] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-01-08T19:31:02.708Z  INFO 10368 --- [toms] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.2
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-01-08T19:31:04.185Z  INFO 10368 --- [toms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-01-08T19:31:04.288Z  INFO 10368 --- [toms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-01-08T19:31:04.665Z  INFO 10368 --- [toms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-01-08T19:31:06.167Z DEBUG 10368 --- [toms] [main] o.s.w.s.s.s.WebSocketHandlerMapping      : Patterns [/ws/**] in 'stompWebSocketHandlerMapping'
+2025-01-08T19:31:06.239Z  WARN 10368 --- [toms] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-01-08T19:31:06.270Z  INFO 10368 --- [toms] [main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-01-08T19:31:06.322Z DEBUG 10368 --- [toms] [main] .WebSocketAnnotationMethodMessageHandler : 
+	t.s.t.c.HelloController:
+	
+2025-01-08T19:31:06.323Z DEBUG 10368 --- [toms] [main] .WebSocketAnnotationMethodMessageHandler : 
+	t.s.t.c.MatchingController:
+	
+2025-01-08T19:31:06.325Z DEBUG 10368 --- [toms] [main] .WebSocketAnnotationMethodMessageHandler : 
+	t.s.t.c.OrderController:
+	
+2025-01-08T19:31:06.334Z DEBUG 10368 --- [toms] [main] .WebSocketAnnotationMethodMessageHandler : 
+	o.s.b.a.w.s.e.BasicErrorController:
+	
+2025-01-08T19:31:06.524Z DEBUG 10368 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 10 mappings in 'requestMappingHandlerMapping'
+2025-01-08T19:31:06.604Z DEBUG 10368 --- [toms] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-01-08T19:31:06.654Z DEBUG 10368 --- [toms] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-01-08T19:31:06.756Z DEBUG 10368 --- [toms] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-01-08T19:31:07.125Z DEBUG 10368 --- [toms] [main] org.springframework.web.SimpLogging      : clientOutboundChannel added SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-01-08T19:31:07.127Z DEBUG 10368 --- [toms] [main] org.springframework.web.SimpLogging      : clientInboundChannel added WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-01-08T19:31:07.128Z  INFO 10368 --- [toms] [main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
+2025-01-08T19:31:07.129Z DEBUG 10368 --- [toms] [main] org.springframework.web.SimpLogging      : clientInboundChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@16be2c40]
+2025-01-08T19:31:07.130Z DEBUG 10368 --- [toms] [main] org.springframework.web.SimpLogging      : brokerChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@16be2c40]
+2025-01-08T19:31:07.133Z  INFO 10368 --- [toms] [main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@16be2c40]]
+2025-01-08T19:31:07.136Z  INFO 10368 --- [toms] [main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
+2025-01-08T19:31:07.136Z DEBUG 10368 --- [toms] [main] org.springframework.web.SimpLogging      : clientInboundChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-01-08T19:31:07.137Z DEBUG 10368 --- [toms] [main] org.springframework.web.SimpLogging      : brokerChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-01-08T19:31:07.183Z  INFO 10368 --- [toms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-01-08T19:31:07.263Z  INFO 10368 --- [toms] [main] o.a.k.clients.consumer.ConsumerConfig    : ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = latest
+	bootstrap.servers = [localhost:9092]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-toms-group-1
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = toms-group
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+2025-01-08T19:31:07.348Z  INFO 10368 --- [toms] [main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2025-01-08T19:31:07.543Z  INFO 10368 --- [toms] [main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2025-01-08T19:31:07.544Z  INFO 10368 --- [toms] [main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2025-01-08T19:31:07.544Z  INFO 10368 --- [toms] [main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1736364667541
+2025-01-08T19:31:07.551Z  INFO 10368 --- [toms] [main] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Subscribed to topic(s): orders
+2025-01-08T19:31:07.570Z  INFO 10368 --- [toms] [main] o.a.k.clients.consumer.ConsumerConfig    : ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = latest
+	bootstrap.servers = [localhost:9092]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-toms-group-2
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = toms-group
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+2025-01-08T19:31:07.574Z  INFO 10368 --- [toms] [main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2025-01-08T19:31:07.598Z  INFO 10368 --- [toms] [main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2025-01-08T19:31:07.599Z  INFO 10368 --- [toms] [main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2025-01-08T19:31:07.600Z  INFO 10368 --- [toms] [main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1736364667598
+2025-01-08T19:31:07.601Z  INFO 10368 --- [toms] [main] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Subscribed to topic(s): trades
+2025-01-08T19:31:07.620Z  INFO 10368 --- [toms] [main] .TradingOrderManagementSystemApplication : Started TradingOrderManagementSystemApplication in 9.658 seconds (process running for 10.25)
+2025-01-08T19:31:08.124Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] org.apache.kafka.clients.Metadata        : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Cluster ID: ozIRocWORxW3CNZIRko-EA
+2025-01-08T19:31:08.124Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] org.apache.kafka.clients.Metadata        : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Cluster ID: ozIRocWORxW3CNZIRko-EA
+2025-01-08T19:31:08.126Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Discovered group coordinator host.docker.internal:9092 (id: 2147483647 rack: null)
+2025-01-08T19:31:08.126Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Discovered group coordinator host.docker.internal:9092 (id: 2147483647 rack: null)
+2025-01-08T19:31:08.138Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] (Re-)joining group
+2025-01-08T19:31:08.138Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] (Re-)joining group
+2025-01-08T19:31:08.177Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Request joining group due to: need to re-join with the given member-id: consumer-toms-group-1-5a02a127-6ef0-4ae0-b043-95b6ee83f731
+2025-01-08T19:31:08.178Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] (Re-)joining group
+2025-01-08T19:31:08.182Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Request joining group due to: need to re-join with the given member-id: consumer-toms-group-2-102c05d7-8053-4d47-87fd-b1881c132a36
+2025-01-08T19:31:08.184Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] (Re-)joining group
+2025-01-08T19:31:08.191Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Successfully joined group with generation Generation{generationId=23, memberId='consumer-toms-group-1-5a02a127-6ef0-4ae0-b043-95b6ee83f731', protocol='range'}
+2025-01-08T19:31:08.191Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Successfully joined group with generation Generation{generationId=23, memberId='consumer-toms-group-2-102c05d7-8053-4d47-87fd-b1881c132a36', protocol='range'}
+2025-01-08T19:31:08.212Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Finished assignment for group at generation 23: {consumer-toms-group-2-102c05d7-8053-4d47-87fd-b1881c132a36=Assignment(partitions=[trades-0]), consumer-toms-group-1-5a02a127-6ef0-4ae0-b043-95b6ee83f731=Assignment(partitions=[orders-0])}
+2025-01-08T19:31:08.228Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Successfully synced group in generation Generation{generationId=23, memberId='consumer-toms-group-1-5a02a127-6ef0-4ae0-b043-95b6ee83f731', protocol='range'}
+2025-01-08T19:31:08.228Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Successfully synced group in generation Generation{generationId=23, memberId='consumer-toms-group-2-102c05d7-8053-4d47-87fd-b1881c132a36', protocol='range'}
+2025-01-08T19:31:08.229Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Notifying assignor about the new Assignment(partitions=[orders-0])
+2025-01-08T19:31:08.229Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Notifying assignor about the new Assignment(partitions=[trades-0])
+2025-01-08T19:31:08.235Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Adding newly assigned partitions: orders-0
+2025-01-08T19:31:08.235Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Adding newly assigned partitions: trades-0
+2025-01-08T19:31:08.254Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition trades-0 to the committed offset FetchPosition{offset=4, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[host.docker.internal:9092 (id: 0 rack: null)], epoch=0}}
+2025-01-08T19:31:08.254Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition orders-0 to the committed offset FetchPosition{offset=4, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[host.docker.internal:9092 (id: 0 rack: null)], epoch=0}}
+2025-01-08T19:31:08.257Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : toms-group: partitions assigned: [orders-0]
+2025-01-08T19:31:08.257Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : toms-group: partitions assigned: [trades-0]
+2025-01-08T19:31:32.415Z  INFO 10368 --- [toms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-01-08T19:31:32.416Z  INFO 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-01-08T19:31:32.416Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-01-08T19:31:32.417Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-01-08T19:31:32.417Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-01-08T19:31:32.419Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@3cd3cf6b
+2025-01-08T19:31:32.421Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@522fdf0c
+2025-01-08T19:31:32.422Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-01-08T19:31:32.422Z  INFO 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+2025-01-08T19:31:32.446Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/ws/info", parameters={}
+2025-01-08T19:31:32.470Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.w.s.s.s.WebSocketHandlerMapping      : Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@346d441a
+2025-01-08T19:31:32.494Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.w.s.s.t.h.DefaultSockJsService       : Processing transport request: GET http://localhost:8080/ws/info
+2025-01-08T19:31:32.502Z DEBUG 10368 --- [toms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-08T19:31:32.522Z DEBUG 10368 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/ws/775/gyu5t4rs/websocket", parameters={}
+2025-01-08T19:31:32.523Z DEBUG 10368 --- [toms] [http-nio-8080-exec-2] o.s.w.s.s.s.WebSocketHandlerMapping      : Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@346d441a
+2025-01-08T19:31:32.525Z DEBUG 10368 --- [toms] [http-nio-8080-exec-2] o.s.w.s.s.t.h.DefaultSockJsService       : Processing transport request: GET http://localhost:8080/ws/775/gyu5t4rs/websocket
+2025-01-08T19:31:32.557Z DEBUG 10368 --- [toms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 101 SWITCHING_PROTOCOLS
+2025-01-08T19:31:32.585Z DEBUG 10368 --- [toms] [http-nio-8080-exec-2] s.w.s.h.LoggingWebSocketHandlerDecorator : New WebSocketServerSockJsSession[id=gyu5t4rs]
+2025-01-08T19:31:32.663Z DEBUG 10368 --- [toms] [clientInboundChannel-2] org.springframework.web.SimpLogging      : Processing CONNECT session=gyu5t4rs
+2025-01-08T19:31:32.683Z DEBUG 10368 --- [toms] [clientInboundChannel-5] org.springframework.web.SimpLogging      : Processing SUBSCRIBE /topic/orders id=sub-0 session=gyu5t4rs
+2025-01-08T19:31:32.696Z DEBUG 10368 --- [toms] [clientInboundChannel-8] org.springframework.web.SimpLogging      : Processing SUBSCRIBE /topic/trades id=sub-1 session=gyu5t4rs
+2025-01-08T19:31:32.696Z DEBUG 10368 --- [toms] [clientInboundChannel-4] .WebSocketAnnotationMethodMessageHandler : Searching methods to handle SEND /app/test session=gyu5t4rs, lookupDestination='/test'
+2025-01-08T19:31:32.697Z DEBUG 10368 --- [toms] [clientInboundChannel-4] .WebSocketAnnotationMethodMessageHandler : No matching message handler methods.
+2025-01-08T19:31:46.080Z DEBUG 10368 --- [toms] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/orders?page=0&size=5&sortBy=symbol&direction=asc&status=PENDING", parameters={masked}
+2025-01-08T19:31:46.083Z DEBUG 10368 --- [toms] [http-nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to tech.smdey.toms.controller.OrderController#getOrders(OrderStatus, int, int, String, String)
+2025-01-08T19:31:46.439Z  WARN 10368 --- [toms] [http-nio-8080-exec-6] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+2025-01-08T19:31:46.452Z DEBUG 10368 --- [toms] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-01-08T19:31:46.455Z DEBUG 10368 --- [toms] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [Page 1 of 0 containing UNKNOWN instances]
+2025-01-08T19:31:46.488Z DEBUG 10368 --- [toms] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-08T19:32:07.127Z  INFO 10368 --- [toms] [MessageBroker-1] o.s.w.s.c.WebSocketMessageBrokerStats    : WebSocketSession[1 current WS(1)-HttpStream(0)-HttpPoll(0), 1 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(1)-CONNECTED(1)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 8, active threads = 0, queued tasks = 0, completed tasks = 12], outboundChannel[pool size = 1, active threads = 0, queued tasks = 0, completed tasks = 1], sockJsScheduler[pool size = 4, active threads = 1, queued tasks = 2, completed tasks = 8]
+2025-01-08T19:32:11.545Z DEBUG 10368 --- [toms] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/orders", parameters={}
+2025-01-08T19:32:11.546Z DEBUG 10368 --- [toms] [http-nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to tech.smdey.toms.controller.OrderController#createOrder(TradeOrder)
+2025-01-08T19:32:11.621Z DEBUG 10368 --- [toms] [http-nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [tech.smdey.toms.entity.TradeOrder@b913a83]
+2025-01-08T19:32:12.606Z DEBUG 10368 --- [toms] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-01-08T19:32:12.607Z DEBUG 10368 --- [toms] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [tech.smdey.toms.entity.TradeOrder@b913a83]
+2025-01-08T19:32:12.609Z DEBUG 10368 --- [toms] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-08T19:32:23.619Z DEBUG 10368 --- [toms] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/orders", parameters={}
+2025-01-08T19:32:23.620Z DEBUG 10368 --- [toms] [http-nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to tech.smdey.toms.controller.OrderController#createOrder(TradeOrder)
+2025-01-08T19:32:23.623Z DEBUG 10368 --- [toms] [http-nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [tech.smdey.toms.entity.TradeOrder@70e52787]
+2025-01-08T19:32:23.632Z DEBUG 10368 --- [toms] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-01-08T19:32:23.633Z DEBUG 10368 --- [toms] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [tech.smdey.toms.entity.TradeOrder@70e52787]
+2025-01-08T19:32:23.635Z DEBUG 10368 --- [toms] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-08T19:32:37.677Z DEBUG 10368 --- [toms] [http-nio-8080-exec-10] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/matching/AAPL", parameters={}
+2025-01-08T19:32:37.678Z DEBUG 10368 --- [toms] [http-nio-8080-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to tech.smdey.toms.controller.MatchingController#matchOrders(String)
+2025-01-08T19:32:37.762Z  INFO 10368 --- [toms] [http-nio-8080-exec-10] o.a.k.clients.producer.ProducerConfig    : ProducerConfig values: 
+	acks = -1
+	auto.include.jmx.reporter = true
+	batch.size = 16384
+	bootstrap.servers = [localhost:9092]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = toms-producer-1
+	compression.gzip.level = -1
+	compression.lz4.level = 9
+	compression.type = none
+	compression.zstd.level = 3
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = true
+	enable.metrics.push = true
+	interceptor.classes = []
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 0
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.adaptive.partitioning.enable = true
+	partitioner.availability.timeout.ms = 0
+	partitioner.class = null
+	partitioner.ignore.keys = false
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.kafka.common.serialization.StringSerializer
+
+2025-01-08T19:32:37.767Z  INFO 10368 --- [toms] [http-nio-8080-exec-10] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2025-01-08T19:32:37.790Z  INFO 10368 --- [toms] [http-nio-8080-exec-10] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=toms-producer-1] Instantiated an idempotent producer.
+2025-01-08T19:32:37.836Z  INFO 10368 --- [toms] [http-nio-8080-exec-10] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2025-01-08T19:32:37.837Z  INFO 10368 --- [toms] [http-nio-8080-exec-10] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2025-01-08T19:32:37.838Z  INFO 10368 --- [toms] [http-nio-8080-exec-10] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1736364757836
+2025-01-08T19:32:37.847Z  INFO 10368 --- [toms] [kafka-producer-network-thread | toms-producer-1] org.apache.kafka.clients.Metadata        : [Producer clientId=toms-producer-1] Cluster ID: ozIRocWORxW3CNZIRko-EA
+2025-01-08T19:32:37.856Z  INFO 10368 --- [toms] [kafka-producer-network-thread | toms-producer-1] o.a.k.c.p.internals.TransactionManager   : [Producer clientId=toms-producer-1] ProducerId set to 3 with epoch 0
+2025-01-08T19:32:37.953Z DEBUG 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] org.springframework.web.SimpLogging      : Processing MESSAGE destination=/topic/orders session=null payload=Order 2 updated to COMPLETED
+2025-01-08T19:32:37.955Z DEBUG 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] org.springframework.web.SimpLogging      : Broadcasting to 1 sessions.
+2025-01-08T19:32:37.958Z DEBUG 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] org.springframework.web.SimpLogging      : Processing MESSAGE destination=/topic/orders session=null payload=Order 1 updated to COMPLETED
+2025-01-08T19:32:37.958Z DEBUG 10368 --- [toms] [http-nio-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'text/plain', given [*/*] and supported [text/plain, */*, application/json, application/*+json]
+2025-01-08T19:32:37.959Z DEBUG 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] org.springframework.web.SimpLogging      : Broadcasting to 1 sessions.
+2025-01-08T19:32:37.959Z DEBUG 10368 --- [toms] [http-nio-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing ["Matching process completed for symbol: AAPL"]
+2025-01-08T19:32:37.963Z DEBUG 10368 --- [toms] [http-nio-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-01-08T19:32:37.968Z DEBUG 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] org.springframework.web.SimpLogging      : Processing MESSAGE destination=/topic/trades session=null payload=Trade created: tech.smdey.toms.entity.Trade@462294d2
+2025-01-08T19:32:37.969Z DEBUG 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] org.springframework.web.SimpLogging      : Broadcasting to 1 sessions.
+2025-01-08T19:37:00.109Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Revoke previously assigned partitions trades-0
+2025-01-08T19:37:00.109Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Revoke previously assigned partitions orders-0
+2025-01-08T19:37:00.111Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : toms-group: partitions revoked: [trades-0]
+2025-01-08T19:37:00.111Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : toms-group: partitions revoked: [orders-0]
+2025-01-08T19:37:00.112Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Member consumer-toms-group-1-5a02a127-6ef0-4ae0-b043-95b6ee83f731 sending LeaveGroup request to coordinator host.docker.internal:9092 (id: 2147483647 rack: null) due to the consumer unsubscribed from all topics
+2025-01-08T19:37:00.112Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Member consumer-toms-group-2-102c05d7-8053-4d47-87fd-b1881c132a36 sending LeaveGroup request to coordinator host.docker.internal:9092 (id: 2147483647 rack: null) due to the consumer unsubscribed from all topics
+2025-01-08T19:37:00.113Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Resetting generation and member id due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.113Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Resetting generation and member id due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.114Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Request joining group due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.114Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Request joining group due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.114Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Unsubscribed all topics or patterns and assigned partitions
+2025-01-08T19:37:00.114Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Unsubscribed all topics or patterns and assigned partitions
+2025-01-08T19:37:00.117Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Resetting generation and member id due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.135Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-1, groupId=toms-group] Request joining group due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.117Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Resetting generation and member id due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.136Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-toms-group-2, groupId=toms-group] Request joining group due to: consumer pro-actively leaving the group
+2025-01-08T19:37:00.424Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2025-01-08T19:37:00.424Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2025-01-08T19:37:00.425Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2025-01-08T19:37:00.425Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2025-01-08T19:37:00.425Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2025-01-08T19:37:00.425Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2025-01-08T19:37:00.426Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2025-01-08T19:37:00.426Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2025-01-08T19:37:00.436Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-toms-group-1 unregistered
+2025-01-08T19:37:00.437Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-toms-group-2 unregistered
+2025-01-08T19:37:00.437Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : toms-group: Consumer stopped
+2025-01-08T19:37:00.437Z  INFO 10368 --- [toms] [org.springframework.kafka.KafkaListenerEndpointContainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : toms-group: Consumer stopped
+2025-01-08T19:37:00.441Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-01-08T19:37:00.541Z  INFO 10368 --- [toms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-01-08T19:37:00.550Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] org.springframework.web.SimpLogging      : clientOutboundChannel removed SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-01-08T19:37:00.553Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] s.w.s.s.t.s.WebSocketServerSockJsSession : Closing SockJS session gyu5t4rs with CloseStatus[code=1001, reason=null]
+2025-01-08T19:37:00.555Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] s.w.s.h.LoggingWebSocketHandlerDecorator : Transport error in WebSocketServerSockJsSession[id=gyu5t4rs]
+
+java.io.IOException: java.nio.channels.ClosedChannelException
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:326) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:266) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsSession.sendCloseMessage(WsSession.java:792) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsSession.doClose(WsSession.java:589) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:324) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:266) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:250) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendPartialString(WsRemoteEndpointImplBase.java:223) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointBasic.sendText(WsRemoteEndpointBasic.java:48) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.springframework.web.socket.adapter.standard.StandardWebSocketSession.sendTextMessage(StandardWebSocketSession.java:217) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.adapter.AbstractWebSocketSession.sendMessage(AbstractWebSocketSession.java:108) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.sockjs.transport.session.WebSocketServerSockJsSession.writeFrameInternal(WebSocketServerSockJsSession.java:228) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.sockjs.transport.session.AbstractSockJsSession.close(AbstractSockJsSession.java:188) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.handler.WebSocketSessionDecorator.close(WebSocketSessionDecorator.java:164) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator.close(ConcurrentWebSocketSessionDecorator.java:271) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:308) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:321) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor.doStop(DefaultLifecycleProcessor.java:384) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor$LifecycleGroup.stop(DefaultLifecycleProcessor.java:526) ~[spring-context-6.2.1.jar:6.2.1]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.context.support.DefaultLifecycleProcessor.stopBeans(DefaultLifecycleProcessor.java:353) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor.onClose(DefaultLifecycleProcessor.java:253) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.AbstractApplicationContext.doClose(AbstractApplicationContext.java:1172) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.doClose(ServletWebServerApplicationContext.java:174) ~[spring-boot-3.4.1.jar:3.4.1]
+	at org.springframework.context.support.AbstractApplicationContext.close(AbstractApplicationContext.java:1126) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.boot.SpringApplicationShutdownHook.closeAndWait(SpringApplicationShutdownHook.java:147) ~[spring-boot-3.4.1.jar:3.4.1]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.boot.SpringApplicationShutdownHook.run(SpringApplicationShutdownHook.java:116) ~[spring-boot-3.4.1.jar:3.4.1]
+	at java.base/java.lang.Thread.run(Thread.java:842) ~[na:na]
+Caused by: java.nio.channels.ClosedChannelException: null
+	at org.apache.tomcat.util.net.NioChannel$1.write(NioChannel.java:273) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper$NioOperationState.run(NioEndpoint.java:1632) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase$OperationState.start(SocketWrapperBase.java:1051) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase.vectoredOperation(SocketWrapperBase.java:1440) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1366) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1337) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.server.WsRemoteEndpointImplServer.doWrite(WsRemoteEndpointImplServer.java:171) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.writeMessagePart(WsRemoteEndpointImplBase.java:521) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:313) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	... 24 common frames omitted
+
+2025-01-08T19:37:00.586Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] s.w.s.s.t.s.WebSocketServerSockJsSession : Failure while sending SockJS close frame
+
+java.io.IOException: java.nio.channels.ClosedChannelException
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:326) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:266) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:250) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendPartialString(WsRemoteEndpointImplBase.java:223) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointBasic.sendText(WsRemoteEndpointBasic.java:48) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.springframework.web.socket.adapter.standard.StandardWebSocketSession.sendTextMessage(StandardWebSocketSession.java:217) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.adapter.AbstractWebSocketSession.sendMessage(AbstractWebSocketSession.java:108) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.sockjs.transport.session.WebSocketServerSockJsSession.writeFrameInternal(WebSocketServerSockJsSession.java:228) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.sockjs.transport.session.AbstractSockJsSession.close(AbstractSockJsSession.java:188) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.handler.WebSocketSessionDecorator.close(WebSocketSessionDecorator.java:164) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator.close(ConcurrentWebSocketSessionDecorator.java:271) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:308) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:321) ~[spring-websocket-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor.doStop(DefaultLifecycleProcessor.java:384) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor$LifecycleGroup.stop(DefaultLifecycleProcessor.java:526) ~[spring-context-6.2.1.jar:6.2.1]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.context.support.DefaultLifecycleProcessor.stopBeans(DefaultLifecycleProcessor.java:353) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor.onClose(DefaultLifecycleProcessor.java:253) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.context.support.AbstractApplicationContext.doClose(AbstractApplicationContext.java:1172) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.doClose(ServletWebServerApplicationContext.java:174) ~[spring-boot-3.4.1.jar:3.4.1]
+	at org.springframework.context.support.AbstractApplicationContext.close(AbstractApplicationContext.java:1126) ~[spring-context-6.2.1.jar:6.2.1]
+	at org.springframework.boot.SpringApplicationShutdownHook.closeAndWait(SpringApplicationShutdownHook.java:147) ~[spring-boot-3.4.1.jar:3.4.1]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.boot.SpringApplicationShutdownHook.run(SpringApplicationShutdownHook.java:116) ~[spring-boot-3.4.1.jar:3.4.1]
+	at java.base/java.lang.Thread.run(Thread.java:842) ~[na:na]
+Caused by: java.nio.channels.ClosedChannelException: null
+	at org.apache.tomcat.util.net.NioChannel$1.write(NioChannel.java:273) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper$NioOperationState.run(NioEndpoint.java:1632) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase$OperationState.start(SocketWrapperBase.java:1051) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase.vectoredOperation(SocketWrapperBase.java:1440) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1366) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1337) ~[tomcat-embed-core-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.server.WsRemoteEndpointImplServer.doWrite(WsRemoteEndpointImplServer.java:171) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.writeMessagePart(WsRemoteEndpointImplBase.java:521) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:313) ~[tomcat-embed-websocket-10.1.34.jar:10.1.34]
+	... 24 common frames omitted
+
+2025-01-08T19:37:00.590Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] s.w.s.h.LoggingWebSocketHandlerDecorator : WebSocketServerSockJsSession[id=gyu5t4rs] closed with CloseStatus[code=1001, reason=null]
+2025-01-08T19:37:00.596Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] o.s.w.s.m.SubProtocolWebSocketHandler    : Clearing session gyu5t4rs
+2025-01-08T19:37:00.601Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] org.springframework.web.SimpLogging      : clientInboundChannel removed WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-01-08T19:37:00.602Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : Stopping...
+2025-01-08T19:37:00.602Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@16be2c40]]
+2025-01-08T19:37:00.603Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] org.springframework.web.SimpLogging      : clientInboundChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@16be2c40]
+2025-01-08T19:37:00.603Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] org.springframework.web.SimpLogging      : brokerChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@16be2c40]
+2025-01-08T19:37:00.604Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : Stopped.
+2025-01-08T19:37:00.604Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] org.springframework.web.SimpLogging      : clientInboundChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-01-08T19:37:00.605Z DEBUG 10368 --- [toms] [SpringApplicationShutdownHook] org.springframework.web.SimpLogging      : brokerChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-01-08T19:37:00.643Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=toms-producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+2025-01-08T19:37:00.649Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2025-01-08T19:37:00.650Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2025-01-08T19:37:00.651Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2025-01-08T19:37:00.651Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2025-01-08T19:37:00.667Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for toms-producer-1 unregistered
+2025-01-08T19:37:00.681Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-01-08T19:37:00.724Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-01-08T19:37:00.769Z  INFO 10368 --- [toms] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
