@@ -54,10 +54,9 @@ public class OrderController {
         orderService.validateOrder(order);
         TradeOrder savedorder = orderRepository.save(order);
         orderCacheService.saveToCache(savedorder.getId(), savedorder);
-        
-        
+
         kafkaProducerService.sendOrderMessage(savedorder);
-        return ResponseEntity.ok(savedorder);    
+        return ResponseEntity.ok(savedorder);
     }
 
     @GetMapping
@@ -81,51 +80,70 @@ public class OrderController {
 
         return ResponseEntity.ok(orders);
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<TradeOrder> getOrderById(@PathVariable Long id) {
         Optional<TradeOrder> cachedOrder = orderCacheService.getFromCache(id);
-        if(cachedOrder.isPresent()){
+        if (cachedOrder.isPresent()) {
             return ResponseEntity.ok(cachedOrder.get());
         }
 
         Optional<TradeOrder> order = orderRepository.findById(id);
-        order.ifPresent(o -> orderCacheService.saveToCache(id,o));
+        order.ifPresent(o -> orderCacheService.saveToCache(id, o));
 
         return order.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<TradeOrder> updateOrder(
-            @PathVariable Long id, 
-            @Valid @RequestBody TradeOrder updatedOrder) {
-        
-        // Check if the order exists
+            @PathVariable Long id,
+            @RequestBody TradeOrder updatedOrder) {
         Optional<TradeOrder> existingOrder = orderRepository.findById(id);
-        
+
         if (existingOrder.isPresent()) {
             TradeOrder order = existingOrder.get();
-            order.setSymbol(updatedOrder.getSymbol());
-            order.setQuantity(updatedOrder.getQuantity());
-        
-            TradeOrder savedOrder = orderRepository.save(order);
-            orderCacheService.saveToCache(id, savedOrder);
-            return ResponseEntity.ok(savedOrder);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
+            // Allow updates only for PENDING or PARTIALLY_COMPLETED orders
+            if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PARTIALLY_COMPLETED) {
+                order.setQuantity(updatedOrder.getQuantity());
+                order.setLimitPrice(updatedOrder.getLimitPrice());
+                TradeOrder savedOrder = orderRepository.save(order);
+
+                // Notify via WebSocket
+                kafkaProducerService.sendOrderMessage(savedOrder);
+
+                return ResponseEntity.ok(savedOrder);
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
         }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
-        if (orderRepository.existsById(id)) {
-            orderRepository.deleteById(id);
-            orderCacheService.deleteFromCache(id);
-            return ResponseEntity.noContent().build(); // 204 No Content
-        } else {
-            return ResponseEntity.notFound().build(); // 404 Not Found
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long id) {
+        Optional<TradeOrder> existingOrder = orderRepository.findById(id);
+
+        if (existingOrder.isPresent()) {
+            TradeOrder order = existingOrder.get();
+
+            // Allow cancellation only for PENDING or PARTIALLY_COMPLETED orders
+            if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PARTIALLY_COMPLETED) {
+                order.setStatus(OrderStatus.CANCELED);
+                orderRepository.save(order);
+
+                // Notify via WebSocket
+                kafkaProducerService.sendOrderMessage(order);
+
+                return ResponseEntity.noContent().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
         }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @PatchMapping("/{id}/status")

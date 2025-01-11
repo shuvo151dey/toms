@@ -14,9 +14,12 @@ import tech.smdey.toms.entity.TradeOrder;
 public interface OrderRepository extends JpaRepository<TradeOrder, Long> {
     Page<TradeOrder> findByStatus(OrderStatus status, Pageable pageable);
 
-    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.type = 'BUY' AND o.status = 'PENDING'")
+    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderAction = 'BUY' AND o.status = 'PENDING'")
     List<TradeOrder> findUnmatchedBuyOrders(@Param("symbol") String symbol);
 
-    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.type = 'SELL' AND o.status = 'PENDING'")
+    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderAction = 'SELL' AND o.status = 'PENDING'")
     List<TradeOrder> findUnmatchedSellOrders(@Param("symbol") String symbol);
+
+    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderMethod = 'STOP'")
+    List<TradeOrder> findStopOrders(@Param("symbol") String symbol);
 }

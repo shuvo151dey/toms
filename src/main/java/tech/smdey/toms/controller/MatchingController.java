@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import tech.smdey.toms.service.MatchingEngineService;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 @RestController
 @RequestMapping("/api/v1/matching")
@@ -21,4 +23,11 @@ public class MatchingController {
         matchingEngineService.matchOrders(symbol);
         return ResponseEntity.ok("Matching process completed for symbol: " + symbol);
     }
+
+    @PostMapping("/triggerstop/{symbol}")
+    public ResponseEntity<String> triggerStop(@RequestBody double marketPrice, @PathVariable String symbol) {
+        matchingEngineService.triggerStopOrders(symbol, marketPrice);
+        return ResponseEntity.ok("Stop orders triggered for symbol: " + symbol);
+    }
+    
 }

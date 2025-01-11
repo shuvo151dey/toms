@@ -33,12 +33,18 @@ public class TradeOrder {
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING;
 
-    @NotNull(message = "Type cannot be Null")
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private OrderAction orderAction;
+
+    @Enumerated(EnumType.STRING)
+    private OrderMethod orderMethod = OrderMethod.MARKET;
 
     @NotNull(message = "Price cannot be Null")
     private double price;
     
+    private double limitPrice;
+    private double stopPrice;
+
     @CreationTimestamp
     private LocalDateTime timestamp;
 
@@ -75,12 +81,20 @@ public class TradeOrder {
         this.status = status;
     }
 
-    public String getType() {
-        return type;
+    public OrderAction getOrderAction() {
+        return orderAction;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setOrderAction(OrderAction orderAction) {
+        this.orderAction = orderAction;
+    }
+
+    public OrderMethod getOrderMethod() {
+        return orderMethod;
+    }
+
+    public void setOrderMethod(OrderMethod orderMethod) {
+        this.orderMethod = orderMethod;
     }
 
     public double getPrice() {
@@ -89,6 +103,22 @@ public class TradeOrder {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public double getLimitPrice() {
+        return limitPrice;
+    }
+
+    public void setLimitPrice(double limitPrice) {
+        this.limitPrice = limitPrice;
+    }
+
+    public double getStopPrice() {
+        return stopPrice;
+    }
+
+    public void setStopPrice(double stopPrice) {
+        this.stopPrice = stopPrice;
     }
 
     public LocalDateTime getTimestamp() {
