@@ -30,9 +30,9 @@ public class MatchingEngineService {
 
         // Sort orders based on priority
         buyOrders.sort(Comparator.comparing(TradeOrder::getPrice).reversed()
-                                  .thenComparing(TradeOrder::getTimestamp));
+                .thenComparing(TradeOrder::getTimestamp));
         sellOrders.sort(Comparator.comparing(TradeOrder::getPrice)
-                                   .thenComparing(TradeOrder::getTimestamp));
+                .thenComparing(TradeOrder::getTimestamp));
 
         // Match buy and sell orders
         for (TradeOrder buy : buyOrders) {
@@ -65,7 +65,7 @@ public class MatchingEngineService {
         trade.setPrice(sell.getPrice());
         tradeRepository.save(trade);
 
-        kafkaProducerService.sendTradeMessage("Trade created: " + trade);
+        kafkaProducerService.sendTradeMessage(trade);
     }
 
     private void updateOrderStatus(TradeOrder order) {
@@ -76,7 +76,6 @@ public class MatchingEngineService {
         }
         orderRepository.save(order);
 
-        kafkaProducerService.sendOrderMessage("Order " + order.getId() + " updated to " + order.getStatus());
+        kafkaProducerService.sendOrderMessage(order);
     }
 }
-

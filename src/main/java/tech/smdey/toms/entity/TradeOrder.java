@@ -3,7 +3,8 @@ package tech.smdey.toms.entity;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.data.redis.connection.SortParameters.Order;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

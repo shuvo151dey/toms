@@ -9,10 +9,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.validation.Valid;
 import tech.smdey.toms.entity.OrderStatus;
 import tech.smdey.toms.entity.TradeOrder;
 import tech.smdey.toms.repository.OrderRepository;
+import tech.smdey.toms.service.KafkaProducerService;
 import tech.smdey.toms.service.OrderCacheService;
 import tech.smdey.toms.service.OrderService;
 
@@ -43,11 +46,17 @@ public class OrderController {
     @Autowired
     private OrderCacheService orderCacheService;
 
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+
     @PostMapping
     public ResponseEntity<TradeOrder> createOrder(@Valid @RequestBody TradeOrder order) {
         orderService.validateOrder(order);
         TradeOrder savedorder = orderRepository.save(order);
         orderCacheService.saveToCache(savedorder.getId(), savedorder);
+        
+        
+        kafkaProducerService.sendOrderMessage(savedorder);
         return ResponseEntity.ok(savedorder);    
     }
 

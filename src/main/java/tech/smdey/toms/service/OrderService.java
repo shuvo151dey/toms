@@ -1,5 +1,6 @@
 package tech.smdey.toms.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import tech.smdey.toms.entity.TradeOrder;
@@ -11,6 +12,7 @@ import java.util.List;
 public class OrderService {
 
     private static final List<String> ALLOWED_SYMBOLS = Arrays.asList("AAPL", "GOOGL", "MSFT");
+    
 
     public boolean validateOrder(TradeOrder order) {
         if (!ALLOWED_SYMBOLS.contains(order.getSymbol())) {

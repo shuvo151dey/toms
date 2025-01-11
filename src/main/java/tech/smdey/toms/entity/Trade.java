@@ -27,7 +27,7 @@ public class Trade {
     private Double price;
 
     @CreationTimestamp
-    private LocalDateTime executedAt;
+    private LocalDateTime tradeTimestamp;
 
     // Getters and Setters
     public Long getId() {
@@ -78,8 +78,8 @@ public class Trade {
         this.price = price;
     }
 
-    public LocalDateTime getExecutedAt() {
-        return executedAt;
+    public LocalDateTime getTradeTimestamp() {
+        return tradeTimestamp;
     }
 
 }
