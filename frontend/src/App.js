@@ -6,13 +6,13 @@ import ErrorWindow from "./components/ErrorWindow";
 import { Container, Grid2 as Grid, Typography, AppBar, Toolbar, Button } from "@mui/material";
 import instance from './services/AxiosInstanceService'
 import OrderModal from "./components/OrderModal";
-
+import OrderCompletionChart from "./components/OrderCompletionChart";
 const App = () => {
     const [orders, setOrders] = useState([]);
     const [tradeList, setTradeList] = useState([]);
     const [error, setError] = useState("");
     const [open, setOpen] = useState(false);
-
+    const [orderAnlayticsData, setOrderAnlayticsData] = useState([]);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
@@ -39,6 +39,33 @@ const App = () => {
             setError("Error in fetching trades")
         }
     }
+    const fetchOrderAnalytics = async () => {
+        try {
+            const orderAnalyticsResponse = await instance.get("/analytics/orders", {
+                params: { symbol: "AAPL" }
+            })
+            const orderAnalytics = orderAnalyticsResponse.data
+            const { canceledOrders, completedOrders, totalOrders } = orderAnalytics
+            const pendingOrders = totalOrders - canceledOrders - completedOrders
+            setOrderAnlayticsData([
+                { name: "Completed", value: completedOrders },
+                { name: "Cancelled", value: canceledOrders },
+                { name: "Pending", value: pendingOrders }
+            ])
+        } catch (error) {
+            setError("Error in fetching order analytics")
+        }
+    }
+    const fetchTradeAnalytics = async () => {
+        try {
+            const tradeAnalyticsResponse = await instance.get("/analytics/trades")
+            const tradeAnalytics = tradeAnalyticsResponse.data
+
+            console.log(tradeAnalyticsResponse)
+        } catch (error) {
+            setError("Error in fetching trade analytics")
+        }
+    }
     const matchOrders = async () => {
         try {
             await instance.post("/matching/AAPL")
@@ -50,6 +77,8 @@ const App = () => {
     useEffect(() => {
         fetchOrders();
         fetchTrades();
+        fetchOrderAnalytics();
+        fetchTradeAnalytics();
         connect((message, topic) => {
             console.log(message)
             if (topic === "orders") {
@@ -78,6 +107,7 @@ const App = () => {
     return (
         <div>
             <ErrorWindow error={error} onClose={onCloseHandler} />
+
             <AppBar position="static">
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -86,7 +116,7 @@ const App = () => {
                     <Button variant="contained" color="secondary" onClick={handleOpen}>
                         Place Order
                     </Button>
-                    <Button variant="contained" color="success" sx={{marginLeft: '4px'}} onClick={matchOrders}>
+                    <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} onClick={matchOrders}>
                         Match Orders
                     </Button>
                 </Toolbar>
@@ -98,6 +128,9 @@ const App = () => {
                     </Grid>
                     <Grid item="true" xs={12} md={6}>
                         <TradeFeed trades={tradeList} />
+                    </Grid>
+                    <Grid item="true" xs={12} md={6}>
+                        <OrderCompletionChart data={orderAnlayticsData} />
                     </Grid>
                 </Grid>
             </Container>

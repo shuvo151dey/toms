@@ -107,6 +107,7 @@ public class OrderController {
             // Allow updates only for PENDING or PARTIALLY_COMPLETED orders
             if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PARTIALLY_COMPLETED) {
                 order.setQuantity(updatedOrder.getQuantity());
+                order.setPrice(updatedOrder.getPrice());
                 order.setLimitPrice(updatedOrder.getLimitPrice());
                 TradeOrder savedOrder = orderRepository.save(order);
 

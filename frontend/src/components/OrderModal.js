@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Box, Typography, Button, TextField, MenuItem } from '@mui/material';
 import instance from '../services/AxiosInstanceService';
 
-const OrderModal = ({open, handleOpen, handleClose}) => {
+const OrderModal = ({ open, handleOpen, handleClose, order = {} }) => {
+    const [isEdit, setIsEdit] = useState(false);
     const [symbol, setSymbol] = useState('');
     const [orderAction, setOrderAction] = useState('');
     const [orderMethod, setOrderMethod] = useState('');
@@ -11,18 +12,42 @@ const OrderModal = ({open, handleOpen, handleClose}) => {
     const [limitPrice, setLimitPrice] = useState(null);
     const [stopPrice, setStopPrice] = useState(null);
 
+    useEffect(() => {
+        if (Object.keys(order).length > 0) {
+            setIsEdit(true);
+            setSymbol(order.symbol);
+            setOrderAction(order.orderAction);
+            setOrderMethod(order.orderMethod);
+            setQuantity(order.quantity);
+            setPrice(order.price);
+            setLimitPrice(order.limitPrice);
+            setStopPrice(order.stopPrice);
+        }
+    }, [order]);
 
     const handleSubmit = async () => {
         try {
-            await instance.post('/orders', {
-                symbol,
-                orderAction,
-                orderMethod,
-                quantity,
-                price,
-                limitPrice,
-                stopPrice
-            });
+            if (order.id) {
+                await instance.put(`/orders/${order.id}`, {
+                    symbol,
+                    orderAction,
+                    orderMethod,
+                    quantity,
+                    price,
+                    limitPrice,
+                    stopPrice
+                });
+            } else {
+                await instance.post('/orders', {
+                    symbol,
+                    orderAction,
+                    orderMethod,
+                    quantity,
+                    price,
+                    limitPrice,
+                    stopPrice
+                });
+            }
             alert('Order Submitted');
         } catch (error) {
             alert('Error in submitting order');
@@ -32,7 +57,7 @@ const OrderModal = ({open, handleOpen, handleClose}) => {
 
     return (
         <div>
-            
+
             <Modal
                 open={open}
                 onClose={handleClose}
@@ -62,6 +87,7 @@ const OrderModal = ({open, handleOpen, handleClose}) => {
                         onChange={(e) => setSymbol(e.target.value)}
                         fullWidth
                         margin="normal"
+                        disabled={isEdit}
                     >
                         <MenuItem value="AAPL">AAPL</MenuItem>
                         <MenuItem value="GOOGL">GOOGL</MenuItem>
@@ -74,6 +100,7 @@ const OrderModal = ({open, handleOpen, handleClose}) => {
                         onChange={(e) => setOrderAction(e.target.value)}
                         fullWidth
                         margin="normal"
+                        disabled={isEdit}
                     >
                         <MenuItem value="BUY">BUY</MenuItem>
                         <MenuItem value="SELL">SELL</MenuItem>
@@ -85,6 +112,7 @@ const OrderModal = ({open, handleOpen, handleClose}) => {
                         onChange={(e) => setOrderMethod(e.target.value)}
                         fullWidth
                         margin="normal"
+                        disabled={isEdit}
                     >
                         <MenuItem value="MARKET">MARKET</MenuItem>
                         <MenuItem value="LIMIT">LIMIT</MenuItem>

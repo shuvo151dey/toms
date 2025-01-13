@@ -22,4 +22,7 @@ public interface OrderRepository extends JpaRepository<TradeOrder, Long> {
 
     @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderMethod = 'STOP'")
     List<TradeOrder> findStopOrders(@Param("symbol") String symbol);
+
+    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol")
+    List<TradeOrder> findOrdersBySymbol(String symbol);
 }
