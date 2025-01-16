@@ -9,14 +9,22 @@ import {
     TableHead,
     TableRow,
     Button,
+    Skeleton,
 } from "@mui/material";
 import OrderModal from "./OrderModal";
 import instance from '../services/AxiosInstanceService';
+import { useGetOrdersQuery } from "../redux/ApiSlice";
 
-const OrderBook = ({ orders = [] }) => {
+const OrderBook = () => {
+    const { data, error, isLoading } = useGetOrdersQuery({
+        page: 0,
+        size: 10,
+        sortBy: 'symbol',
+        direction: 'asc',
+    });
     const [open, setOpen] = React.useState(false);
     const [selectedOrder, setSelectedOrder] = React.useState({});
-
+    const orders = data || { content: [] };
     const handleOpen = (order) => {
         setSelectedOrder(order)
         setOpen(true);
@@ -57,7 +65,8 @@ const OrderBook = ({ orders = [] }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {orders.length > 0 && orders.map((order, index) => (
+                        {isLoading && <TableRow><Skeleton variant="rectangular" width="100%"/></TableRow>}
+                        {orders.content.length > 0 && orders.content.map((order, index) => (
                             <TableRow key={index}>
                                 <TableCell>{order.id}</TableCell>
                                 <TableCell>{order.orderAction}</TableCell>

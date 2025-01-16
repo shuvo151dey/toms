@@ -1,142 +1,73 @@
-import React, { useState, useEffect } from "react";
-import { connect, disconnect } from "./services/WebSocketService";
-import OrderBook from "./components/OrderBook";
-import TradeFeed from "./components/TradeFeed";
-import ErrorWindow from "./components/ErrorWindow";
-import { Container, Grid2 as Grid, Typography, AppBar, Toolbar, Button } from "@mui/material";
-import instance from './services/AxiosInstanceService'
-import OrderModal from "./components/OrderModal";
-import OrderCompletionChart from "./components/OrderCompletionChart";
-const App = () => {
-    const [orders, setOrders] = useState([]);
-    const [tradeList, setTradeList] = useState([]);
-    const [error, setError] = useState("");
-    const [open, setOpen] = useState(false);
-    const [orderAnlayticsData, setOrderAnlayticsData] = useState([]);
+import { BrowserRouter as Router, Routes, Route, Outlet, Link } from 'react-router-dom';
+import Home from './pages/Home';
+import Analytics from './pages/Analytics';
+import MenuIcon from '@mui/icons-material/Menu';
+import HomeIcon from '@mui/icons-material/Home';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import { AppBar, Toolbar, Typography, Button, Drawer, Menu, MenuList, MenuItem } from '@mui/material';
+import { useMatchOrdersMutation } from './redux/ApiSlice';
+import OrderModal from './components/OrderModal';
+import React from 'react';
+
+export default function App() {
+    const [open, setOpen] = React.useState(false);
+    const [drawer, toggleDrawer] = React.useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+    const [matchOrders, { isLoading, error }] = useMatchOrdersMutation();
 
-    const fetchOrders = async (page = 0, size = 10, sortBy = "symbol", direction = "asc") => {
+    const handleMatchOrders = async (symbol) => {
         try {
-            const orderResponse = await instance.get("/orders", null, {
-                page,
-                size,
-                sortBy,
-                direction,
-                // status: "AAPL"
-            })
-            setOrders(orderResponse.data.content)
-        } catch (error) {
-            setError("Error in fetching orders")
+            await matchOrders(symbol).unwrap();
+            alert("Matching completed successfully!");
+        } catch {
+            alert("Error in matching orders");
         }
-    }
-    const fetchTrades = async () => {
-        try {
-            const tradeResponse = await instance.get("/trades/recent")
-            console.log(tradeResponse)
-            setTradeList(tradeResponse.data)
-        } catch (error) {
-            setError("Error in fetching trades")
-        }
-    }
-    const fetchOrderAnalytics = async () => {
-        try {
-            const orderAnalyticsResponse = await instance.get("/analytics/orders", {
-                params: { symbol: "AAPL" }
-            })
-            const orderAnalytics = orderAnalyticsResponse.data
-            const { canceledOrders, completedOrders, totalOrders } = orderAnalytics
-            const pendingOrders = totalOrders - canceledOrders - completedOrders
-            setOrderAnlayticsData([
-                { name: "Completed", value: completedOrders },
-                { name: "Cancelled", value: canceledOrders },
-                { name: "Pending", value: pendingOrders }
-            ])
-        } catch (error) {
-            setError("Error in fetching order analytics")
-        }
-    }
-    const fetchTradeAnalytics = async () => {
-        try {
-            const tradeAnalyticsResponse = await instance.get("/analytics/trades")
-            const tradeAnalytics = tradeAnalyticsResponse.data
+    };
+    const AppLayout = ({ children }) => {
+        return (
+            <div>
+                <AppBar position="static" mb={4}>
+                    <Toolbar>
+                        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                            TOMS Dashboard
+                        </Typography>
+                        <Button variant="contained" color="secondary" onClick={handleOpen}>
+                            Place Order
+                        </Button>
+                        <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} disabled={isLoading} onClick={() => handleMatchOrders("AAPL")}>
+                            Match Orders
+                        </Button>
+                        <Button color='white' onClick={() => toggleDrawer(true)}>
+                            <MenuIcon color='white' />
+                        </Button>
+                    </Toolbar>
+                </AppBar>
+                <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
+                <Drawer anchor="left" open={drawer} onClose={() => toggleDrawer(false)}>
+                    <MenuList>
+                        <MenuItem >
 
-            console.log(tradeAnalyticsResponse)
-        } catch (error) {
-            setError("Error in fetching trade analytics")
-        }
-    }
-    const matchOrders = async () => {
-        try {
-            await instance.post("/matching/AAPL")
-        } catch (error) {
-            setError("Error in matching orders")
-        }
-    }
-
-    useEffect(() => {
-        fetchOrders();
-        fetchTrades();
-        fetchOrderAnalytics();
-        fetchTradeAnalytics();
-        connect((message, topic) => {
-            console.log(message)
-            if (topic === "orders") {
-                setOrders((prevOrders) => {
-                    const existingOrderIndex = prevOrders.findIndex((order) => order.id === message.id);
-
-                    if (existingOrderIndex !== -1) {
-                        // Update existing order
-                        const updatedOrders = [...prevOrders];
-                        updatedOrders[existingOrderIndex] = { ...prevOrders[existingOrderIndex], ...message };
-                        return updatedOrders;
-                    } else {
-                        // Add new order
-                        return [...prevOrders, message];
-                    }
-                });
-            } else if (topic === "trades") {
-                setTradeList((prevTrades) => [...prevTrades, message])
-            }
-        });
-
-        return () => disconnect();
-    }, []);
-
-    const onCloseHandler = () => setError("")
+                            <Link variant='button' style={{color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}} underline="none" to="/"><HomeIcon /> Home</Link>
+                        </MenuItem>
+                        <MenuItem >
+                            <Link variant='button' style={{color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
+                        </MenuItem>
+                    </MenuList>
+                </Drawer>
+                {<Outlet />}
+            </div>
+        );
+    };
     return (
-        <div>
-            <ErrorWindow error={error} onClose={onCloseHandler} />
+        <Router>
+            <Routes>
+                <Route element={<AppLayout />}>
 
-            <AppBar position="static">
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        TOMS Dashboard
-                    </Typography>
-                    <Button variant="contained" color="secondary" onClick={handleOpen}>
-                        Place Order
-                    </Button>
-                    <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} onClick={matchOrders}>
-                        Match Orders
-                    </Button>
-                </Toolbar>
-            </AppBar>
-            <Container sx={{ marginTop: 4 }}>
-                <Grid container spacing={4}>
-                    <Grid item="true" xs={12} md={6}>
-                        <OrderBook orders={orders} />
-                    </Grid>
-                    <Grid item="true" xs={12} md={6}>
-                        <TradeFeed trades={tradeList} />
-                    </Grid>
-                    <Grid item="true" xs={12} md={6}>
-                        <OrderCompletionChart data={orderAnlayticsData} />
-                    </Grid>
-                </Grid>
-            </Container>
-            <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
-        </div>
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/" element={<Home />} />
+                </Route>
+            </Routes>
+        </Router>
     );
-};
-
-export default App;
+}
