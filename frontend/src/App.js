@@ -28,43 +28,46 @@ export default function App() {
     const [matchOrders, { isLoading, error }] = useMatchOrdersMutation();
     const orders = useSelector((state) => state.order.orders);
     const trades = useSelector((state) => state.trade.trades);
-    const [triggerGetOrders] = useLazyGetOrdersQuery({
-        page: 0,
-        size: 10,
-        sortBy: 'symbol',
-        direction: 'asc',
-    });
+    const [triggerGetOrders] = useLazyGetOrdersQuery();
     const [triggerGetTrades] = useLazyGetTradesQuery();
 
     useEffect(() => {
-        triggerGetOrders();
+        triggerGetOrders({
+            page: 0,
+            size: 100,
+            sortBy: 'symbol',
+            direction: 'asc',
+        });
         triggerGetTrades();
-    }, [triggerGetOrders, triggerGetTrades, dispatch]);
+    }, [triggerGetOrders, triggerGetTrades]);
 
     useEffect(() => {
         
         connect((message, topic) => {
             if (topic === 'orders') {
                 const newOrder = message;
-                const existingOrder = orders.find((order) => order.id === newOrder.id);
-                let updatedOrders = orders;
-
+                const currentOrders = store.getState().order.orders; // Fetch the latest orders state
+    
+                const existingOrder = currentOrders.find((order) => order.id === newOrder.id);
+                let updatedOrders = currentOrders;
+    
                 if (existingOrder) {
-                    updatedOrders = orders.map((order) => (order.id === newOrder.id ? newOrder : order));
+                    updatedOrders = currentOrders.map((order) => (order.id === newOrder.id ? newOrder : order));
                 } else {
-                    updatedOrders = [newOrder, ...orders];
+                    updatedOrders = [newOrder, ...currentOrders];
                 }
                 dispatch(setOrders(updatedOrders));
             } else if (topic === 'trades') {
                 const newTrade = message;
-
-                dispatch(setTrades([newTrade, ...trades]));
+                const currentTrades = store.getState().trade.trades; // Fetch the latest trades state
+                dispatch(setTrades([newTrade, ...currentTrades]));
             }
         });
+    
 
         
 
-    }, [orders, trades, dispatch]);
+    }, [dispatch]);
 
 
     const handleMatchOrders = async (symbol) => {
@@ -75,7 +78,7 @@ export default function App() {
             console.error(error);
         }
     };
-    const AppLayout = ({ children }) => {
+    const AppLayout = () => {
         return (
             <div>
                 <AppBar position="static" mb={4}>

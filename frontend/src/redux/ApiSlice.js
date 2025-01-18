@@ -1,17 +1,17 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setOrders } from "./OrderSlice";
 import { setTrades } from "./TradeSlice";
-import { create } from "@mui/material/styles/createTransitions";
 
 export const apiSlice = createApi({
     reducerPath: "api",
     baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:8080/api/v1/" }),
     endpoints: (builder) => ({
         getOrders: builder.query({
-            query: (params) => ({
+            query: (params) => {
+                return {
                 url: "orders",
                 params,
-            }),
+            }},
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
                     const { data } = await queryFulfilled;
@@ -53,7 +53,7 @@ export const apiSlice = createApi({
             query: (symbol) => ({ url: `analytics/orders`, params: { symbol } }),
         }),
         fetchTradeAnalytics: builder.query({
-            query: (symbol) => ({ url: "analytics/trades", params: { symbol } }),
+            query: (params) => ({ url: "analytics/trades", params }),
         }),
         matchOrders: builder.mutation({
             query: (symbol) => ({ url: `matching/${symbol}`, method: "POST" }),
