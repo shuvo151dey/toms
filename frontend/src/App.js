@@ -1,27 +1,78 @@
+import React, { use, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { AppBar, Toolbar, Typography, Button, Drawer, MenuList, MenuItem } from '@mui/material';
+
+import store from './redux/store';
+import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery } from './redux/ApiSlice';
+import { setOrders } from './redux/OrderSlice';
+import { setTrades } from './redux/TradeSlice';
+
+
 import Home from './pages/Home';
 import Analytics from './pages/Analytics';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import { AppBar, Toolbar, Typography, Button, Drawer, Menu, MenuList, MenuItem } from '@mui/material';
-import { useMatchOrdersMutation } from './redux/ApiSlice';
 import OrderModal from './components/OrderModal';
-import React from 'react';
+import BarChartIcon from '@mui/icons-material/BarChart';
+
+import { connect, disconnect } from './services/WebSocketService';
 
 export default function App() {
     const [open, setOpen] = React.useState(false);
     const [drawer, toggleDrawer] = React.useState(false);
+    const dispatch = useDispatch();
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
     const [matchOrders, { isLoading, error }] = useMatchOrdersMutation();
+    const orders = useSelector((state) => state.order.orders);
+    const trades = useSelector((state) => state.trade.trades);
+    const [triggerGetOrders] = useLazyGetOrdersQuery({
+        page: 0,
+        size: 10,
+        sortBy: 'symbol',
+        direction: 'asc',
+    });
+    const [triggerGetTrades] = useLazyGetTradesQuery();
+
+    useEffect(() => {
+        triggerGetOrders();
+        triggerGetTrades();
+    }, [triggerGetOrders, triggerGetTrades, dispatch]);
+
+    useEffect(() => {
+        
+        connect((message, topic) => {
+            if (topic === 'orders') {
+                const newOrder = message;
+                const existingOrder = orders.find((order) => order.id === newOrder.id);
+                let updatedOrders = orders;
+
+                if (existingOrder) {
+                    updatedOrders = orders.map((order) => (order.id === newOrder.id ? newOrder : order));
+                } else {
+                    updatedOrders = [newOrder, ...orders];
+                }
+                dispatch(setOrders(updatedOrders));
+            } else if (topic === 'trades') {
+                const newTrade = message;
+
+                dispatch(setTrades([newTrade, ...trades]));
+            }
+        });
+
+        
+
+    }, [orders, trades, dispatch]);
+
 
     const handleMatchOrders = async (symbol) => {
         try {
             await matchOrders(symbol).unwrap();
             alert("Matching completed successfully!");
-        } catch {
-            alert("Error in matching orders");
+        } catch(error) {
+            console.error(error);
         }
     };
     const AppLayout = ({ children }) => {
@@ -48,10 +99,10 @@ export default function App() {
                     <MenuList>
                         <MenuItem >
 
-                            <Link variant='button' style={{color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}} underline="none" to="/"><HomeIcon /> Home</Link>
+                            <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/"><HomeIcon /> Home</Link>
                         </MenuItem>
                         <MenuItem >
-                            <Link variant='button' style={{color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
+                            <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
                         </MenuItem>
                     </MenuList>
                 </Drawer>

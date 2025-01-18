@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Box, Typography, Button, TextField, MenuItem } from '@mui/material';
 import instance from '../services/AxiosInstanceService';
+import { useSelector } from 'react-redux';
+import { useCreateOrderMutation, useUpdateOrderMutation } from '../redux/ApiSlice';
 
-const OrderModal = ({ open, handleOpen, handleClose, order = {} }) => {
+
+const OrderModal = ({ open, handleOpen, handleClose }) => {
     const [isEdit, setIsEdit] = useState(false);
     const [symbol, setSymbol] = useState('');
     const [orderAction, setOrderAction] = useState('');
@@ -11,9 +14,11 @@ const OrderModal = ({ open, handleOpen, handleClose, order = {} }) => {
     const [price, setPrice] = useState(0);
     const [limitPrice, setLimitPrice] = useState(null);
     const [stopPrice, setStopPrice] = useState(null);
-
+    const order = useSelector((state) => state.order.order);
+    const [createOrder] = useCreateOrderMutation();
+    const [updateOrder] = useUpdateOrderMutation();
     useEffect(() => {
-        if (Object.keys(order).length > 0) {
+        if (order) {
             setIsEdit(true);
             setSymbol(order.symbol);
             setOrderAction(order.orderAction);
@@ -27,8 +32,9 @@ const OrderModal = ({ open, handleOpen, handleClose, order = {} }) => {
 
     const handleSubmit = async () => {
         try {
-            if (order.id) {
-                await instance.put(`/orders/${order.id}`, {
+            if (order) {
+                await updateOrder({
+                    id: order.id,
                     symbol,
                     orderAction,
                     orderMethod,
@@ -36,9 +42,9 @@ const OrderModal = ({ open, handleOpen, handleClose, order = {} }) => {
                     price,
                     limitPrice,
                     stopPrice
-                });
+                }).unwrap();
             } else {
-                await instance.post('/orders', {
+                await createOrder({
                     symbol,
                     orderAction,
                     orderMethod,
@@ -46,11 +52,12 @@ const OrderModal = ({ open, handleOpen, handleClose, order = {} }) => {
                     price,
                     limitPrice,
                     stopPrice
-                });
+                }).unwrap();
             }
-            alert('Order Submitted');
+            console.log('Order Submitted');
         } catch (error) {
-            alert('Error in submitting order');
+            // alert('Error in submitting order');
+            console.error(error);
         }
         handleClose();
     };

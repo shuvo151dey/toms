@@ -10,11 +10,10 @@ import {
     TableRow,
     Skeleton,
 } from "@mui/material";
-import { useGetTradesQuery } from "../redux/ApiSlice";
+import { useSelector } from "react-redux";
 
 const TradeFeed = () => {
-    const { data, error, isLoading } = useGetTradesQuery();
-    const trades = data || [];
+    const trades = useSelector((state) => state.trade.trades);
     return (
         <Card>
             <CardContent>
@@ -33,7 +32,6 @@ const TradeFeed = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {isLoading && <TableRow><Skeleton variant="rectangular" width={"100%"} /></TableRow>}
                         {trades.map((trade, index) => (
                             <TableRow key={index}>
                                 <TableCell>{trade.id}</TableCell>

@@ -1,5 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { connect, disconnect } from "../services/WebSocketService";
+import { setOrders } from "./OrderSlice";
+import { setTrades } from "./TradeSlice";
+import { create } from "@mui/material/styles/createTransitions";
 
 export const apiSlice = createApi({
     reducerPath: "api",
@@ -10,11 +12,42 @@ export const apiSlice = createApi({
                 url: "orders",
                 params,
             }),
-            
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    dispatch(setOrders(data.content));
+                } catch (error) {
+                    console.error("Failed to fetch orders", error);
+                }
+
+            },
+
+        }),
+        createOrder: builder.mutation({
+            query: (order) => ({
+                url: "orders",
+                method: "POST",
+                body: order,
+            })
         }),
         getTrades: builder.query({
             query: () => "trades/recent",
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    dispatch(setTrades(data));
+                } catch (error) {
+                    console.error("Failed to fetch trades", error);
+                }
+            },
+
+        }),
+        cancelOrder: builder.mutation({
+            query: (id) => ({ url: `orders/${id}`, method: "DELETE" }),
             
+        }),
+        updateOrder: builder.mutation({
+            query: ({ id, ...patch }) => ({ url: `orders/${id}`, method: "PUT", body: patch }),
         }),
         fetchOrderAnalytics: builder.query({
             query: (symbol) => ({ url: `analytics/orders`, params: { symbol } }),
@@ -28,4 +61,17 @@ export const apiSlice = createApi({
     }),
 });
 
-export const { useGetOrdersQuery, useGetTradesQuery, useFetchOrderAnalyticsQuery, useFetchTradeAnalyticsQuery, useMatchOrdersMutation } = apiSlice;
+export const { 
+    useGetOrdersQuery, 
+    useGetTradesQuery, 
+    useFetchOrderAnalyticsQuery, 
+    useFetchTradeAnalyticsQuery, 
+    useMatchOrdersMutation, 
+    useCancelOrderMutation,
+    useCreateOrderMutation,
+    useUpdateOrderMutation, 
+    useLazyGetOrdersQuery,
+    useLazyGetTradesQuery,
+} = apiSlice;
+
+

@@ -13,37 +13,35 @@ import {
 } from "@mui/material";
 import OrderModal from "./OrderModal";
 import instance from '../services/AxiosInstanceService';
-import { useGetOrdersQuery } from "../redux/ApiSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { setOrder } from "../redux/OrderSlice";
+import { useCancelOrderMutation } from "../redux/ApiSlice";
 
 const OrderBook = () => {
-    const { data, error, isLoading } = useGetOrdersQuery({
-        page: 0,
-        size: 10,
-        sortBy: 'symbol',
-        direction: 'asc',
-    });
     const [open, setOpen] = React.useState(false);
-    const [selectedOrder, setSelectedOrder] = React.useState({});
-    const orders = data || { content: [] };
+    const dispatch = useDispatch();
+    const orders = useSelector((state) => state.order.orders);
+    const [cancelOrder] = useCancelOrderMutation();
+    
     const handleOpen = (order) => {
-        setSelectedOrder(order)
+        dispatch(setOrder(order));
         setOpen(true);
     }    
     const handleClose = () =>{ 
-        setSelectedOrder({})
+        dispatch(setOrder({}));
         setOpen(false);
 
     }
     const handleCancel = async (order) => {
         try {
-            await instance.delete(`/orders/${order.id}`);
-            alert('Order Cancelled');
+            await cancelOrder(order.id).unwrap();
+            console.log('Order Cancelled');
         } catch (error) {
-            alert('Error in cancelling order');
+            console.log('Error in cancelling order');
         }
     }
     return (<>
-    <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} order={selectedOrder}/>
+    <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose}/>
         <Card>
             <CardContent>
                 <Typography variant="h5" gutterBottom>
@@ -65,8 +63,8 @@ const OrderBook = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {isLoading && <TableRow><Skeleton variant="rectangular" width="100%"/></TableRow>}
-                        {orders.content.length > 0 && orders.content.map((order, index) => (
+                        
+                        {orders.length > 0 && orders.map((order, index) => (
                             <TableRow key={index}>
                                 <TableCell>{order.id}</TableCell>
                                 <TableCell>{order.orderAction}</TableCell>
