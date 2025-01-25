@@ -12,7 +12,6 @@ import {
     Skeleton,
 } from "@mui/material";
 import OrderModal from "./OrderModal";
-import instance from '../services/AxiosInstanceService';
 import { useSelector, useDispatch } from "react-redux";
 import { setOrder } from "../redux/OrderSlice";
 import { useCancelOrderMutation } from "../redux/ApiSlice";

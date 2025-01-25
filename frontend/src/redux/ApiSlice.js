@@ -4,14 +4,15 @@ import { setTrades } from "./TradeSlice";
 
 export const apiSlice = createApi({
     reducerPath: "api",
-    baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:8080/api/v1/" }),
+    baseQuery: fetchBaseQuery({ baseUrl: process.env.REACT_APP_BACKEND_URL || "http://localhost:8080/api/v1/" }),
     endpoints: (builder) => ({
         getOrders: builder.query({
             query: (params) => {
                 return {
-                url: "orders",
-                params,
-            }},
+                    url: "orders",
+                    params,
+                }
+            },
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
                     const { data } = await queryFulfilled;
@@ -44,7 +45,7 @@ export const apiSlice = createApi({
         }),
         cancelOrder: builder.mutation({
             query: (id) => ({ url: `orders/${id}`, method: "DELETE" }),
-            
+
         }),
         updateOrder: builder.mutation({
             query: ({ id, ...patch }) => ({ url: `orders/${id}`, method: "PUT", body: patch }),
@@ -61,15 +62,15 @@ export const apiSlice = createApi({
     }),
 });
 
-export const { 
-    useGetOrdersQuery, 
-    useGetTradesQuery, 
-    useFetchOrderAnalyticsQuery, 
-    useFetchTradeAnalyticsQuery, 
-    useMatchOrdersMutation, 
+export const {
+    useGetOrdersQuery,
+    useGetTradesQuery,
+    useFetchOrderAnalyticsQuery,
+    useFetchTradeAnalyticsQuery,
+    useMatchOrdersMutation,
     useCancelOrderMutation,
     useCreateOrderMutation,
-    useUpdateOrderMutation, 
+    useUpdateOrderMutation,
     useLazyGetOrdersQuery,
     useLazyGetTradesQuery,
 } = apiSlice;

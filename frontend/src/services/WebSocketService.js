@@ -1,7 +1,7 @@
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 
-const SOCKET_URL = "http://localhost:8080/ws";
+const SOCKET_URL = process.env.REACT_APP_WEBSOCKET_URL || "http://localhost:8080/ws";
 
 let stompClient = null;
 let subscriptions = [];

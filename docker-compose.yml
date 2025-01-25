@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
   backend:
     build:
@@ -13,33 +11,48 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REACT_FRONTEND_URL: http://frontend:3001/
+    env_file:
+      - .env
     depends_on:
       - db
       - kafka
       - redis
-    restart: always
+    restart: unless-stopped
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: toms-frontend
-    ports:
-      - "3001:80"
-    restart: always
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: toms-frontend
+  #   ports:
+  #     - "3001:80"
+  #   restart: unless-stopped
+  #   environment:
+  #     - REACT_APP_BACKEND_URL=http://backend:8080/api/v1/
+  #     - REACT_APP_WEBSOCKET_URL=http://backend:8080/ws/
 
   db:
     image: postgres:17
     container_name: toms-db
-    restart: always
+    restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      PGDATABASE: ${POSTGRES_DB}
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -51,7 +64,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
-    restart: always
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -68,7 +81,7 @@ services:
       - zookeeper
     volumes:
       - kafka_data:/var/lib/kafka/data
-    restart: always
+    restart: unless-stopped
   
   redis:
     image: redis:7
@@ -78,10 +91,11 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
-    restart: always
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   zookeeper_data:
   kafka_data:
   redis_data:
+
