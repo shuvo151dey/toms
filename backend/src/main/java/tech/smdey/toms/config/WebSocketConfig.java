@@ -10,11 +10,14 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+
+    private static final String REACT_FRONTEND_URL = System.getenv().getOrDefault("REACT_FRONTEND_URL",
+            "http://localhost:3001");
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
         .addEndpoint("/ws")
-        .setAllowedOriginPatterns("*")
+        .setAllowedOriginPatterns(REACT_FRONTEND_URL)
         .withSockJS()
         ;
     }

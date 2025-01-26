@@ -9,14 +9,17 @@ import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery } 
 import { setOrders } from './redux/OrderSlice';
 import { setTrades } from './redux/TradeSlice';
 
+import MenuIcon from '@mui/icons-material/Menu';
+import HomeIcon from '@mui/icons-material/Home';
+import BarChartIcon from '@mui/icons-material/BarChart';
 
 import Home from './pages/Home';
 import Analytics from './pages/Analytics';
-import MenuIcon from '@mui/icons-material/Menu';
-import HomeIcon from '@mui/icons-material/Home';
-import OrderModal from './components/OrderModal';
-import BarChartIcon from '@mui/icons-material/BarChart';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
+import OrderModal from './components/OrderModal';
+import PrivateRoute from './components/PrivateRouter';
 import { connect, disconnect } from './services/WebSocketService';
 
 export default function App() {
@@ -117,9 +120,12 @@ export default function App() {
         <Router>
             <Routes>
                 <Route element={<AppLayout />}>
-
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route element={<PrivateRoute />}>
+                        <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/" element={<Home />} />
+                    </Route>
                 </Route>
             </Routes>
         </Router>

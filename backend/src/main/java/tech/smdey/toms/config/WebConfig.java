@@ -12,13 +12,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig {
 
     private static final String REACT_FRONTEND_URL = System.getenv().getOrDefault("REACT_FRONTEND_URL",
-            "http://localhost:3000");
+            "http://localhost:3001");
     
     private static final Logger logger = LoggerFactory.getLogger(WebConfig.class);
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         logger.debug("CORS Configuration: Allowing requests from {}", REACT_FRONTEND_URL); // Debug log
+        System.out.println(REACT_FRONTEND_URL);
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {

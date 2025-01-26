@@ -4,8 +4,33 @@ import { setTrades } from "./TradeSlice";
 
 export const apiSlice = createApi({
     reducerPath: "api",
-    baseQuery: fetchBaseQuery({ baseUrl: process.env.REACT_APP_BACKEND_URL || "http://localhost:8080/api/v1/" }),
+    baseQuery: fetchBaseQuery({
+        baseUrl: process.env.REACT_APP_BACKEND_URL || "http://localhost:8080/api/v1/",
+        prepareHeaders: (headers, { getState }) => {
+        const token = getState().auth.token;
+        if (token) {
+            headers.set('Authorization', `Bearer ${token}`);
+        }
+        headers.set("Content-Type", "application/json");
+            
+        return headers;
+    },
+     }),
     endpoints: (builder) => ({
+        login: builder.mutation({
+            query: (credentials) => ({
+                url: "auth/login",
+                method: "POST",
+                body: credentials,
+            }),
+        }),
+        signup: builder.mutation({
+            query: (user) => ({
+                url: "auth/register",
+                method: "POST",
+                body: user,
+            }),
+        }),
         getOrders: builder.query({
             query: (params) => {
                 return {
@@ -73,6 +98,8 @@ export const {
     useUpdateOrderMutation,
     useLazyGetOrdersQuery,
     useLazyGetTradesQuery,
+    useLoginMutation,
+    useSignupMutation,
 } = apiSlice;
 
 
