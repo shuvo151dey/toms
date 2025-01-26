@@ -107,7 +107,7 @@ const Signup = () => {
                     <Box mt={2} textAlign="center">
                         <Typography variant="body2">
                             Already have an account?{' '}
-                            <Link href="/login" underline="hover">
+                            <Link href="/login" to="/login" underline="hover">
                                 Login
                             </Link>
                         </Typography>

@@ -87,7 +87,7 @@ const Login = () => {
                     <Box mt={2} textAlign="center">
                         <Typography variant="body2">
                             Don't have an account?{' '}
-                            <Link href="/signup" underline="hover">
+                            <Link href="/signup" to="/signup" underline="hover">
                                 Sign Up
                             </Link>
                         </Typography>
