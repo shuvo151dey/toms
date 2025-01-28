@@ -30,6 +30,12 @@ export const apiSlice = createApi({
                 method: "POST",
                 body: user,
             }),
+            transformResponse: (response) => {
+                if (typeof response === 'string') {
+                return { message: response };
+                }
+                return response;
+            },
         }),
         getOrders: builder.query({
             query: (params) => {

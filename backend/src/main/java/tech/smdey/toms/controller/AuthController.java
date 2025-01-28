@@ -61,7 +61,7 @@ public class AuthController {
 
         // Encode password and set default role
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(Collections.singleton(UserRole.USER));
+        user.setRoles(Collections.singleton(UserRole.TRADER));
 
         // Save user
         userRepository.save(user);

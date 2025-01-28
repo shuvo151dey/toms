@@ -20,6 +20,7 @@ import Signup from './pages/Signup';
 
 import OrderModal from './components/OrderModal';
 import PrivateRoute from './components/PrivateRouter';
+import ProtectedRoute from './components/ProtectedRoute';
 import { connect, disconnect } from './services/WebSocketService';
 
 export default function App() {
@@ -29,20 +30,20 @@ export default function App() {
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
     const [matchOrders, { isLoading, error }] = useMatchOrdersMutation();
-    const orders = useSelector((state) => state.order.orders);
-    const trades = useSelector((state) => state.trade.trades);
     const [triggerGetOrders] = useLazyGetOrdersQuery();
     const [triggerGetTrades] = useLazyGetTradesQuery();
-
+    const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
+    const userRoles = useSelector(state => state.auth.roles);
     useEffect(() => {
+        if(isAuthenticated){
         triggerGetOrders({
             page: 0,
             size: 100,
             sortBy: 'symbol',
             direction: 'asc',
         });
-        triggerGetTrades();
-    }, [triggerGetOrders, triggerGetTrades]);
+        triggerGetTrades();}
+    }, [triggerGetOrders, triggerGetTrades, isAuthenticated]);
 
     useEffect(() => {
         
@@ -89,15 +90,15 @@ export default function App() {
                         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                             TOMS Dashboard
                         </Typography>
-                        <Button variant="contained" color="secondary" onClick={handleOpen}>
+                        {isAuthenticated && (<Button variant="contained" color="secondary" onClick={handleOpen}>
                             Place Order
-                        </Button>
-                        <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} disabled={isLoading} onClick={() => handleMatchOrders("AAPL")}>
+                        </Button>)}
+                        {userRoles.includes('ADMIN') && <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} disabled={isLoading} onClick={() => handleMatchOrders("AAPL")}>
                             Match Orders
-                        </Button>
-                        <Button color='white' onClick={() => toggleDrawer(true)}>
+                        </Button>}
+                        {isAuthenticated && (<Button color='white' onClick={() => toggleDrawer(true)}>
                             <MenuIcon color='white' />
-                        </Button>
+                        </Button>)}
                     </Toolbar>
                 </AppBar>
                 <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
@@ -123,7 +124,7 @@ export default function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route element={<PrivateRoute />}>
-                        <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/analytics" element={<ProtectedRoute roles={['ADMIN']}><Analytics /></ProtectedRoute>} />
                         <Route path="/" element={<Home />} />
                     </Route>
                 </Route>

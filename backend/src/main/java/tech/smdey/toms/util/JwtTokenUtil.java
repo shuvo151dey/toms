@@ -19,7 +19,7 @@ public class JwtTokenUtil {
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", user.getRoles());
+        claims.put("roles", user.getRoles().stream().map(Enum::name).toList());
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(user.getUsername())

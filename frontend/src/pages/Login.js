@@ -12,6 +12,7 @@ import {
     Link,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import {jwtDecode} from 'jwt-decode';
 
 const Login = () => {
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -28,7 +29,9 @@ const Login = () => {
         e.preventDefault();
         try {
             const response = await login(formData).unwrap();
-            dispatch(setCredentials(response)); // Save user and token to Redux
+            const {roles, sub} = jwtDecode(response.token);
+            
+            dispatch(setCredentials({roles, user: sub, token: response.token})); // Save user and token to Redux
             localStorage.setItem('token', response.token); // Optional: Save token
             navigate('/');
         } catch (err) {

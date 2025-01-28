@@ -28,10 +28,11 @@ const Signup = () => {
         }
 
         try {
-            await signup({ ...userData, password }).unwrap();
+            await signup({ ...userData, password });
             alert('Account created successfully! You can now log in.');
             navigate('/login');
         } catch (err) {
+            console.error(err);
             setError('Signup failed. Please try again.');
         }
     };

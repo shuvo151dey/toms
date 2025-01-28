@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +20,7 @@ public class AnalyticsController {
     @Autowired
     private AnalyticsService analyticsService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/trades")
     public Map<String, Object> getTradeAnalytics(
             @RequestParam(required = false) String symbol,
@@ -28,6 +30,7 @@ public class AnalyticsController {
         return analyticsService.getTradeAnalytics(symbol, from, to);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/orders")
     public Map<String, Object> getOrderAnalytics(
             @RequestParam(required = false) String symbol) {
