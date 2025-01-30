@@ -13,4 +13,6 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
 
     @Query("SELECT t FROM Trade t WHERE t.symbol = :symbol AND t.tradeTimestamp BETWEEN :from AND :to")
     List<Trade> findTrades(String symbol, LocalDateTime from, LocalDateTime to);
+
+    List<Trade> findByTenantId(String tenantId);
 }

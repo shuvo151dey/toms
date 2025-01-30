@@ -47,6 +47,9 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Set<UserRole> roles = new HashSet<>();
 
+    @Column(nullable = false)
+    private String tenantId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -91,6 +94,14 @@ public class User implements UserDetails {
 
     public void removeRole(UserRole role) {
         this.roles.remove(role);
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
     @Override

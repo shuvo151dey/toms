@@ -21,4 +21,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         return userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
+
+    public String getTenantId(String username){
+        return userRepository.findByUsername(username)
+            .map(user -> user.getTenantId())
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    }
 }

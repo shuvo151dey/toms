@@ -1,6 +1,10 @@
 # Stage 1: Build the JAR
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 WORKDIR /app
+
+ARG REACT_FRONTEND_URL
+ENV REACT_FRONTEND_URL=${REACT_FRONTEND_URL}
+
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
