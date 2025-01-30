@@ -55,6 +55,7 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://localhost:3001"); // Allow frontend origin
         config.addAllowedOrigin("http://frontend"); // Dockerized frontend container
+        config.addAllowedOrigin(REACT_FRONTEND_URL);
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         

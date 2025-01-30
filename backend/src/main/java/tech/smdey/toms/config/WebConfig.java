@@ -19,7 +19,6 @@ public class WebConfig {
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         logger.debug("CORS Configuration: Allowing requests from {}", REACT_FRONTEND_URL); // Debug log
-        System.out.println(REACT_FRONTEND_URL);
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {

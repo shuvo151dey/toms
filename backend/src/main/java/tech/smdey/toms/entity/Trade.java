@@ -26,6 +26,8 @@ public class Trade {
 
     private Double price;
 
+    private String tenantId;
+
     @CreationTimestamp
     private LocalDateTime tradeTimestamp;
 
@@ -82,4 +84,11 @@ public class Trade {
         return tradeTimestamp;
     }
 
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
 }
