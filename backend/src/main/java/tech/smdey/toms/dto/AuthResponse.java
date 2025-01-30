@@ -1,4 +1,4 @@
-package tech.smdey.toms.response;
+package tech.smdey.toms.dto;
 
 public class AuthResponse {
     private String token;

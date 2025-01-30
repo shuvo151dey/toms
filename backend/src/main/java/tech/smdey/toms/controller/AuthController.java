@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import tech.smdey.toms.entity.User;
 import tech.smdey.toms.entity.UserRole;
 import tech.smdey.toms.repository.UserRepository;
-import tech.smdey.toms.request.AuthRequest;
-import tech.smdey.toms.response.AuthResponse;
+import tech.smdey.toms.dto.AuthRequest;
+import tech.smdey.toms.dto.AuthResponse;
+import tech.smdey.toms.dto.SignupRequest;
 import tech.smdey.toms.util.JwtTokenUtil;
 
 import java.util.Collections;
@@ -27,9 +28,7 @@ public class AuthController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
-    /**
-     * Endpoint to authenticate a user and generate a JWT token.
-     */
+    
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         // Validate user credentials
@@ -46,19 +45,21 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
-    /**
-     * Endpoint to register a new user.
-     */
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
+    public ResponseEntity<String> register(@RequestBody SignupRequest request) {
         // Check if username or email is already taken
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Username already exists");
         }
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
+        String tenantId = request.getEmail().split("@")[1].split("\\.")[0];
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setTenantId(tenantId);
         // Encode password and set default role
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRoles(Collections.singleton(UserRole.TRADER));

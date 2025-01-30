@@ -1,27 +1,28 @@
 package tech.smdey.toms.controller;
 
-import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.validation.Valid;
+import tech.smdey.toms.dto.OrderRequest;
+import tech.smdey.toms.entity.OrderAction;
+import tech.smdey.toms.entity.OrderMethod;
 import tech.smdey.toms.entity.OrderStatus;
 import tech.smdey.toms.entity.TradeOrder;
 import tech.smdey.toms.repository.OrderRepository;
 import tech.smdey.toms.service.KafkaProducerService;
 import tech.smdey.toms.service.OrderCacheService;
 import tech.smdey.toms.service.OrderService;
+import tech.smdey.toms.util.JwtTokenUtil;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,29 +39,47 @@ import org.springframework.data.domain.Sort;
 @RequestMapping("/api/v1/orders")
 @Validated
 public class OrderController {
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
 
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
 
-    @Autowired
-    private OrderCacheService orderCacheService;
+    private final OrderCacheService orderCacheService;
 
-    @Autowired
-    private KafkaProducerService kafkaProducerService;
+    private final KafkaProducerService kafkaProducerService;
 
-    @PostMapping
-    public ResponseEntity<TradeOrder> createOrder(@Valid @RequestBody TradeOrder order) {
-        orderService.validateOrder(order);
-        TradeOrder savedorder = orderRepository.save(order);
-        orderCacheService.saveToCache(savedorder.getId(), savedorder);
+    private final JwtTokenUtil jwtTokenUtil;
 
-        kafkaProducerService.sendOrderMessage(savedorder);
-        return ResponseEntity.ok(savedorder);
+    public OrderController(OrderRepository orderRepository, OrderService orderService,
+            OrderCacheService orderCacheService, KafkaProducerService kafkaProducerService, JwtTokenUtil jwtTokenUtil) {
+        this.orderRepository = orderRepository;
+        this.orderService = orderService;
+        this.orderCacheService = orderCacheService;
+        this.kafkaProducerService = kafkaProducerService;
+        this.jwtTokenUtil = jwtTokenUtil;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<TradeOrder> createOrder(@Valid @RequestBody OrderRequest order,
+            @RequestHeader("Authorization") String token) {
+        TradeOrder newOrder = new TradeOrder();
+        newOrder.setSymbol(order.getSymbol());
+        newOrder.setQuantity(order.getQuantity());
+        newOrder.setPrice(order.getPrice());
+        newOrder.setLimitPrice(order.getLimitPrice());
+        newOrder.setStopPrice(order.getStopPrice());
+        newOrder.setOrderAction(OrderAction.valueOf(order.getOrderAction()));
+        newOrder.setOrderMethod(OrderMethod.valueOf(order.getOrderMethod()));
+        newOrder.setStatus(OrderStatus.PENDING);
+        String tenantId = jwtTokenUtil.extractTenantId(token);
+        newOrder.setTenantId(tenantId);
+        orderService.validateOrder(newOrder);
+        orderRepository.save(newOrder);
+        orderCacheService.saveToCache(newOrder.getId(), newOrder);
+
+        kafkaProducerService.sendOrderMessage(newOrder);
+        return ResponseEntity.ok(newOrder);
+    }
+
     @GetMapping
     public ResponseEntity<Page<TradeOrder>> getOrders(
             @RequestParam(required = false) OrderStatus status,
@@ -68,7 +87,7 @@ public class OrderController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
-
+        
         Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
@@ -84,13 +103,16 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TradeOrder> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<TradeOrder> getOrderById(@PathVariable Long id,
+            @RequestHeader("Authorization") String token) {
         Optional<TradeOrder> cachedOrder = orderCacheService.getFromCache(id);
-        if (cachedOrder.isPresent()) {
+        String tenantId = jwtTokenUtil.extractTenantId(token);
+
+        if (cachedOrder.isPresent() && cachedOrder.get().getTenantId().equals(tenantId)) {
             return ResponseEntity.ok(cachedOrder.get());
         }
 
-        Optional<TradeOrder> order = orderRepository.findById(id);
+        Optional<TradeOrder> order = orderRepository.findByIdAndTenantId(id, tenantId);
         order.ifPresent(o -> orderCacheService.saveToCache(id, o));
 
         return order.map(ResponseEntity::ok)
@@ -100,8 +122,10 @@ public class OrderController {
     @PutMapping("/{id}")
     public ResponseEntity<TradeOrder> updateOrder(
             @PathVariable Long id,
-            @RequestBody TradeOrder updatedOrder) {
-        Optional<TradeOrder> existingOrder = orderRepository.findById(id);
+            @RequestBody TradeOrder updatedOrder,
+            @RequestHeader("Authorization") String token) {
+        String tenantId = jwtTokenUtil.extractTenantId(token);
+        Optional<TradeOrder> existingOrder = orderRepository.findByIdAndTenantId(id, tenantId);
 
         if (existingOrder.isPresent()) {
             TradeOrder order = existingOrder.get();
@@ -111,6 +135,7 @@ public class OrderController {
                 order.setQuantity(updatedOrder.getQuantity());
                 order.setPrice(updatedOrder.getPrice());
                 order.setLimitPrice(updatedOrder.getLimitPrice());
+                order.setStopPrice(updatedOrder.getStopPrice());
                 TradeOrder savedOrder = orderRepository.save(order);
 
                 // Notify via WebSocket
@@ -126,8 +151,9 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelOrder(@PathVariable Long id) {
-        Optional<TradeOrder> existingOrder = orderRepository.findById(id);
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+        String tenantId = jwtTokenUtil.extractTenantId(token);
+        Optional<TradeOrder> existingOrder = orderRepository.findByIdAndTenantId(id, tenantId);
 
         if (existingOrder.isPresent()) {
             TradeOrder order = existingOrder.get();
@@ -147,22 +173,6 @@ public class OrderController {
         }
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<TradeOrder> updateOrderStatus(
-            @PathVariable Long id,
-            @RequestParam OrderStatus status) {
-
-        Optional<TradeOrder> orderOptional = orderRepository.findById(id);
-        if (orderOptional.isPresent()) {
-            TradeOrder order = orderOptional.get();
-            order.setStatus(status);
-            orderRepository.save(order);
-            return ResponseEntity.ok(order);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
     }
 
 }

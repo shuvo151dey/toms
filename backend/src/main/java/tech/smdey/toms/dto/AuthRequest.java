@@ -1,4 +1,4 @@
-package tech.smdey.toms.request;
+package tech.smdey.toms.dto;
 
 public class AuthRequest {
     private String username;
