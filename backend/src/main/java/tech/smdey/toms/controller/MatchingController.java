@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import tech.smdey.toms.service.MatchingEngineService;
+import tech.smdey.toms.util.JwtTokenUtil;
+
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 
 @RestController
@@ -20,15 +23,20 @@ public class MatchingController {
     @Autowired
     private MatchingEngineService matchingEngineService;
 
-    @PostMapping("/{symbol}")
-    public ResponseEntity<String> matchOrders(@PathVariable String symbol) {
-        matchingEngineService.matchOrders(symbol);
-        return ResponseEntity.ok("Matching process completed for symbol: " + symbol);
+    @Autowired
+    private JwtTokenUtil jwtUtil;
+
+    @PostMapping
+    public ResponseEntity<String> matchOrders(@RequestHeader("Authorization") String token) {
+        String tenantId = jwtUtil.extractTenantId(token);
+        matchingEngineService.matchOrders(tenantId);
+        return ResponseEntity.ok("Matching process completed for tenantId: " + tenantId);
     }
 
     @PostMapping("/triggerstop/{symbol}")
-    public ResponseEntity<String> triggerStop(@RequestBody double marketPrice, @PathVariable String symbol) {
-        matchingEngineService.triggerStopOrders(symbol, marketPrice);
+    public ResponseEntity<String> triggerStop(@RequestHeader("Authorization") String token, @RequestBody double marketPrice, @PathVariable String symbol) {
+        String tenantId = jwtUtil.extractTenantId(token);
+        matchingEngineService.triggerStopOrders(symbol, marketPrice, tenantId);
         return ResponseEntity.ok("Stop orders triggered for symbol: " + symbol);
     }
     

@@ -30,23 +30,23 @@ public class MatchingEngineService {
     @Autowired
     private KafkaProducerService kafkaProducerService;
 
-    public void matchOrders() {
+    public void matchOrders(String tenantId) {
         List<String> symbols = new ArrayList<String>();
         symbols.add("AAPL");
         symbols.add("GOOGL");
         symbols.add("MSFT");
 
         for (String symbol : symbols) {
-            matchOrdersForSymbol(symbol);
+            matchOrdersForSymbol(symbol, tenantId);
         }
 
     }
 
     // Match orders for a specific symbol
-    public void matchOrdersForSymbol(String symbol) {
+    public void matchOrdersForSymbol(String symbol, String tenantId) {
         Pageable topOrders = PageRequest.of(0, 100);
-        List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol, topOrders);
-        List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol, topOrders);
+        List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol, tenantId, topOrders);
+        List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol, tenantId, topOrders);
 
         // Sort orders
         buyOrders.sort(Comparator.comparing(TradeOrder::getPrice).reversed()
@@ -153,7 +153,7 @@ public class MatchingEngineService {
     }
 
     // Trigger stop orders based on market price
-    public void triggerStopOrders(String symbol, double marketPrice) {
+    public void triggerStopOrders(String symbol, double marketPrice, String tenantId) {
         List<TradeOrder> stopOrders = orderRepository.findStopOrders(symbol);
         for (TradeOrder stopOrder : stopOrders) {
             boolean shouldTrigger = (stopOrder.getOrderAction() == OrderAction.BUY && marketPrice >= stopOrder.getStopPrice()) ||
@@ -162,7 +162,7 @@ public class MatchingEngineService {
             if (shouldTrigger) {
                 stopOrder.setOrderMethod(OrderMethod.MARKET);
                 orderRepository.save(stopOrder);
-                matchOrdersForSymbol(stopOrder.getSymbol()); // Reprocess the market orders
+                matchOrdersForSymbol(stopOrder.getSymbol(), tenantId); // Reprocess the market orders
             }
         }
     }

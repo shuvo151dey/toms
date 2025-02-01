@@ -2,6 +2,8 @@ package tech.smdey.toms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,13 +23,27 @@ public class KafkaProducerService {
     private static final String ORDERS_TOPIC = "orders";
 
     public void sendTradeMessage(Trade trade) {
+        String tenantId = trade.getTenantId();
         String message = convertToJson(trade);
-        kafkaTemplate.send(TRADES_TOPIC, message);
+        kafkaTemplate.send(
+            MessageBuilder
+                .withPayload(message)
+                .setHeader(KafkaHeaders.TOPIC, TRADES_TOPIC)
+                .setHeader("tenantId", tenantId) // Add tenantId as header
+                .build()
+            );
     }
 
     public void sendOrderMessage(TradeOrder order) {
+        String tenantId = order.getTenantId();
         String message = convertToJson(order);
-        kafkaTemplate.send(ORDERS_TOPIC, message);
+        kafkaTemplate.send(
+                MessageBuilder
+                    .withPayload(message)
+                    .setHeader(KafkaHeaders.TOPIC, ORDERS_TOPIC)
+                    .setHeader("tenantId", tenantId) // Add tenantId as header
+                    .build()
+                );
     }
 
     private String convertToJson(Object object) {
