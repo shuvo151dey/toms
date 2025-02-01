@@ -40,7 +40,8 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // Disable CSRF
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
-            .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
                 .requestMatchers("/api/v1/auth/**").permitAll() // Allow authentication endpoints
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight CORS requests
                 .anyRequest().authenticated()) // Protect all other endpoints

@@ -1,9 +1,13 @@
 package tech.smdey.toms.service;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import tech.smdey.toms.entity.OrderAction;
@@ -26,10 +30,23 @@ public class MatchingEngineService {
     @Autowired
     private KafkaProducerService kafkaProducerService;
 
+    public void matchOrders() {
+        List<String> symbols = new ArrayList<String>();
+        symbols.add("AAPL");
+        symbols.add("GOOGL");
+        symbols.add("MSFT");
+
+        for (String symbol : symbols) {
+            matchOrdersForSymbol(symbol);
+        }
+
+    }
+
     // Match orders for a specific symbol
-    public void matchOrders(String symbol) {
-        List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol);
-        List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol);
+    public void matchOrdersForSymbol(String symbol) {
+        Pageable topOrders = PageRequest.of(0, 100);
+        List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol, topOrders);
+        List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol, topOrders);
 
         // Sort orders
         buyOrders.sort(Comparator.comparing(TradeOrder::getPrice).reversed()
@@ -44,23 +61,31 @@ public class MatchingEngineService {
 
     // Process MARKET orders
     private void processMarketOrders(List<TradeOrder> buyOrders, List<TradeOrder> sellOrders) {
+        PriorityQueue<TradeOrder> sellQueue = new PriorityQueue<>(Comparator.comparing(TradeOrder::getTimestamp));
+        sellQueue.addAll(sellOrders);
         for (TradeOrder buy : buyOrders) {
             if (buy.getOrderMethod() == OrderMethod.MARKET) {
-                for (TradeOrder sell : sellOrders) {
+                while(!sellQueue.isEmpty() && buy.getQuantity() > 0) {
+                    TradeOrder sell = sellQueue.poll();
+                    int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
+                    executeTrade(buy, sell, tradeQuantity);
                     if (sell.getQuantity() > 0) {
-                        int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
-                        executeTrade(buy, sell, tradeQuantity);
+                        sellQueue.add(sell);
                     }
                 }
             }
         }
+        PriorityQueue<TradeOrder> buyQueue = new PriorityQueue<>(Comparator.comparing(TradeOrder::getTimestamp));
+        buyQueue.addAll(buyOrders);
 
         for (TradeOrder sell : sellOrders) {
             if (sell.getOrderMethod() == OrderMethod.MARKET) {
-                for (TradeOrder buy : buyOrders) {
+                while(!buyQueue.isEmpty() && sell.getQuantity() > 0) {
+                    TradeOrder buy = buyQueue.poll();
+                    int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
+                    executeTrade(buy, sell, tradeQuantity);
                     if (buy.getQuantity() > 0) {
-                        int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
-                        executeTrade(buy, sell, tradeQuantity);
+                        buyQueue.add(buy);
                     }
                 }
             }
@@ -69,15 +94,18 @@ public class MatchingEngineService {
 
     // Process LIMIT orders
     private void processLimitOrders(List<TradeOrder> buyOrders, List<TradeOrder> sellOrders) {
+        PriorityQueue<TradeOrder> sellQueue = new PriorityQueue<>(Comparator.comparing(TradeOrder::getPrice).reversed()
+                .thenComparing(TradeOrder::getTimestamp));
+        sellQueue.addAll(sellOrders);
+
         for (TradeOrder buy : buyOrders) {
             if (buy.getOrderMethod() == OrderMethod.LIMIT) {
-                for (TradeOrder sell : sellOrders) {
-                    if (sell.getOrderMethod() == OrderMethod.LIMIT &&
-                        buy.getPrice() >= sell.getPrice() &&
-                        buy.getQuantity() > 0 &&
-                        sell.getQuantity() > 0) {
-                        int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
-                        executeTrade(buy, sell, tradeQuantity);
+                while(!sellQueue.isEmpty() && buy.getPrice() >= sellQueue.peek().getPrice() && buy.getQuantity() > 0) {
+                    TradeOrder sell = sellQueue.poll();
+                    int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
+                    executeTrade(buy, sell, tradeQuantity);
+                    if (sell.getQuantity() > 0) {
+                        sellQueue.add(sell);
                     }
                 }
             }
@@ -86,6 +114,9 @@ public class MatchingEngineService {
 
     // Execute trade between two orders
     private void executeTrade(TradeOrder buy, TradeOrder sell, int quantity) {
+        if(!buy.getTenantId().equals(sell.getTenantId())) {
+            return;
+        }
         // Update order quantities
         buy.setQuantity(buy.getQuantity() - quantity);
         sell.setQuantity(sell.getQuantity() - quantity);
@@ -101,6 +132,7 @@ public class MatchingEngineService {
         trade.setQuantity(quantity);
         trade.setSymbol(buy.getSymbol());
         trade.setPrice(sell.getPrice());
+        trade.setTenantId(buy.getTenantId());
         tradeRepository.save(trade);
 
         // Notify via Kafka
@@ -129,7 +161,8 @@ public class MatchingEngineService {
 
             if (shouldTrigger) {
                 stopOrder.setOrderMethod(OrderMethod.MARKET);
-                matchOrders(stopOrder.getSymbol()); // Reprocess the market orders
+                orderRepository.save(stopOrder);
+                matchOrdersForSymbol(stopOrder.getSymbol()); // Reprocess the market orders
             }
         }
     }

@@ -8,7 +8,6 @@ import tech.smdey.toms.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
-
     Optional<User> findByUsernameAndTenantId(String username, String tenantId);
+    Optional<User> findByEmailAndTenantId(String email, String tenantId);
 }

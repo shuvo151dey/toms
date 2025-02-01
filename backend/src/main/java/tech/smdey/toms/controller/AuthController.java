@@ -31,8 +31,9 @@ public class AuthController {
     
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+        String tenantId = "NSE";
         // Validate user credentials
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsernameAndTenantId(request.getUsername(), tenantId)
                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -48,20 +49,20 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody SignupRequest request) {
         // Check if username or email is already taken
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+        String tenantId = "NSE";
+        if (userRepository.findByUsernameAndTenantId(request.getUsername(), tenantId).isPresent()) {
             return ResponseEntity.badRequest().body("Username already exists");
         }
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepository.findByEmailAndTenantId(request.getEmail(), tenantId).isPresent()) {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
-        String tenantId = request.getEmail().split("@")[1].split("\\.")[0];
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setTenantId(tenantId);
         // Encode password and set default role
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(Collections.singleton(UserRole.TRADER));
 
         // Save user

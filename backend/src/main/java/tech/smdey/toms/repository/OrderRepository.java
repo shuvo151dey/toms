@@ -16,10 +16,10 @@ public interface OrderRepository extends JpaRepository<TradeOrder, Long> {
     Page<TradeOrder> findByStatus(OrderStatus status, Pageable pageable);
 
     @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderAction = 'BUY' AND o.status = 'PENDING'")
-    List<TradeOrder> findUnmatchedBuyOrders(@Param("symbol") String symbol);
+    List<TradeOrder> findUnmatchedBuyOrders(@Param("symbol") String symbol, Pageable pageable);
 
     @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderAction = 'SELL' AND o.status = 'PENDING'")
-    List<TradeOrder> findUnmatchedSellOrders(@Param("symbol") String symbol);
+    List<TradeOrder> findUnmatchedSellOrders(@Param("symbol") String symbol, Pageable pageable);
 
     @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderMethod = 'STOP'")
     List<TradeOrder> findStopOrders(@Param("symbol") String symbol);

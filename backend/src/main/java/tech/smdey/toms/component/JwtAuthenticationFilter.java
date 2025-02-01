@@ -21,7 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
-    private static final List<String> EXCLUDED_PATHS = List.of("/api/v1/auth/**");
+    private static final List<String> EXCLUDED_PATHS = List.of("/api/v1/auth/**", "/ws/**");
     
     public JwtAuthenticationFilter(JwtTokenUtil jwtUtil, CustomUserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
@@ -43,10 +43,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             String username = jwtUtil.extractUsername(token);
+            String tenantId = jwtUtil.extractTenantId(token);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                String tenantId = userDetailsService.getTenantId(username);
+                UserDetails userDetails = userDetailsService.loadUserByUsernameAndTenantId(username, tenantId);
 
                 if (jwtUtil.validateToken(token, userDetails.getUsername(), tenantId)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

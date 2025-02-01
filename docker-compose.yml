@@ -4,7 +4,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       args:
-        - REACT_FRONTEND_URL=https://bookish-winner-g7p56gv9x9jcp4j5-3001.app.github.dev/
+        - REACT_FRONTEND_URL=http://localhost:3001/
     container_name: toms-backend
     ports:
       - "8080:8080"
@@ -13,7 +13,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      REACT_FRONTEND_URL: https://bookish-winner-g7p56gv9x9jcp4j5-3001.app.github.dev/
+      REACT_FRONTEND_URL: http://localhost:3001/
     env_file:
       - .env
     depends_on:
@@ -27,8 +27,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-      - REACT_APP_BACKEND_URL=https://bookish-winner-g7p56gv9x9jcp4j5-8080.app.github.dev/api/v1
-      - REACT_APP_WEBSOCKET_URL=https://bookish-winner-g7p56gv9x9jcp4j5-8080.app.github.dev/ws/
+      - REACT_APP_BACKEND_URL=http://localhost:8080/api/v1
+      - REACT_APP_WEBSOCKET_URL=http://localhost:8080/ws/
     container_name: toms-frontend
     ports:
       - "3001:80"
