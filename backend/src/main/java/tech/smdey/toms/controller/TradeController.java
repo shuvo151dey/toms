@@ -32,7 +32,8 @@ public class TradeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Trade>> getTrades(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<Trade>> getTrades(@RequestHeader("Authorization") String authheader) {
+        String token = authheader.replace("Bearer ", "").trim();
         String tenantId = jwtUtil.extractTenantId(token); 
         List<Trade> trades = (tenantId != null) ? tradeRepository.findByTenantId(tenantId) : tradeRepository.findAll();
         return ResponseEntity.ok(trades);

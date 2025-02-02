@@ -1,5 +1,6 @@
 package tech.smdey.toms.controller;
 
+import org.apache.kafka.common.protocol.types.Field.Str;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,14 +28,17 @@ public class MatchingController {
     private JwtTokenUtil jwtUtil;
 
     @PostMapping
-    public ResponseEntity<String> matchOrders(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<String> matchOrders(@RequestHeader("Authorization") String authheader) {
+        String token = authheader.replace("Bearer ", "").trim();
         String tenantId = jwtUtil.extractTenantId(token);
         matchingEngineService.matchOrders(tenantId);
         return ResponseEntity.ok("Matching process completed for tenantId: " + tenantId);
     }
 
     @PostMapping("/triggerstop/{symbol}")
-    public ResponseEntity<String> triggerStop(@RequestHeader("Authorization") String token, @RequestBody double marketPrice, @PathVariable String symbol) {
+    public ResponseEntity<String> triggerStop(@RequestHeader("Authorization") String authheader,
+            @RequestBody double marketPrice, @PathVariable String symbol) {
+        String token = authheader.replace("Bearer ", "").trim();
         String tenantId = jwtUtil.extractTenantId(token);
         matchingEngineService.triggerStopOrders(symbol, marketPrice, tenantId);
         return ResponseEntity.ok("Stop orders triggered for symbol: " + symbol);

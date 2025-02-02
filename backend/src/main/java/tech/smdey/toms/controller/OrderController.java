@@ -60,7 +60,10 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<TradeOrder> createOrder(@Valid @RequestBody OrderRequest order,
-            @RequestHeader("Authorization") String token) {
+            @RequestHeader("Authorization") String authheader) {
+
+        String token = authheader.replace("Bearer ", "").trim();
+
         TradeOrder newOrder = new TradeOrder();
         newOrder.setSymbol(order.getSymbol());
         newOrder.setQuantity(order.getQuantity());
@@ -104,7 +107,9 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TradeOrder> getOrderById(@PathVariable Long id,
-            @RequestHeader("Authorization") String token) {
+            @RequestHeader("Authorization") String authheader) {
+
+        String token = authheader.replace("Bearer ", "").trim();
         Optional<TradeOrder> cachedOrder = orderCacheService.getFromCache(id);
         String tenantId = jwtTokenUtil.extractTenantId(token);
 
@@ -123,7 +128,8 @@ public class OrderController {
     public ResponseEntity<TradeOrder> updateOrder(
             @PathVariable Long id,
             @RequestBody TradeOrder updatedOrder,
-            @RequestHeader("Authorization") String token) {
+            @RequestHeader("Authorization") String authheader) {
+        String token = authheader.replace("Bearer ", "").trim();
         String tenantId = jwtTokenUtil.extractTenantId(token);
         Optional<TradeOrder> existingOrder = orderRepository.findByIdAndTenantId(id, tenantId);
 
@@ -151,7 +157,8 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelOrder(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long id, @RequestHeader("Authorization") String authheader) {
+        String token = authheader.replace("Bearer ", "").trim();
         String tenantId = jwtTokenUtil.extractTenantId(token);
         Optional<TradeOrder> existingOrder = orderRepository.findByIdAndTenantId(id, tenantId);
 
