@@ -6,7 +6,7 @@ const SOCKET_URL = process.env.REACT_APP_WEBSOCKET_URL || "http://localhost:8080
 let stompClient = null;
 let subscriptions = [];
 
-export const connect = (onMessage) => {
+export const connect = (onMessage, tenantId) => {
     if (stompClient && stompClient.connected) {
         console.log("WebSocket is already connected.");
         return;
@@ -20,10 +20,10 @@ export const connect = (onMessage) => {
 
         // Subscribe to multiple topics
         subscriptions = [
-            stompClient.subscribe("/topic/orders", (message) => {
+            stompClient.subscribe(`/topic/orders/${tenantId}`, (message) => {
                 onMessage(JSON.parse(message.body), "orders");
             }),
-            stompClient.subscribe("/topic/trades", (message) => {
+            stompClient.subscribe(`/topic/trades/${tenantId}`, (message) => {
                 onMessage(JSON.parse(message.body), "trades");
             }),
         ];

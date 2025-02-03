@@ -34,6 +34,7 @@ export default function App() {
     const [triggerGetTrades] = useLazyGetTradesQuery();
     const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
     const userRoles = useSelector(state => state.auth.roles);
+    const tenantId = useSelector(state => state.auth.tenantId);
     useEffect(() => {
         if(isAuthenticated){
         triggerGetOrders({
@@ -66,7 +67,7 @@ export default function App() {
                     const currentTrades = store.getState().trade.trades; // Fetch the latest trades state
                     dispatch(setTrades([newTrade, ...currentTrades]));
                 }
-            });
+            }, tenantId);
     
         }
         
