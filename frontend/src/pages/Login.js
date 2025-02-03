@@ -29,9 +29,9 @@ const Login = () => {
         e.preventDefault();
         try {
             const response = await login(formData).unwrap();
-            const {roles, sub} = jwtDecode(response.token);
+            const {roles, sub, tenantId} = jwtDecode(response.token);
             
-            dispatch(setCredentials({roles, user: sub, token: response.token})); // Save user and token to Redux
+            dispatch(setCredentials({roles, user: sub, token: response.token, tenantId})); // Save user and token to Redux
             localStorage.setItem('token', response.token); // Optional: Save token
             navigate('/');
         } catch (err) {
