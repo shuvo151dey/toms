@@ -1,0 +1,866 @@
+### Unstaged Changes ###
+diff --git a/backend/src/main/java/tech/smdey/toms/controller/AuthController.java b/backend/src/main/java/tech/smdey/toms/controller/AuthController.java
+index d3aa8f6..4f19fe0 100644
+--- a/backend/src/main/java/tech/smdey/toms/controller/AuthController.java
++++ b/backend/src/main/java/tech/smdey/toms/controller/AuthController.java
+@@ -1,6 +1,7 @@
+ package tech.smdey.toms.controller;
+ 
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.security.crypto.password.PasswordEncoder;
+ import org.springframework.web.bind.annotation.*;
+@@ -11,9 +12,12 @@ import tech.smdey.toms.repository.UserRepository;
+ import tech.smdey.toms.dto.AuthRequest;
+ import tech.smdey.toms.dto.AuthResponse;
+ import tech.smdey.toms.dto.SignupRequest;
++import tech.smdey.toms.dto.RefreshRequest;
+ import tech.smdey.toms.util.JwtTokenUtil;
+ 
+ import java.util.Collections;
++import java.util.Map;
++import java.util.Optional;
+ 
+ @RestController
+ @RequestMapping("/api/v1/auth")
+@@ -28,11 +32,10 @@ public class AuthController {
+     @Autowired
+     private JwtTokenUtil jwtTokenUtil;
+ 
+-    
+     @PostMapping("/login")
+     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+-        String tenantId = "NSE";
+-        // Validate user credentials
++        String tenantId = "NSE"; 
++
+         User user = userRepository.findByUsernameAndTenantId(request.getUsername(), tenantId)
+                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+ 
+@@ -40,16 +43,20 @@ public class AuthController {
+             throw new RuntimeException("Invalid username or password");
+         }
+ 
+-        // Generate JWT token
+-        String token = jwtTokenUtil.generateToken(user);
++        // Generate both Access Token and Refresh Token
++        String accessToken = jwtTokenUtil.generateToken(user);
++        String refreshToken = jwtTokenUtil.generateRefreshToken(user);
++
++        user.setRefreshToken(refreshToken);
++        userRepository.save(user);
+ 
+-        return ResponseEntity.ok(new AuthResponse(token));
++        return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken));
+     }
+ 
+     @PostMapping("/register")
+     public ResponseEntity<String> register(@RequestBody SignupRequest request) {
+-        // Check if username or email is already taken
+-        String tenantId = "NSE";
++        String tenantId = "NSE"; // Static for now
++
+         if (userRepository.findByUsernameAndTenantId(request.getUsername(), tenantId).isPresent()) {
+             return ResponseEntity.badRequest().body("Username already exists");
+         }
+@@ -61,13 +68,44 @@ public class AuthController {
+         user.setUsername(request.getUsername());
+         user.setEmail(request.getEmail());
+         user.setTenantId(tenantId);
+-        // Encode password and set default role
+         user.setPassword(passwordEncoder.encode(request.getPassword()));
+         user.setRoles(Collections.singleton(UserRole.TRADER));
+ 
+-        // Save user
+         userRepository.save(user);
+-
+         return ResponseEntity.ok("User registered successfully");
+     }
++
++    @PostMapping("/refresh-token")
++    public ResponseEntity<?> refreshToken(@RequestBody RefreshRequest request) {
++        String refreshToken = request.getRefreshToken();
++        if (refreshToken == null || refreshToken.isEmpty()) {
++            return ResponseEntity.badRequest().body("Refresh token is missing");
++        }
++
++        Optional<User> optionalUser = userRepository.findByRefreshToken(refreshToken);
++        if (optionalUser.isEmpty()) {
++            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
++        }
++
++        User user = optionalUser.get();
++        if (jwtTokenUtil.isTokenExpired(refreshToken)) {
++            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token has expired");
++        }
++
++        String newAccessToken = jwtTokenUtil.generateToken(user);
++        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
++    }
++
++    @PostMapping("/logout")
++    public ResponseEntity<String> logout(@RequestBody RefreshRequest request) {
++        String refreshToken = request.getRefreshToken();
++        if (refreshToken != null) {
++            userRepository.findByRefreshToken(refreshToken)
++                    .ifPresent(user -> {
++                        user.setRefreshToken(null);
++                        userRepository.save(user);
++                    });
++        }
++        return ResponseEntity.ok("Logged out successfully");
++    }
+ }
+diff --git a/backend/src/main/java/tech/smdey/toms/dto/AuthResponse.java b/backend/src/main/java/tech/smdey/toms/dto/AuthResponse.java
+index c6a3dbd..741895d 100644
+--- a/backend/src/main/java/tech/smdey/toms/dto/AuthResponse.java
++++ b/backend/src/main/java/tech/smdey/toms/dto/AuthResponse.java
+@@ -1,17 +1,27 @@
+ package tech.smdey.toms.dto;
+ 
+ public class AuthResponse {
+-    private String token;
++    private String accessToken;
++    private String refreshToken;
+ 
+-    public AuthResponse(String token) {
+-        this.token = token;
++    public AuthResponse(String accessToken, String refreshToken) {
++        this.accessToken = accessToken;
++        this.refreshToken = refreshToken;
+     }
+ 
+-    public String getToken() {
+-        return token;
++    public String getAccessToken() {
++        return accessToken;
+     }
+ 
+-    public void setToken(String token) {
+-        this.token = token;
++    public void setAccessToken(String token) {
++        this.accessToken = token;
++    }
++
++    public String getRefreshToken() {
++        return refreshToken;
++    }
++
++    public void setRefreshToken(String token) {
++        this.refreshToken = token;
+     }
+ }
+diff --git a/backend/src/main/java/tech/smdey/toms/entity/User.java b/backend/src/main/java/tech/smdey/toms/entity/User.java
+index 9123304..5b0319a 100644
+--- a/backend/src/main/java/tech/smdey/toms/entity/User.java
++++ b/backend/src/main/java/tech/smdey/toms/entity/User.java
+@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
+ import java.util.Collection;
+ import java.util.HashSet;
+ import java.util.Set;
+-import java.util.stream.Collector;
+ import java.util.stream.Collectors;
+ 
+ import org.hibernate.annotations.CreationTimestamp;
+@@ -50,6 +49,9 @@ public class User implements UserDetails {
+     @Column(nullable = false)
+     private String tenantId;
+ 
++    @Column(name = "refresh_token")
++    private String refreshToken;
++
+     @CreationTimestamp
+     private LocalDateTime createdAt;
+ 
+@@ -104,6 +106,14 @@ public class User implements UserDetails {
+         this.tenantId = tenantId;
+     }
+ 
++    public String getRefreshToken() {
++        return refreshToken;
++    }
++    
++    public void setRefreshToken(String refreshToken) {
++        this.refreshToken = refreshToken;
++    }
++    
+     @Override
+     public Collection<? extends GrantedAuthority> getAuthorities() {
+         // Convert UserRole enums to GrantedAuthority instances
+diff --git a/backend/src/main/java/tech/smdey/toms/repository/UserRepository.java b/backend/src/main/java/tech/smdey/toms/repository/UserRepository.java
+index e3de741..2ea52e2 100644
+--- a/backend/src/main/java/tech/smdey/toms/repository/UserRepository.java
++++ b/backend/src/main/java/tech/smdey/toms/repository/UserRepository.java
+@@ -10,4 +10,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
+     Optional<User> findByUsername(String username);
+     Optional<User> findByUsernameAndTenantId(String username, String tenantId);
+     Optional<User> findByEmailAndTenantId(String email, String tenantId);
++    Optional<User> findByRefreshToken(String refreshToken);
+ }
+diff --git a/backend/src/main/java/tech/smdey/toms/util/JwtTokenUtil.java b/backend/src/main/java/tech/smdey/toms/util/JwtTokenUtil.java
+index b944e59..d223ac6 100644
+--- a/backend/src/main/java/tech/smdey/toms/util/JwtTokenUtil.java
++++ b/backend/src/main/java/tech/smdey/toms/util/JwtTokenUtil.java
+@@ -16,6 +16,7 @@ import tech.smdey.toms.entity.User;
+ public class JwtTokenUtil {
+     private final Key signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+     private final long EXPIRATION_TIME = 86400000; 
++    private final long REFRESH_TIME = 604800000;
+ 
+     public String generateToken(User user) {
+         Map<String, Object> claims = new HashMap<>();
+@@ -30,6 +31,19 @@ public class JwtTokenUtil {
+                 .compact();
+     }
+ 
++    public String generateRefreshToken(User user) {
++        Map<String, Object> claims = new HashMap<>();
++        claims.put("roles", user.getRoles().stream().map(Enum::name).toList());
++        claims.put("tenantId", user.getTenantId());
++        return Jwts.builder()
++                .setClaims(claims)
++                .setSubject(user.getUsername())
++                .setIssuedAt(new Date())
++                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TIME)) 
++                .signWith(signingKey)
++                .compact();
++    }
++
+     public String extractTenantId(String token) {
+         return (String) Jwts.parserBuilder()
+                 .setSigningKey(signingKey)
+@@ -54,7 +68,7 @@ public class JwtTokenUtil {
+         return extractedUsername.equals(username) && !isTokenExpired(token) && extractedTenantId.equals(tenantId);
+     }
+ 
+-    private boolean isTokenExpired(String token) {
++    public boolean isTokenExpired(String token) {
+         return Jwts.parserBuilder()
+                 .setSigningKey(signingKey)
+                 .build()
+diff --git a/frontend/src/App.js b/frontend/src/App.js
+index e21366d..b1bb6bb 100644
+--- a/frontend/src/App.js
++++ b/frontend/src/App.js
+@@ -5,13 +5,14 @@ import { useDispatch, useSelector } from 'react-redux';
+ import { AppBar, Toolbar, Typography, Button, Drawer, MenuList, MenuItem } from '@mui/material';
+ 
+ import store from './redux/store';
+-import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery } from './redux/ApiSlice';
++import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery, useLogoutMutation } from './redux/ApiSlice';
+ import { setOrders } from './redux/OrderSlice';
+ import { setTrades } from './redux/TradeSlice';
+ 
+ import MenuIcon from '@mui/icons-material/Menu';
+ import HomeIcon from '@mui/icons-material/Home';
+ import BarChartIcon from '@mui/icons-material/BarChart';
++import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+ 
+ import Home from './pages/Home';
+ import Analytics from './pages/Analytics';
+@@ -23,13 +24,15 @@ import PrivateRoute from './components/PrivateRouter';
+ import ProtectedRoute from './components/ProtectedRoute';
+ import { connect, disconnect } from './services/WebSocketService';
+ 
++
+ export default function App() {
+     const [open, setOpen] = React.useState(false);
+     const [drawer, toggleDrawer] = React.useState(false);
+     const dispatch = useDispatch();
+     const handleOpen = () => setOpen(true);
+     const handleClose = () => setOpen(false);
+-    const [matchOrders, { isLoading, error }] = useMatchOrdersMutation();
++    const [matchOrders] = useMatchOrdersMutation();
++    const [logout] = useLogoutMutation();
+     const [triggerGetOrders] = useLazyGetOrdersQuery();
+     const [triggerGetTrades] = useLazyGetTradesQuery();
+     const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
+@@ -83,6 +86,13 @@ export default function App() {
+             console.error(error);
+         }
+     };
++    const logoutHandler = async () => {
++        try{
++            await logout.unwrap();
++        } catch(error){
++            console.log(error)
++        }
++    }
+     const AppLayout = () => {
+         return (
+             <div>
+@@ -112,6 +122,9 @@ export default function App() {
+                         <MenuItem >
+                             <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
+                         </MenuItem>
++                        <MenuItem>
++                            <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" onClick={logoutHandler}><ExitToAppIcon /> Logout</Link>
++                        </MenuItem>
+                     </MenuList>
+                 </Drawer>
+                 {<Outlet />}
+diff --git a/frontend/src/pages/Login.js b/frontend/src/pages/Login.js
+index aca73d4..c901a00 100644
+--- a/frontend/src/pages/Login.js
++++ b/frontend/src/pages/Login.js
+@@ -1,7 +1,6 @@
+ import React, { useState } from 'react';
+ import { useLoginMutation } from '../redux/ApiSlice';
+ import { useDispatch } from 'react-redux';
+-import { setCredentials } from '../redux/AuthSlice';
+ import {
+     Box,
+     TextField,
+@@ -12,7 +11,6 @@ import {
+     Link,
+ } from '@mui/material';
+ import { useNavigate } from 'react-router-dom';
+-import {jwtDecode} from 'jwt-decode';
+ 
+ const Login = () => {
+     const [formData, setFormData] = useState({ username: '', password: '' });
+@@ -28,11 +26,8 @@ const Login = () => {
+     const handleSubmit = async (e) => {
+         e.preventDefault();
+         try {
+-            const response = await login(formData).unwrap();
+-            const {roles, sub, tenantId} = jwtDecode(response.token);
+-            
+-            dispatch(setCredentials({roles, user: sub, token: response.token, tenantId})); // Save user and token to Redux
+-            localStorage.setItem('token', response.token); // Optional: Save token
++            await login(formData).unwrap();
++             
+             navigate('/');
+         } catch (err) {
+             setError('Invalid username or password');
+diff --git a/frontend/src/redux/ApiSlice.js b/frontend/src/redux/ApiSlice.js
+index 95cd908..0b340fe 100644
+--- a/frontend/src/redux/ApiSlice.js
++++ b/frontend/src/redux/ApiSlice.js
+@@ -1,22 +1,52 @@
+ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+ import { setOrders } from "./OrderSlice";
+ import { setTrades } from "./TradeSlice";
++import { setAuth, logout } from "./AuthSlice";
++import { jwtDecode } from 'jwt-decode';
+ 
+-
+-export const apiSlice = createApi({
+-    reducerPath: "api",
+-    baseQuery: fetchBaseQuery({
+-        baseUrl: process.env.REACT_APP_BACKEND_URL || "http://localhost:8080/api/v1/",
+-        prepareHeaders: (headers, { getState }) => {
+-        const token = getState().auth.token;
++const baseQuery = fetchBaseQuery({
++    baseUrl: process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api/v1',
++    prepareHeaders: (headers, { getState }) => {
++        const token = getState().auth.accessToken;
+         if (token) {
+-            headers.set('Authorization', `Bearer ${token}`);
++            headers.set("Authorization", `Bearer ${token}`);
+         }
+-        headers.set("Content-Type", "application/json");
+-            
+         return headers;
+     },
+-     }),
++});
++
++const baseQueryWithReauth = async (args, api, extraOptions) => {
++    let result = await baseQuery(args, api, extraOptions);
++
++    if (result.error && result.error.status === 401) {
++        console.log("Access token expired. Attempting refresh...");
++
++        const refreshToken = api.getState().auth.refreshToken;
++        const refreshResult = await baseQuery(
++            {
++                url: "/auth/refresh-token",
++                method: "POST",
++                body: { refreshToken },
++            },
++            api,
++            extraOptions
++        );
++
++        if (refreshResult.data) {
++            const authState = api.getState().auth;
++            api.dispatch(setAuth({ ...authState, accessToken: refreshResult.data.accessToken, refreshToken }));
++
++            result = await baseQuery(args, api, extraOptions);
++        } else {
++            api.dispatch(logout());
++        }
++    }
++    return result;
++};
++
++export const apiSlice = createApi({
++    reducerPath: "api",
++    baseQuery: baseQueryWithReauth,
+     endpoints: (builder) => ({
+         login: builder.mutation({
+             query: (credentials) => ({
+@@ -24,6 +54,18 @@ export const apiSlice = createApi({
+                 method: "POST",
+                 body: credentials,
+             }),
++            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
++                try {
++                    const { data } = await queryFulfilled;
++                    const {roles, sub, tenantId} = jwtDecode(data.accessToken);
++            
++                    dispatch(setAuth({roles, user: sub, accessToken: data.accessToken, refreshToken: data.refreshToken, tenantId})); 
++                    localStorage.setItem('refreshToken', data.refreshToken);
++                } catch (error) {
++                    console.error("Failed to login", error);
++                }
++
++            },
+         }),
+         signup: builder.mutation({
+             query: (user) => ({
+@@ -38,6 +80,22 @@ export const apiSlice = createApi({
+                 return response;
+             },
+         }),
++        logout: builder.mutation({
++            query: (refreshToken) => ({
++                url: "auth/logout",
++                method: "POST",
++                body: { refreshToken },
++            }),
++            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
++                try {
++                    await queryFulfilled;
++                    dispatch(logout());
++                } catch (error) {
++                    console.error("Logout Error", error);
++                }
++
++            },
++        }),
+         getOrders: builder.query({
+             query: (params) => {
+                 return {
+@@ -107,6 +165,7 @@ export const {
+     useLazyGetTradesQuery,
+     useLoginMutation,
+     useSignupMutation,
++    useLogoutMutation
+ } = apiSlice;
+ 
+ 
+diff --git a/frontend/src/redux/AuthSlice.js b/frontend/src/redux/AuthSlice.js
+index 21c3bc7..83c05dc 100644
+--- a/frontend/src/redux/AuthSlice.js
++++ b/frontend/src/redux/AuthSlice.js
+@@ -1,9 +1,10 @@
+ import { createSlice } from '@reduxjs/toolkit';
+ 
+ const initialState = {
+-    user: null, // Store user data here
+-    token: null, // JWT token
+-    roles: [], // User roles
++    user: null, 
++    accessToken: null,
++    refreshToken: null, 
++    roles: [], 
+     tenantId: null,
+     isAuthenticated: false,
+ };
+@@ -12,16 +13,18 @@ export const authSlice = createSlice({
+     name: 'auth',
+     initialState,
+     reducers: {
+-        setCredentials: (state, action) => {
++        setAuth: (state, action) => {
+             state.user = action.payload.user;
+-            state.token = action.payload.token;
++            state.accessToken = action.payload.accessToken;
++            state.refreshToken = action.payload.refreshToken;
+             state.roles = action.payload.roles;
+             state.tenantId = action.payload.tenantId;
+             state.isAuthenticated = true;
+         },
+         logout: (state) => {
+             state.user = null;
+-            state.token = null;
++            state.accessToken = null;
++            state.refreshToken = null;
+             state.roles = [];
+             state.tenantId = null;
+             state.isAuthenticated = false;
+@@ -29,5 +32,5 @@ export const authSlice = createSlice({
+     },
+ });
+ 
+-export const { setCredentials, logout } = authSlice.actions;
++export const { setAuth, logout } = authSlice.actions;
+ export default authSlice.reducer;
+diff --git a/git_diff_20250201_155236.txt b/git_diff_20250201_155236.txt
+deleted file mode 100644
+index 7c11f3f..0000000
+--- a/git_diff_20250201_155236.txt
++++ /dev/null
+@@ -1,274 +0,0 @@
+-### Unstaged Changes ###
+-
+-### Staged Changes ###
+-diff --git a/backend/src/main/java/tech/smdey/toms/controller/MatchingController.java b/backend/src/main/java/tech/smdey/toms/controller/MatchingController.java
+-index e41ead4..fed9d50 100644
+---- a/backend/src/main/java/tech/smdey/toms/controller/MatchingController.java
+-+++ b/backend/src/main/java/tech/smdey/toms/controller/MatchingController.java
+-@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
+- import org.springframework.web.bind.annotation.RestController;
+- 
+- import tech.smdey.toms.service.MatchingEngineService;
+-+import tech.smdey.toms.util.JwtTokenUtil;
+-+
+- import org.springframework.web.bind.annotation.RequestBody;
+-+import org.springframework.web.bind.annotation.RequestHeader;
+- 
+- 
+- @RestController
+-@@ -20,15 +23,20 @@ public class MatchingController {
+-     @Autowired
+-     private MatchingEngineService matchingEngineService;
+- 
+--    @PostMapping("/{symbol}")
+--    public ResponseEntity<String> matchOrders(@PathVariable String symbol) {
+--        matchingEngineService.matchOrders(symbol);
+--        return ResponseEntity.ok("Matching process completed for symbol: " + symbol);
+-+    @Autowired
+-+    private JwtTokenUtil jwtUtil;
+-+
+-+    @PostMapping
+-+    public ResponseEntity<String> matchOrders(@RequestHeader("Authorization") String token) {
+-+        String tenantId = jwtUtil.extractTenantId(token);
+-+        matchingEngineService.matchOrders(tenantId);
+-+        return ResponseEntity.ok("Matching process completed for tenantId: " + tenantId);
+-     }
+- 
+-     @PostMapping("/triggerstop/{symbol}")
+--    public ResponseEntity<String> triggerStop(@RequestBody double marketPrice, @PathVariable String symbol) {
+--        matchingEngineService.triggerStopOrders(symbol, marketPrice);
+-+    public ResponseEntity<String> triggerStop(@RequestHeader("Authorization") String token, @RequestBody double marketPrice, @PathVariable String symbol) {
+-+        String tenantId = jwtUtil.extractTenantId(token);
+-+        matchingEngineService.triggerStopOrders(symbol, marketPrice, tenantId);
+-         return ResponseEntity.ok("Stop orders triggered for symbol: " + symbol);
+-     }
+-     
+-diff --git a/backend/src/main/java/tech/smdey/toms/controller/TradeController.java b/backend/src/main/java/tech/smdey/toms/controller/TradeController.java
+-index 5afc776..6d58266 100644
+---- a/backend/src/main/java/tech/smdey/toms/controller/TradeController.java
+-+++ b/backend/src/main/java/tech/smdey/toms/controller/TradeController.java
+-@@ -3,14 +3,17 @@ package tech.smdey.toms.controller;
+- import java.util.List;
+- 
+- import org.springframework.beans.factory.annotation.Autowired;
+-+import org.springframework.http.ResponseEntity;
+- import org.springframework.security.access.prepost.PreAuthorize;
+- import org.springframework.web.bind.annotation.GetMapping;
+--import org.springframework.web.bind.annotation.PathVariable;
+-+import org.springframework.web.bind.annotation.RequestHeader;
+- import org.springframework.web.bind.annotation.RequestMapping;
+-+import org.springframework.web.bind.annotation.RequestParam;
+- import org.springframework.web.bind.annotation.RestController;
+- 
+- import tech.smdey.toms.entity.Trade;
+- import tech.smdey.toms.repository.TradeRepository;
+-+import tech.smdey.toms.util.JwtTokenUtil;
+- 
+- @RestController
+- @RequestMapping("/api/v1/trades")
+-@@ -19,9 +22,19 @@ public class TradeController {
+-     @Autowired
+-     private TradeRepository tradeRepository;
+- 
+-+    @Autowired
+-+    private JwtTokenUtil jwtUtil;
+-+
+-     @PreAuthorize("hasRole('ADMIN')")
+-     @GetMapping("/recent")
+-     public List<Trade> getRecentTrades() {
+-         return tradeRepository.findTop10ByOrderByTradeTimestampDesc();
+-     }
+-+
+-+    @GetMapping
+-+    public ResponseEntity<List<Trade>> getTrades(@RequestHeader("Authorization") String token) {
+-+        String tenantId = jwtUtil.extractTenantId(token); 
+-+        List<Trade> trades = (tenantId != null) ? tradeRepository.findByTenantId(tenantId) : tradeRepository.findAll();
+-+        return ResponseEntity.ok(trades);
+-+    }
+- }
+-diff --git a/backend/src/main/java/tech/smdey/toms/repository/OrderRepository.java b/backend/src/main/java/tech/smdey/toms/repository/OrderRepository.java
+-index 0fd23e0..124606a 100644
+---- a/backend/src/main/java/tech/smdey/toms/repository/OrderRepository.java
+-+++ b/backend/src/main/java/tech/smdey/toms/repository/OrderRepository.java
+-@@ -15,11 +15,11 @@ import tech.smdey.toms.entity.TradeOrder;
+- public interface OrderRepository extends JpaRepository<TradeOrder, Long> {
+-     Page<TradeOrder> findByStatus(OrderStatus status, Pageable pageable);
+- 
+--    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderAction = 'BUY' AND o.status = 'PENDING'")
+--    List<TradeOrder> findUnmatchedBuyOrders(@Param("symbol") String symbol, Pageable pageable);
+-+    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.tenantId = :tenantId AND o.status = 'PENDING' AND o.orderAction = 'BUY' ORDER BY o.price DESC, o.timestamp ASC")
+-+    List<TradeOrder> findUnmatchedBuyOrders(@Param("symbol") String symbol, @Param("tenantId") String tenantId, Pageable pageable);
+- 
+--    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderAction = 'SELL' AND o.status = 'PENDING'")
+--    List<TradeOrder> findUnmatchedSellOrders(@Param("symbol") String symbol, Pageable pageable);
+-+    @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.tenantId = :tenantId AND o.status = 'PENDING' AND o.orderAction = 'SELL' ORDER BY o.price ASC, o.timestamp ASC")
+-+    List<TradeOrder> findUnmatchedSellOrders(@Param("symbol") String symbol, @Param("tenantId") String tenantId, Pageable pageable);
+- 
+-     @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.orderMethod = 'STOP'")
+-     List<TradeOrder> findStopOrders(@Param("symbol") String symbol);
+-diff --git a/backend/src/main/java/tech/smdey/toms/service/KafkaConsumerService.java b/backend/src/main/java/tech/smdey/toms/service/KafkaConsumerService.java
+-index 1b497e7..3b9a472 100644
+---- a/backend/src/main/java/tech/smdey/toms/service/KafkaConsumerService.java
+-+++ b/backend/src/main/java/tech/smdey/toms/service/KafkaConsumerService.java
+-@@ -1,25 +1,59 @@
+- package tech.smdey.toms.service;
+- 
+--import org.springframework.beans.factory.annotation.Autowired;
+-+import org.apache.kafka.clients.consumer.ConsumerRecord;
+- import org.springframework.kafka.annotation.KafkaListener;
+- import org.springframework.messaging.simp.SimpMessagingTemplate;
+- import org.springframework.stereotype.Service;
+-+import org.springframework.beans.factory.annotation.Autowired;
+-+
+-+import tech.smdey.toms.entity.Trade;
+-+import tech.smdey.toms.entity.TradeOrder;
+-+import com.fasterxml.jackson.databind.ObjectMapper;
+-+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+- 
+- @Service
+- public class KafkaConsumerService {
+- 
+-+    private final ObjectMapper objectMapper;
+-+    private final SimpMessagingTemplate messagingTemplate;
+-+
+-     @Autowired
+--    private SimpMessagingTemplate messagingTemplate;
+-+    public KafkaConsumerService(SimpMessagingTemplate messagingTemplate) {
+-+        this.objectMapper = new ObjectMapper();
+-+        this.objectMapper.registerModule(new JavaTimeModule());
+-+        this.messagingTemplate = messagingTemplate;
+-+    }
+- 
+-     @KafkaListener(topics = "trades", groupId = "toms-group")
+--    public void consumeTradeMessage(String message) {
+--        System.out.println("Received Trade Message: " + message);
+--        messagingTemplate.convertAndSend("/topic/trades", message);
+-+    public void consumeTrade(ConsumerRecord<String, String> record) {
+-+        String tenantId = extractTenantId(record);
+-+        System.out.println("Received trade for tenant: " + tenantId);
+-+
+-+        Trade trade = convertFromJson(record.value(), Trade.class);
+-+        messagingTemplate.convertAndSend("/topic/trades/" + tenantId, trade);
+-     }
+- 
+-     @KafkaListener(topics = "orders", groupId = "toms-group")
+--    public void consumeOrderMessage(String message) {
+--        System.out.println("Received Order Message: " + message);
+--        messagingTemplate.convertAndSend("/topic/orders", message);
+-+    public void consumeOrder(ConsumerRecord<String, String> record) {
+-+        String tenantId = extractTenantId(record);
+-+        System.out.println("Received order for tenant: " + tenantId);
+-+
+-+        TradeOrder order = convertFromJson(record.value(), TradeOrder.class);
+-+        messagingTemplate.convertAndSend("/topic/orders/" + tenantId, order);
+-+    }
+-+
+-+    private <T> T convertFromJson(String json, Class<T> clazz) {
+-+        try {
+-+            return objectMapper.readValue(json, clazz);
+-+        } catch (Exception e) {
+-+            throw new RuntimeException("Error parsing JSON", e);
+-+        }
+-+    }
+-+
+-+    private String extractTenantId(ConsumerRecord<String, String> record) {
+-+        if (record.headers().lastHeader("tenantId") != null) {
+-+            return new String(record.headers().lastHeader("tenantId").value());
+-+        }
+-+        return "default"; // Fallback tenant ID
+-     }
+- }
+-diff --git a/backend/src/main/java/tech/smdey/toms/service/KafkaProducerService.java b/backend/src/main/java/tech/smdey/toms/service/KafkaProducerService.java
+-index 9fe6e3a..8083d1b 100644
+---- a/backend/src/main/java/tech/smdey/toms/service/KafkaProducerService.java
+-+++ b/backend/src/main/java/tech/smdey/toms/service/KafkaProducerService.java
+-@@ -2,6 +2,8 @@ package tech.smdey.toms.service;
+- 
+- import org.springframework.beans.factory.annotation.Autowired;
+- import org.springframework.kafka.core.KafkaTemplate;
+-+import org.springframework.kafka.support.KafkaHeaders;
+-+import org.springframework.messaging.support.MessageBuilder;
+- import org.springframework.stereotype.Service;
+- 
+- import com.fasterxml.jackson.core.JsonProcessingException;
+-@@ -21,13 +23,27 @@ public class KafkaProducerService {
+-     private static final String ORDERS_TOPIC = "orders";
+- 
+-     public void sendTradeMessage(Trade trade) {
+-+        String tenantId = trade.getTenantId();
+-         String message = convertToJson(trade);
+--        kafkaTemplate.send(TRADES_TOPIC, message);
+-+        kafkaTemplate.send(
+-+            MessageBuilder
+-+                .withPayload(message)
+-+                .setHeader(KafkaHeaders.TOPIC, TRADES_TOPIC)
+-+                .setHeader("tenantId", tenantId) // Add tenantId as header
+-+                .build()
+-+            );
+-     }
+- 
+-     public void sendOrderMessage(TradeOrder order) {
+-+        String tenantId = order.getTenantId();
+-         String message = convertToJson(order);
+--        kafkaTemplate.send(ORDERS_TOPIC, message);
+-+        kafkaTemplate.send(
+-+                MessageBuilder
+-+                    .withPayload(message)
+-+                    .setHeader(KafkaHeaders.TOPIC, ORDERS_TOPIC)
+-+                    .setHeader("tenantId", tenantId) // Add tenantId as header
+-+                    .build()
+-+                );
+-     }
+- 
+-     private String convertToJson(Object object) {
+-diff --git a/backend/src/main/java/tech/smdey/toms/service/MatchingEngineService.java b/backend/src/main/java/tech/smdey/toms/service/MatchingEngineService.java
+-index 37f3438..bb8e301 100644
+---- a/backend/src/main/java/tech/smdey/toms/service/MatchingEngineService.java
+-+++ b/backend/src/main/java/tech/smdey/toms/service/MatchingEngineService.java
+-@@ -30,23 +30,23 @@ public class MatchingEngineService {
+-     @Autowired
+-     private KafkaProducerService kafkaProducerService;
+- 
+--    public void matchOrders() {
+-+    public void matchOrders(String tenantId) {
+-         List<String> symbols = new ArrayList<String>();
+-         symbols.add("AAPL");
+-         symbols.add("GOOGL");
+-         symbols.add("MSFT");
+- 
+-         for (String symbol : symbols) {
+--            matchOrdersForSymbol(symbol);
+-+            matchOrdersForSymbol(symbol, tenantId);
+-         }
+- 
+-     }
+- 
+-     // Match orders for a specific symbol
+--    public void matchOrdersForSymbol(String symbol) {
+-+    public void matchOrdersForSymbol(String symbol, String tenantId) {
+-         Pageable topOrders = PageRequest.of(0, 100);
+--        List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol, topOrders);
+--        List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol, topOrders);
+-+        List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol, tenantId, topOrders);
+-+        List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol, tenantId, topOrders);
+- 
+-         // Sort orders
+-         buyOrders.sort(Comparator.comparing(TradeOrder::getPrice).reversed()
+-@@ -153,7 +153,7 @@ public class MatchingEngineService {
+-     }
+- 
+-     // Trigger stop orders based on market price
+--    public void triggerStopOrders(String symbol, double marketPrice) {
+-+    public void triggerStopOrders(String symbol, double marketPrice, String tenantId) {
+-         List<TradeOrder> stopOrders = orderRepository.findStopOrders(symbol);
+-         for (TradeOrder stopOrder : stopOrders) {
+-             boolean shouldTrigger = (stopOrder.getOrderAction() == OrderAction.BUY && marketPrice >= stopOrder.getStopPrice()) ||
+-@@ -162,7 +162,7 @@ public class MatchingEngineService {
+-             if (shouldTrigger) {
+-                 stopOrder.setOrderMethod(OrderMethod.MARKET);
+-                 orderRepository.save(stopOrder);
+--                matchOrdersForSymbol(stopOrder.getSymbol()); // Reprocess the market orders
+-+                matchOrdersForSymbol(stopOrder.getSymbol(), tenantId); // Reprocess the market orders
+-             }
+-         }
+-     }
+diff --git a/git_diff_20250203_092228.txt b/git_diff_20250203_092228.txt
+deleted file mode 100644
+index d520bca..0000000
+--- a/git_diff_20250203_092228.txt
++++ /dev/null
+@@ -1,77 +0,0 @@
+-### Unstaged Changes ###
+-diff --git a/frontend/src/App.js b/frontend/src/App.js
+-index ed318aa..e21366d 100644
+---- a/frontend/src/App.js
+-+++ b/frontend/src/App.js
+-@@ -34,6 +34,7 @@ export default function App() {
+-     const [triggerGetTrades] = useLazyGetTradesQuery();
+-     const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
+-     const userRoles = useSelector(state => state.auth.roles);
+-+    const tenantId = useSelector(state => state.auth.tenantId);
+-     useEffect(() => {
+-         if(isAuthenticated){
+-         triggerGetOrders({
+-@@ -66,7 +67,7 @@ export default function App() {
+-                     const currentTrades = store.getState().trade.trades; // Fetch the latest trades state
+-                     dispatch(setTrades([newTrade, ...currentTrades]));
+-                 }
+--            });
+-+            }, tenantId);
+-     
+-         }
+-         
+-diff --git a/frontend/src/redux/AuthSlice.js b/frontend/src/redux/AuthSlice.js
+-index 808d3e2..21c3bc7 100644
+---- a/frontend/src/redux/AuthSlice.js
+-+++ b/frontend/src/redux/AuthSlice.js
+-@@ -4,6 +4,7 @@ const initialState = {
+-     user: null, // Store user data here
+-     token: null, // JWT token
+-     roles: [], // User roles
+-+    tenantId: null,
+-     isAuthenticated: false,
+- };
+- 
+-@@ -15,12 +16,14 @@ export const authSlice = createSlice({
+-             state.user = action.payload.user;
+-             state.token = action.payload.token;
+-             state.roles = action.payload.roles;
+-+            state.tenantId = action.payload.tenantId;
+-             state.isAuthenticated = true;
+-         },
+-         logout: (state) => {
+-             state.user = null;
+-             state.token = null;
+-             state.roles = [];
+-+            state.tenantId = null;
+-             state.isAuthenticated = false;
+-         },
+-     },
+-diff --git a/frontend/src/services/WebSocketService.js b/frontend/src/services/WebSocketService.js
+-index 0802658..e996a72 100644
+---- a/frontend/src/services/WebSocketService.js
+-+++ b/frontend/src/services/WebSocketService.js
+-@@ -6,7 +6,7 @@ const SOCKET_URL = process.env.REACT_APP_WEBSOCKET_URL || "http://localhost:8080
+- let stompClient = null;
+- let subscriptions = [];
+- 
+--export const connect = (onMessage) => {
+-+export const connect = (onMessage, tenantId) => {
+-     if (stompClient && stompClient.connected) {
+-         console.log("WebSocket is already connected.");
+-         return;
+-@@ -20,10 +20,10 @@ export const connect = (onMessage) => {
+- 
+-         // Subscribe to multiple topics
+-         subscriptions = [
+--            stompClient.subscribe("/topic/orders", (message) => {
+-+            stompClient.subscribe(`/topic/orders/${tenantId}`, (message) => {
+-                 onMessage(JSON.parse(message.body), "orders");
+-             }),
+--            stompClient.subscribe("/topic/trades", (message) => {
+-+            stompClient.subscribe(`/topic/trades/${tenantId}`, (message) => {
+-                 onMessage(JSON.parse(message.body), "trades");
+-             }),
+-         ];
+-
+-### Staged Changes ###
+
+### Staged Changes ###

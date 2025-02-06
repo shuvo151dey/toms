@@ -16,6 +16,7 @@ import tech.smdey.toms.entity.User;
 public class JwtTokenUtil {
     private final Key signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private final long EXPIRATION_TIME = 86400000; 
+    private final long REFRESH_TIME = 604800000;
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
@@ -26,6 +27,19 @@ public class JwtTokenUtil {
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) 
+                .signWith(signingKey)
+                .compact();
+    }
+
+    public String generateRefreshToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoles().stream().map(Enum::name).toList());
+        claims.put("tenantId", user.getTenantId());
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TIME)) 
                 .signWith(signingKey)
                 .compact();
     }
@@ -54,7 +68,7 @@ public class JwtTokenUtil {
         return extractedUsername.equals(username) && !isTokenExpired(token) && extractedTenantId.equals(tenantId);
     }
 
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(signingKey)
                 .build()

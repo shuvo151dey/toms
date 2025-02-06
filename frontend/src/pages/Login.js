@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useLoginMutation } from '../redux/ApiSlice';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '../redux/AuthSlice';
 import {
     Box,
     TextField,
@@ -12,7 +11,6 @@ import {
     Link,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
 
 const Login = () => {
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -28,11 +26,8 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await login(formData).unwrap();
-            const {roles, sub, tenantId} = jwtDecode(response.token);
-            
-            dispatch(setCredentials({roles, user: sub, token: response.token, tenantId})); // Save user and token to Redux
-            localStorage.setItem('token', response.token); // Optional: Save token
+            await login(formData).unwrap();
+             
             navigate('/');
         } catch (err) {
             setError('Invalid username or password');

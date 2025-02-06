@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -49,6 +48,9 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String tenantId;
+
+    @Column(name = "refresh_token")
+    private String refreshToken;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -104,6 +106,14 @@ public class User implements UserDetails {
         this.tenantId = tenantId;
     }
 
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+    
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+    
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // Convert UserRole enums to GrantedAuthority instances

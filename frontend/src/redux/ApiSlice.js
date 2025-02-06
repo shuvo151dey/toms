@@ -1,22 +1,52 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setOrders } from "./OrderSlice";
 import { setTrades } from "./TradeSlice";
+import { setAuth, logout } from "./AuthSlice";
+import { jwtDecode } from 'jwt-decode';
 
+const baseQuery = fetchBaseQuery({
+    baseUrl: process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api/v1',
+    prepareHeaders: (headers, { getState }) => {
+        const token = getState().auth.accessToken;
+        if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
+        }
+        return headers;
+    },
+});
+
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+    let result = await baseQuery(args, api, extraOptions);
+
+    if (result.error && result.error.status === 401) {
+        console.log("Access token expired. Attempting refresh...");
+
+        const refreshToken = api.getState().auth.refreshToken;
+        const refreshResult = await baseQuery(
+            {
+                url: "/auth/refresh-token",
+                method: "POST",
+                body: { refreshToken },
+            },
+            api,
+            extraOptions
+        );
+
+        if (refreshResult.data) {
+            const authState = api.getState().auth;
+            api.dispatch(setAuth({ ...authState, accessToken: refreshResult.data.accessToken, refreshToken }));
+
+            result = await baseQuery(args, api, extraOptions);
+        } else {
+            api.dispatch(logout());
+        }
+    }
+    return result;
+};
 
 export const apiSlice = createApi({
     reducerPath: "api",
-    baseQuery: fetchBaseQuery({
-        baseUrl: process.env.REACT_APP_BACKEND_URL || "http://localhost:8080/api/v1/",
-        prepareHeaders: (headers, { getState }) => {
-        const token = getState().auth.token;
-        if (token) {
-            headers.set('Authorization', `Bearer ${token}`);
-        }
-        headers.set("Content-Type", "application/json");
-            
-        return headers;
-    },
-     }),
+    baseQuery: baseQueryWithReauth,
     endpoints: (builder) => ({
         login: builder.mutation({
             query: (credentials) => ({
@@ -24,6 +54,18 @@ export const apiSlice = createApi({
                 method: "POST",
                 body: credentials,
             }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    const {roles, sub, tenantId} = jwtDecode(data.accessToken);
+            
+                    dispatch(setAuth({roles, user: sub, accessToken: data.accessToken, refreshToken: data.refreshToken, tenantId})); 
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                } catch (error) {
+                    console.error("Failed to login", error);
+                }
+
+            },
         }),
         signup: builder.mutation({
             query: (user) => ({
@@ -36,6 +78,22 @@ export const apiSlice = createApi({
                 return { message: response };
                 }
                 return response;
+            },
+        }),
+        logout: builder.mutation({
+            query: (refreshToken) => ({
+                url: "auth/logout",
+                method: "POST",
+                body: { refreshToken },
+            }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(logout());
+                } catch (error) {
+                    console.error("Logout Error", error);
+                }
+
             },
         }),
         getOrders: builder.query({
@@ -107,6 +165,7 @@ export const {
     useLazyGetTradesQuery,
     useLoginMutation,
     useSignupMutation,
+    useLogoutMutation
 } = apiSlice;
 
 

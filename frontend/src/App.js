@@ -5,13 +5,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppBar, Toolbar, Typography, Button, Drawer, MenuList, MenuItem } from '@mui/material';
 
 import store from './redux/store';
-import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery } from './redux/ApiSlice';
+import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery, useLogoutMutation } from './redux/ApiSlice';
 import { setOrders } from './redux/OrderSlice';
 import { setTrades } from './redux/TradeSlice';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 import Home from './pages/Home';
 import Analytics from './pages/Analytics';
@@ -23,18 +24,21 @@ import PrivateRoute from './components/PrivateRouter';
 import ProtectedRoute from './components/ProtectedRoute';
 import { connect, disconnect } from './services/WebSocketService';
 
+
 export default function App() {
     const [open, setOpen] = React.useState(false);
     const [drawer, toggleDrawer] = React.useState(false);
     const dispatch = useDispatch();
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
-    const [matchOrders, { isLoading, error }] = useMatchOrdersMutation();
+    const [matchOrders] = useMatchOrdersMutation();
+    const [logout] = useLogoutMutation();
     const [triggerGetOrders] = useLazyGetOrdersQuery();
     const [triggerGetTrades] = useLazyGetTradesQuery();
     const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
     const userRoles = useSelector(state => state.auth.roles);
     const tenantId = useSelector(state => state.auth.tenantId);
+    const refreshToken = useSelector(state => state.auth.refreshToken);
     useEffect(() => {
         if(isAuthenticated){
         triggerGetOrders({
@@ -83,6 +87,13 @@ export default function App() {
             console.error(error);
         }
     };
+    const logoutHandler = async () => {
+        try{
+            await logout(refreshToken).unwrap();
+        } catch(error){
+            console.log(error)
+        }
+    }
     const AppLayout = () => {
         return (
             <div>
@@ -111,6 +122,9 @@ export default function App() {
                         </MenuItem>
                         <MenuItem >
                             <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
+                        </MenuItem>
+                        <MenuItem>
+                            <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" onClick={logoutHandler}><ExitToAppIcon /> Logout</Link>
                         </MenuItem>
                     </MenuList>
                 </Drawer>
