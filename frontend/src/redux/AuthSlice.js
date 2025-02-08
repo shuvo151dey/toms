@@ -7,6 +7,7 @@ const initialState = {
     roles: [], 
     tenantId: null,
     isAuthenticated: false,
+    expiryTime: null
 };
 
 export const authSlice = createSlice({
@@ -20,6 +21,7 @@ export const authSlice = createSlice({
             state.roles = action.payload.roles;
             state.tenantId = action.payload.tenantId;
             state.isAuthenticated = true;
+            state.expiryTime = action.payload.expiryTime;
         },
         logout: (state) => {
             state.user = null;
@@ -28,6 +30,7 @@ export const authSlice = createSlice({
             state.roles = [];
             state.tenantId = null;
             state.isAuthenticated = false;
+            state.expiryTime = null;
         },
     },
 });

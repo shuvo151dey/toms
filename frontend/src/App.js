@@ -8,6 +8,7 @@ import store from './redux/store';
 import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery, useLogoutMutation } from './redux/ApiSlice';
 import { setOrders } from './redux/OrderSlice';
 import { setTrades } from './redux/TradeSlice';
+import { clearAlert, setAlert } from './redux/AppSlice';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
@@ -22,6 +23,7 @@ import Signup from './pages/Signup';
 import OrderModal from './components/OrderModal';
 import PrivateRoute from './components/PrivateRouter';
 import ProtectedRoute from './components/ProtectedRoute';
+import CustomAlert from './components/CustomAlert';
 import { connect, disconnect } from './services/WebSocketService';
 
 
@@ -39,6 +41,10 @@ export default function App() {
     const userRoles = useSelector(state => state.auth.roles);
     const tenantId = useSelector(state => state.auth.tenantId);
     const refreshToken = useSelector(state => state.auth.refreshToken);
+    const expiryTime = useSelector(state => state.auth.expiryTime);
+    const alert = useSelector(state => state.app.alert);
+    const alertType = useSelector(state => state.app.alertType);
+
     useEffect(() => {
         if(isAuthenticated){
         triggerGetOrders({
@@ -78,11 +84,34 @@ export default function App() {
 
     }, [dispatch, isAuthenticated]);
 
+    useEffect(() =>{
+        if(expiryTime){
+            const now = new Date().now();
+            const timeout = expiryTime - now;
+
+            if (timeout > 60000){
+                const timer = setTimeout(() => {
+                    dispatch(setAlert({ alert: "Session will expire in 60s", type: "warning" }))
+                }, timeout - 60000)
+
+                return () => clearTimeout(timer);
+            }else if(timeout > 0){
+                
+                const timer = setTimeout(() => {
+                    dispatch(logout());
+                    dispatch(setAlert({ alert: "Session expired", type: "error" }))
+                }, timeout)
+
+                return () => clearTimeout(timer);
+            } else{
+                dispatch(logout());
+            }
+        }
+    }, [dispatch, expiryTime]);
 
     const handleMatchOrders = async (symbol) => {
         try {
             await matchOrders(symbol).unwrap();
-            alert("Matching completed successfully!");
         } catch(error) {
             console.error(error);
         }
@@ -113,6 +142,7 @@ export default function App() {
                         </Button>)}
                     </Toolbar>
                 </AppBar>
+                <CustomAlert message={alert} type={alertType} onClose={() => dispatch(clearAlert())} />
                 <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
                 <Drawer anchor="left" open={drawer} onClose={() => toggleDrawer(false)}>
                     <MenuList>

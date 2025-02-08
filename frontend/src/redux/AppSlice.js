@@ -1,9 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    selectedSymbol: "AAPL", // Default symbol
-    theme: "light",         // App theme (light/dark)
-    error: null,            // Global error handling
+    selectedSymbol: "AAPL", 
+    theme: "light",         
+    alert: null,
+    alertType: null            
 };
 
 const appSlice = createSlice({
@@ -16,15 +17,17 @@ const appSlice = createSlice({
         toggleTheme: (state) => {
             state.theme = state.theme === "light" ? "dark" : "light";
         },
-        setError: (state, action) => {
-            state.error = action.payload;
+        setAlert: (state, action) => {
+            state.alert = action.payload.alert;
+            state.alertType = action.payload.type;
         },
-        clearError: (state) => {
-            state.error = null;
+        clearAlert: (state) => {
+            state.alert = null;
+            state.alertType = null;
         },
     },
 });
 
-export const { setSelectedSymbol, toggleTheme, setError, clearError } = appSlice.actions;
+export const { setSelectedSymbol, toggleTheme, setAlert, clearAlert } = appSlice.actions;
 
 export default appSlice.reducer;
