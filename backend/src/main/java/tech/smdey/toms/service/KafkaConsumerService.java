@@ -24,7 +24,7 @@ public class KafkaConsumerService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @KafkaListener(topics = "trades", groupId = "toms-group")
+    @KafkaListener(topics = "trades", groupId = "toms-group", concurrency = "3")
     public void consumeTrade(ConsumerRecord<String, String> record) {
         String tenantId = extractTenantId(record);
         System.out.println("Received trade for tenant: " + tenantId);
@@ -33,7 +33,7 @@ public class KafkaConsumerService {
         messagingTemplate.convertAndSend("/topic/trades/" + tenantId, trade);
     }
 
-    @KafkaListener(topics = "orders", groupId = "toms-group")
+    @KafkaListener(topics = "orders", groupId = "toms-group", concurrency = "3")
     public void consumeOrder(ConsumerRecord<String, String> record) {
         String tenantId = extractTenantId(record);
         System.out.println("Received order for tenant: " + tenantId);

@@ -1,5 +1,7 @@
 services:
   backend:
+    deploy:
+      replicas: 3
     build:
       context: ./backend
       dockerfile: Dockerfile
