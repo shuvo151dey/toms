@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Box, Typography, Button, TextField, MenuItem } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { useCreateOrderMutation, useUpdateOrderMutation } from '../redux/ApiSlice';
+import { useDispatch } from 'react-redux';
+import { setAlert } from '../redux/AppSlice';
 
 
 const OrderModal = ({ open, handleOpen, handleClose }) => {
@@ -16,6 +18,7 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
     const order = useSelector((state) => state.order.order);
     const [createOrder] = useCreateOrderMutation();
     const [updateOrder] = useUpdateOrderMutation();
+    const dispatch = useDispatch();
     useEffect(() => {
         if (order) {
             setIsEdit(true);
@@ -42,6 +45,7 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                     limitPrice,
                     stopPrice
                 }).unwrap();
+                dispatch(setAlert({ message: 'Order updated successfully', type: 'success' }));
             } else {
                 await createOrder({
                     symbol,
@@ -52,10 +56,10 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                     limitPrice,
                     stopPrice
                 }).unwrap();
+                dispatch(setAlert({ message: 'Order created successfully', type: 'success' }));
             }
-            console.log('Order Submitted');
         } catch (error) {
-            // alert('Error in submitting order');
+            dispatch(setAlert({ message: 'Order creation failed', type: 'error' }));
             console.error(error);
         }
         handleClose();

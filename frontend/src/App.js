@@ -44,7 +44,7 @@ export default function App() {
     const expiryTime = useSelector(state => state.auth.expiryTime);
     const alert = useSelector(state => state.app.alert);
     const alertType = useSelector(state => state.app.alertType);
-
+    console.log(process.env.REACT_APP_BACKEND_URL);
     useEffect(() => {
         if(isAuthenticated){
         triggerGetOrders({
@@ -86,7 +86,7 @@ export default function App() {
 
     useEffect(() =>{
         if(expiryTime){
-            const now = new Date().now();
+            const now = Date.now();
             const timeout = expiryTime - now;
 
             if (timeout > 60000){
@@ -134,7 +134,7 @@ export default function App() {
                         {isAuthenticated && (<Button variant="contained" color="secondary" onClick={handleOpen}>
                             Place Order
                         </Button>)}
-                        {userRoles.includes('ADMIN') && <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} disabled={isLoading} onClick={() => handleMatchOrders("AAPL")}>
+                        {userRoles.includes('ADMIN') && <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} onClick={() => handleMatchOrders("AAPL")}>
                             Match Orders
                         </Button>}
                         {isAuthenticated && (<Button color='white' onClick={() => toggleDrawer(true)}>

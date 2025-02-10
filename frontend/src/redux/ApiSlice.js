@@ -5,7 +5,9 @@ import { setAuth, logout } from "./AuthSlice";
 import { jwtDecode } from 'jwt-decode';
 import { setAlert } from "./AppSlice";
 
+
 const baseQuery = fetchBaseQuery({
+    
     baseUrl: process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api/v1',
     prepareHeaders: (headers, { getState }) => {
         const token = getState().auth.accessToken;

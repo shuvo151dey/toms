@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useSignupMutation } from '../redux/ApiSlice';
 import { Box, TextField, Button, Typography, Paper, CircularProgress, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { setAlert } from '../redux/AppSlice';
+import { useDispatch } from 'react-redux';
 
 const Signup = () => {
     const [formData, setFormData] = useState({
@@ -13,6 +15,7 @@ const Signup = () => {
     const [signup, { isLoading }] = useSignupMutation();
     const navigate = useNavigate();
     const [error, setError] = useState('');
+    const dispatch = useDispatch();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,17 +26,17 @@ const Signup = () => {
         const { password, confirmPassword, ...userData } = formData;
 
         if (password !== confirmPassword) {
-            setError('Passwords do not match');
+            dispatch(setAlert({ message: 'Passwords do not match', type: 'error' }));
             return;
         }
 
         try {
             await signup({ ...userData, password });
-            alert('Account created successfully! You can now log in.');
+            dispatch(setAlert({ message: 'Signup successful. Please login.', type: 'success' }));
             navigate('/login');
         } catch (err) {
             console.error(err);
-            setError('Signup failed. Please try again.');
+            dispatch(setAlert({ message: 'Signup failed. Please try again.', type: 'error' }));
         }
     };
 
