@@ -1,17 +1,22 @@
+version: "3.9"
+
 services:
   backend:
+    deploy:
+      replicas: 3
     build:
       context: ./backend
       dockerfile: Dockerfile
       args:
-        - REACT_FRONTEND_URL=http://localhost:3001/
-    # container_name: toms-backend
+        - REACT_FRONTEND_URL=http://frontend:3001/
+    ports:
+      - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      REACT_FRONTEND_URL: http://localhost:3001/
+      REACT_FRONTEND_URL: http://frontend:3001/
     env_file:
       - .env
     depends_on:
@@ -19,22 +24,29 @@ services:
       - kafka
       - redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   frontend:
+    deploy:
+      replicas: 1
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: toms-frontend
     ports:
       - "3001:80"
     restart: unless-stopped
     environment:
-      - REACT_APP_WEBSOCKET_URL=http://localhost:8080/ws/
-      - REACT_APP_BACKEND_URL=http://localhost:8080/api/v1
+      - REACT_APP_WEBSOCKET_URL=http://backend/ws/
+      - REACT_APP_BACKEND_URL=http://backend/api/v1
 
   db:
+    deploy:
+      replicas: 1
     image: postgres:17
-    container_name: toms-db
     restart: unless-stopped
     ports:
       - "5432:5432"
@@ -55,8 +67,9 @@ services:
       retries: 5
 
   zookeeper:
+    deploy:
+      replicas: 1
     image: confluentinc/cp-zookeeper:7.5.0
-    container_name: zookeeper
     ports:
       - "2181:2181"
     environment:
@@ -67,8 +80,9 @@ services:
     restart: unless-stopped
 
   kafka:
+    deploy:
+      replicas: 1
     image: confluentinc/cp-kafka:7.5.0
-    container_name: kafka
     ports:
       - "9092:9092"
     environment:
@@ -82,20 +96,25 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     restart: unless-stopped
-  
+
   redis:
+    deploy:
+      replicas: 1
     image: redis:7
-    container_name: redis
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres_data:
   zookeeper_data:
   kafka_data:
   redis_data:
-
