@@ -4,11 +4,7 @@ services:
   backend:
     deploy:
       replicas: 3
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      args:
-        - REACT_FRONTEND_URL=http://frontend:3001/
+    image: shuvomoy/toms-backend:latest
     ports:
       - "8080:8080"
     environment:
@@ -16,26 +12,20 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      REACT_FRONTEND_URL: http://frontend:3001/
+      REACT_FRONTEND_URL: http://frontend/
     env_file:
       - .env
-    depends_on:
-      - db
-      - kafka
-      - redis
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   frontend:
     deploy:
       replicas: 1
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: shuvomoy/toms-frontend:latest
     ports:
       - "3001:80"
     restart: unless-stopped
@@ -61,10 +51,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db-scripts:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   zookeeper:
     deploy:
@@ -88,14 +78,18 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    depends_on:
-      - zookeeper
     volumes:
       - kafka_data:/var/lib/kafka/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     deploy:
@@ -108,13 +102,9 @@ services:
       - redis_data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
+      test: ["CMD", "redis-cli", "-h", "localhost", "ping"]
 volumes:
   postgres_data:
   zookeeper_data:
   kafka_data:
-  redis_data:
+  redis_data: 
