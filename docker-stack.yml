@@ -3,8 +3,8 @@ version: "3.9"
 services:
   backend:
     deploy:
-      replicas: 2
-    image: toms-backend:latest
+      replicas: 3
+    image: shuvomoy/toms-backend:latest
     ports:
       - "8080:8080"
     environment:
@@ -13,12 +13,19 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       REACT_FRONTEND_URL: http://frontend/
+    env_file:
+      - .env
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     deploy:
       replicas: 1
-    image: toms-frontend:latest
+    image: shuvomoy/toms-frontend:latest
     ports:
       - "3001:80"
     restart: unless-stopped
@@ -69,7 +76,10 @@ services:
       replicas: 1
     image: confluentinc/cp-kafka:7.5.0
     ports:
-      - "9092:9092"
+      - target: 9092
+        published: 9092
+        protocol: tcp
+        mode: host
     networks:
       - default
     environment:
