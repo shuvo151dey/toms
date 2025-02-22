@@ -1,0 +1,103 @@
+### Unstaged Changes ###
+diff --git a/docker-stack.yml b/docker-stack.yml
+index dbf560e..1149765 100644
+--- a/docker-stack.yml
++++ b/docker-stack.yml
+@@ -3,8 +3,8 @@ version: "3.9"
+ services:
+   backend:
+     deploy:
+-      replicas: 3
+-    image: shuvomoy/toms-backend:latest
++      replicas: 2
++    image: toms-backend:latest
+     ports:
+       - "8080:8080"
+     environment:
+@@ -13,19 +13,12 @@ services:
+       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+       REACT_FRONTEND_URL: http://frontend/
+-    env_file:
+-      - .env
+     restart: unless-stopped
+-    healthcheck:
+-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+-      interval: 10s
+-      timeout: 5s
+-      retries: 5
+ 
+   frontend:
+     deploy:
+       replicas: 1
+-    image: shuvomoy/toms-frontend:latest
++    image: toms-frontend:latest
+     ports:
+       - "3001:80"
+     restart: unless-stopped
+@@ -40,13 +33,13 @@ services:
+     restart: unless-stopped
+     ports:
+       - "5432:5432"
++    networks:
++      - default
+     environment:
+       POSTGRES_USER: ${POSTGRES_USER}
+       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+       POSTGRES_DB: ${POSTGRES_DB}
+       PGDATABASE: ${POSTGRES_DB}
+-    env_file:
+-      - .env
+     volumes:
+       - postgres_data:/var/lib/postgresql/data
+       - ./db-scripts:/docker-entrypoint-initdb.d
+@@ -62,6 +55,8 @@ services:
+     image: confluentinc/cp-zookeeper:7.5.0
+     ports:
+       - "2181:2181"
++    networks:
++      - default
+     environment:
+       ZOOKEEPER_CLIENT_PORT: 2181
+       ZOOKEEPER_TICK_TIME: 2000
+@@ -75,21 +70,20 @@ services:
+     image: confluentinc/cp-kafka:7.5.0
+     ports:
+       - "9092:9092"
++    networks:
++      - default
+     environment:
+       KAFKA_BROKER_ID: 1
+       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
++      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://toms_kafka:9092
+       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+     volumes:
+       - kafka_data:/var/lib/kafka/data
+     restart: unless-stopped
+-    healthcheck:
+-      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+-      interval: 10s
+-      timeout: 5s
+-      retries: 5
++    depends_on:
++      - zookeeper
+ 
+   redis:
+     deploy:
+@@ -103,6 +97,11 @@ services:
+     restart: unless-stopped
+     healthcheck:
+       test: ["CMD", "redis-cli", "-h", "localhost", "ping"]
++
++networks:
++  default:
++    name: toms_default
++    driver: overlay
+ volumes:
+   postgres_data:
+   zookeeper_data:
+
+### Staged Changes ###
