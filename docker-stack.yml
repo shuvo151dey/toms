@@ -4,30 +4,33 @@ services:
   backend:
     deploy:
       replicas: 3
-    image: shuvomoy/toms-backend:latest
+    image: toms-backend:latest
     ports:
-      - "8080:8080"
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: host
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       REACT_FRONTEND_URL: http://frontend/
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
     env_file:
       - .env
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   frontend:
     deploy:
       replicas: 1
-    image: shuvomoy/toms-frontend:latest
+    image: toms-frontend:latest
     ports:
-      - "3001:80"
+      - target: 80
+        published: 3001
+        protocol: tcp
+        mode: host
     restart: unless-stopped
     environment:
       - REACT_APP_WEBSOCKET_URL=http://backend/ws/
