@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
 
     private static final String REACT_FRONTEND_URL = System.getenv().getOrDefault("REACT_FRONTEND_URL",
-            "http://localhost:3001");
+            "http://localhost:3000");
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CustomUserDetailsService customUserDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -54,7 +54,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:3001"); // Allow frontend origin
+        config.addAllowedOrigin("http://localhost:3000"); // Allow frontend origin
         config.addAllowedOrigin("http://frontend"); // Dockerized frontend container
         config.addAllowedOrigin(REACT_FRONTEND_URL);
         config.addAllowedHeader("*");

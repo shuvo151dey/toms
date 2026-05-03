@@ -12,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig {
 
     private static final String REACT_FRONTEND_URL = System.getenv().getOrDefault("REACT_FRONTEND_URL",
-            "http://localhost:3001");
+            "http://localhost:3000");
     
     private static final Logger logger = LoggerFactory.getLogger(WebConfig.class);
 

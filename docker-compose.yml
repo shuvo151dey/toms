@@ -1,37 +1,4 @@
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      args:
-        - REACT_FRONTEND_URL=http://localhost:3001/
-    container_name: toms-backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      REACT_FRONTEND_URL: http://localhost:3001/
-    env_file:
-      - .env
-    depends_on:
-      - db
-      - kafka
-      - redis
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: toms-frontend
-    ports:
-      - "3001:80"
-    restart: unless-stopped
-    environment:
-      - REACT_APP_WEBSOCKET_URL=http://localhost:8080/ws/
-      - REACT_APP_BACKEND_URL=http://localhost:8080/api/v1
-
   db:
     image: postgres:17
     container_name: toms-db
@@ -74,7 +41,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
@@ -82,7 +49,7 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     restart: unless-stopped
-  
+
   redis:
     image: redis:7
     container_name: redis
@@ -98,4 +65,3 @@ volumes:
   zookeeper_data:
   kafka_data:
   redis_data:
-
