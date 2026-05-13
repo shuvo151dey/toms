@@ -4,19 +4,26 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Base64;
 
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import tech.smdey.toms.entity.User;
 
 @Component
 public class JwtTokenUtil {
-    private final Key signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final Key signingKey;
     private final long EXPIRATION_TIME = 86400000; 
     private final long REFRESH_TIME = 604800000;
+
+    public JwtTokenUtil(@Value("${jwt.secret.key}") String secretKey) {
+        byte[] keyBytes = Base64.getDecoder().decode(secretKey);
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
+    }
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();

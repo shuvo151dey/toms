@@ -118,3 +118,137 @@ Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All re
 - `spring.jpa.hibernate.ddl-auto=update` — schema is updated on startup, data is preserved across restarts.
 - `db-scripts/init.sql` runs once on first PostgreSQL container start to create the role and database.
 - Credentials for the DB container come from `.env` (see `.env.example`).
+
+---
+
+## Future Scope
+
+Items are grouped by theme and roughly ordered by impact within each group. "Known issue" items already documented above are included here with their fix strategy.
+
+---
+
+### 🔐 Security — Critical Fixes
+
+| # | Item | What to do |
+|---|------|------------|
+| S1 | **Externalize JWT secret** | Replace `Keys.secretKeyFor(...)` in `JwtTokenUtil` with a key loaded from `JWT_SECRET` env var. Tokens currently invalidate on every restart. |
+| S2 | **Move refresh token off localStorage** | Store refresh token in an `httpOnly; Secure` cookie instead of `localStorage.setItem(...)` in `ApiSlice.js`. Prevents XSS theft. |
+| S3 | **Rate-limit auth & order endpoints** | Add Bucket4j or Spring's `HandlerInterceptor` to cap login attempts (e.g., 5/min per IP) and order submissions per user. |
+| S4 | **Fix tenant isolation in repositories** | `findOrdersBySymbol()` and `findStopOrders()` in `OrderRepository` omit the `tenantId` filter — cross-tenant data leakage is possible. Add `AND tenant_id = :tenantId` to every query. |
+| S5 | **Account lockout on failed logins** | `User.isAccountNonLocked()` is hardcoded `true`. Track failed attempts in a `login_attempts` table and lock after N failures; expose an admin unlock endpoint. |
+| S6 | **Email verification on signup** | Send a verification link (via `JavaMailSender`) before activating the account. `User.isEnabled()` is already present — just needs to start as `false`. |
+| S7 | **Idempotency keys on order creation** | Accept an `Idempotency-Key` header in `POST /api/v1/orders`; deduplicate by storing the key in Redis with a TTL. Prevents double-orders on client retries. |
+| S8 | **Secure Kafka with SASL/TLS** | Add `security.protocol`, `sasl.mechanism`, and keystore config to `KafkaConfig`. The broker currently accepts unauthenticated connections. |
+| S9 | **Remove console.log from frontend** | `App.js` logs `REACT_APP_BACKEND_URL` to the browser console. Strip all production `console.log/error` calls or gate them behind `process.env.NODE_ENV === "development"`. |
+| S10 | **Add `/unauthorized` page** | `ProtectedRoute` redirects to `/unauthorized` but no route exists — the user sees a blank screen. Create a simple `UnauthorizedPage` component and register the route in `App.js`. |
+
+---
+
+### ⚙️ Core Trading Features
+
+| # | Item | What to do |
+|---|------|------------|
+| T1 | **Auto-trigger matching on order creation** | Call `MatchingEngineService.matchOrders(symbol)` asynchronously (via `@Async` or Kafka event) after every successful order save, instead of requiring a manual admin POST. |
+| T2 | **Dynamic symbol catalogue** | Replace the hardcoded `["AAPL", "GOOGL", "MSFT"]` list in `OrderService` and the frontend dropdowns with a `Symbol` entity/table; expose `GET /api/v1/symbols` and populate the dropdowns dynamically. |
+| T3 | **Real-time stop order evaluation** | Connect a `MarketDataService` (or a mock price-tick publisher) that periodically evaluates pending STOP orders against current prices instead of requiring `POST /api/v1/matching/triggerstop/{symbol}`. |
+| T4 | **Market data feed (simulated or live)** | Add a `MarketDataService` that generates OHLCV tick data (simulated via random walk, or via a free provider like Yahoo Finance / Alpaca). Publish ticks to Kafka; subscribe on the frontend for live price display. |
+| T5 | **Position & portfolio tracking** | Add a `Position` entity (user × symbol → net quantity, avg cost). Update it on every trade execution. Expose `GET /api/v1/portfolio` so traders can see current holdings and unrealised P&L. |
+| T6 | **Risk controls** | Add a `RiskService` called before order acceptance: position limit per user, notional value cap (price × qty), daily loss limit. Reject orders that breach limits with a clear error code. |
+| T7 | **Order book depth view** | Expose `GET /api/v1/orderbook/{symbol}` returning aggregated bid/ask levels; render a depth chart on the frontend so traders can see the book before submitting. |
+| T8 | **Configurable order constraints** | Move `MAX_QUANTITY=100` and allowed symbols to application config (or DB), not source code, so they can be changed without a redeploy. |
+
+---
+
+### 📊 Analytics & Reporting
+
+| # | Item | What to do |
+|---|------|------------|
+| A1 | **P&L reporting** | Calculate realised P&L per user per symbol (FIFO cost basis). Expose via `GET /api/v1/analytics/pnl` and add a P&L breakdown page in the frontend. |
+| A2 | **Time-series analytics** | Store VWAP, volume, and trade count in a pre-computed `AnalyticsSnapshot` table (populated by a scheduled job), so `AnalyticsService` returns history rather than recalculating from scratch each call. |
+| A3 | **End-of-day summary report** | Scheduled job (`@Scheduled` or Quartz) that generates a daily summary (trades, volume, fills) and optionally emails it to admins. |
+| A4 | **Volatility & spread metrics** | Add intraday high/low/volatility to `AnalyticsController`; display on a candlestick chart (e.g., `recharts` or `lightweight-charts`) in the analytics page. |
+| A5 | **Analytics caching** | Cache `AnalyticsService` responses in Redis with a short TTL (e.g., 30 s) so repeated admin queries don't hit the DB on every call. |
+
+---
+
+### 🔔 Notifications
+
+| # | Item | What to do |
+|---|------|------------|
+| N1 | **In-app notification centre** | Add a `Notification` entity; publish events (order filled, order rejected, stop triggered) to it. Show a badge + dropdown in the header; mark as read via API. |
+| N2 | **Email alerts** | Integrate `spring-boot-starter-mail`. Send emails on order fill, rejection, and daily summary. Templates via Thymeleaf. |
+| N3 | **WebSocket per-user channels** | Currently all messages go to `/topic/orders/{tenantId}`. Add per-user channels `/user/queue/notifications` using `SimpMessagingTemplate.convertAndSendToUser()` to avoid broadcasting sensitive order data to all tenants. |
+
+---
+
+### 🏗️ Reliability & Correctness
+
+| # | Item | What to do |
+|---|------|------------|
+| R1 | **Wrap trade execution in `@Transactional`** | `MatchingEngineService.executeTrade()` currently has no transaction boundary — a crash mid-execution can leave order state inconsistent. Annotate with `@Transactional(isolation = REPEATABLE_READ)`. |
+| R2 | **Optimistic locking on orders** | Add `@Version` to `TradeOrder` to prevent lost-update race conditions when two matching cycles run concurrently on the same order. |
+| R3 | **Redis cache coherence** | Use Redisson distributed lock (or Lua CAS) around the read-modify-write cycle in `OrderCacheService` to close the window between DB write and cache invalidation. |
+| R4 | **Global exception handler** | Add `@ControllerAdvice GlobalExceptionHandler` with typed exceptions (`OrderNotFoundException`, `InsufficientFundsException`, `SymbolNotAllowedException`) returning structured JSON error bodies, replacing the current ad-hoc `RuntimeException` throws. |
+| R5 | **Idempotent Kafka consumer** | `KafkaConsumerService` can process a message more than once on rebalance or retry. Store processed Kafka offsets (or a dedup key) in the DB to make trade creation idempotent. |
+| R6 | **Enforce pagination limits** | `OrderController.getOrders()` accepts arbitrary page sizes. Add `@Max(100)` to the size parameter and validate with `@Validated` on the controller. |
+
+---
+
+### 🖥️ Frontend Improvements
+
+| # | Item | What to do |
+|---|------|------------|
+| F1 | **Wire up dark/light theme** | `AppSlice` already tracks `theme`. Create a MUI `theme` object for each mode and wrap `App.js` in `<ThemeProvider theme={...}>` that reads from Redux state. |
+| F2 | **Client-side order form validation** | Add field-level validation to `OrderModal` (symbol required, quantity 1–100, price > 0 for LIMIT orders, stop price required for STOP orders) before hitting the API. Show inline error messages. |
+| F3 | **Structured error messages** | Parse backend error codes/messages in `ApiSlice` and surface them as actionable alerts (`"Symbol TSLA is not supported"`) instead of the current generic `"Order creation failed"`. |
+| F4 | **User profile & settings page** | Add a `/profile` route showing username, role, tenant, and options to change password. Extend `AuthController` with `PUT /api/v1/auth/password`. |
+| F5 | **Dashboard / home page** | Replace the combined order+trade list on Home with a proper dashboard: key metrics cards (open orders, today's trades, P&L), mini chart, recent activity feed. |
+| F6 | **Order cancellation UI** | The backend likely supports order updates, but there is no cancel button in the UI. Add a cancel action in `OrderBook` that calls `DELETE /api/v1/orders/{id}`. |
+| F7 | **Trade history pagination** | `TradeFeed` loads all trades. Add server-driven pagination with infinite scroll or page controls. |
+| F8 | **Session expiry handling** | On tab close / reopen, check token expiry before letting the user in. Prompt re-login instead of letting an expired token accumulate in `localStorage`. |
+
+---
+
+### 🧪 Testing
+
+| # | Item | What to do |
+|---|------|------------|
+| X1 | **Unit tests for matching engine** | `MatchingEngineService` has complex priority logic and partial-fill edge cases — add JUnit 5 + Mockito tests covering: full fill, partial fill, MARKET vs LIMIT priority, stop order conversion. |
+| X2 | **Integration tests with Testcontainers** | Use `@SpringBootTest` + Testcontainers (PostgreSQL, Kafka) to test the full order → match → trade → Kafka path without mocks. |
+| X3 | **Frontend component tests** | Add Jest + React Testing Library tests for `OrderModal`, `OrderBook`, `TradeFeed`, and the Redux slices. |
+| X4 | **E2E tests** | Add Playwright or Cypress tests for the core trader flow: login → create order → trigger match → see trade in feed. |
+
+---
+
+### 🔭 Observability
+
+| # | Item | What to do |
+|---|------|------------|
+| O1 | **Spring Boot Actuator** | Enable `/actuator/health`, `/actuator/metrics`, `/actuator/info` and configure readiness/liveness probes for Docker/Kubernetes deployments. |
+| O2 | **Structured logging** | Replace plain `System.out`/bare SLF4J with structured JSON logging (Logstash encoder) so logs are queryable in ELK or Loki. Add correlation IDs per request. |
+| O3 | **Prometheus + Grafana** | Expose Micrometer metrics via `/actuator/prometheus`; add a Grafana dashboard tracking order throughput, match latency, Kafka consumer lag, cache hit rate. |
+| O4 | **Distributed tracing** | Add OpenTelemetry instrumentation (or Zipkin via `spring-cloud-sleuth`) to trace a request from REST → Kafka → WebSocket across services. |
+| O5 | **Log rotation & retention** | `logs/toms.log` grows unbounded. Configure `logback-spring.xml` with rolling file appender (size + time based) and a max-history policy. |
+
+---
+
+### 🏢 Multi-tenancy Completion
+
+| # | Item | What to do |
+|---|------|------------|
+| M1 | **Dynamic tenant selection at login** | Replace hardcoded `tenantId = "NSE"` in `AuthController` with a `tenantId` field in the signup/login request body. Store the chosen tenant in the JWT claim (already read correctly downstream). |
+| M2 | **Tenant administration panel** | Add an ADMIN-only page to create and manage tenants (name, allowed symbols, risk limits). Back it with a `Tenant` entity and `TenantRepository`. |
+| M3 | **Per-tenant risk configuration** | Allow each tenant to have its own symbol list, position limits, and order size caps, rather than sharing global hardcoded values. |
+
+---
+
+### 🚀 DevOps & Infrastructure
+
+| # | Item | What to do |
+|---|------|------------|
+| D1 | **Kubernetes manifests** | Add `k8s/` directory with Deployments, Services, ConfigMaps, and HorizontalPodAutoscalers for backend and frontend. |
+| D2 | **CI/CD pipeline** | Add a GitHub Actions workflow: test → build Docker image → push to registry → deploy to staging. |
+| D3 | **Secrets management** | Move DB password, JWT secret, and Kafka credentials to a secrets manager (Vault, AWS Secrets Manager, or GitHub Actions secrets) rather than `.env` files. |
+| D4 | **Database migrations** | Replace `ddl-auto=update` with Flyway or Liquibase managed migrations so schema changes are versioned, reviewable, and reversible. |
+| D5 | **OpenAPI / Swagger UI** | Add `springdoc-openapi-starter-webmvc-ui` dependency; annotate controllers — auto-generates interactive API docs at `/swagger-ui.html`. |
+| D6 | **Read replica for analytics** | Route `AnalyticsService` queries to a PostgreSQL read replica to prevent heavy analytical queries from impacting the OLTP write path. |
