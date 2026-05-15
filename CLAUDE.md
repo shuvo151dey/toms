@@ -131,7 +131,7 @@ Items are grouped by theme and roughly ordered by impact within each group. "Kno
 
 | # | Item | What to do |
 |---|------|------------|
-| S1 | **Externalize JWT secret** | Replace `Keys.secretKeyFor(...)` in `JwtTokenUtil` with a key loaded from `JWT_SECRET` env var. Tokens currently invalidate on every restart. |
+| S1 | ~~**Externalize JWT secret**~~ | ~~Replace `Keys.secretKeyFor(...)` in `JwtTokenUtil` with a key loaded from `JWT_SECRET` env var. Tokens currently invalidate on every restart.~~ |
 | S2 | **Move refresh token off localStorage** | Store refresh token in an `httpOnly; Secure` cookie instead of `localStorage.setItem(...)` in `ApiSlice.js`. Prevents XSS theft. |
 | S3 | **Rate-limit auth & order endpoints** | Add Bucket4j or Spring's `HandlerInterceptor` to cap login attempts (e.g., 5/min per IP) and order submissions per user. |
 | S4 | **Fix tenant isolation in repositories** | `findOrdersBySymbol()` and `findStopOrders()` in `OrderRepository` omit the `tenantId` filter — cross-tenant data leakage is possible. Add `AND tenant_id = :tenantId` to every query. |
