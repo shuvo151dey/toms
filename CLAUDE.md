@@ -133,7 +133,7 @@ Items are grouped by theme and roughly ordered by impact within each group. "Kno
 |---|------|------------|
 | S1 | ~~**Externalize JWT secret**~~ | ~~Replace `Keys.secretKeyFor(...)` in `JwtTokenUtil` with a key loaded from `JWT_SECRET` env var. Tokens currently invalidate on every restart.~~ |
 | S2 | ~~**Move refresh token off localStorage**~~ | ~~Store refresh token in an `httpOnly; Secure` cookie instead of `localStorage.setItem(...)` in `ApiSlice.js`. Prevents XSS theft.~~ |
-| S3 | **Rate-limit auth & order endpoints** | Add Bucket4j or Spring's `HandlerInterceptor` to cap login attempts (e.g., 5/min per IP) and order submissions per user. |
+| S3 | ~~**Rate-limit auth & order endpoints**~~ | ~~Add Bucket4j or Spring's `HandlerInterceptor` to cap login attempts (e.g., 5/min per IP) and order submissions per user.~~ |
 | S4 | **Fix tenant isolation in repositories** | `findOrdersBySymbol()` and `findStopOrders()` in `OrderRepository` omit the `tenantId` filter — cross-tenant data leakage is possible. Add `AND tenant_id = :tenantId` to every query. |
 | S5 | **Account lockout on failed logins** | `User.isAccountNonLocked()` is hardcoded `true`. Track failed attempts in a `login_attempts` table and lock after N failures; expose an admin unlock endpoint. |
 | S6 | **Email verification on signup** | Send a verification link (via `JavaMailSender`) before activating the account. `User.isEnabled()` is already present — just needs to start as `false`. |
