@@ -9,6 +9,7 @@ import { setAlert } from "./AppSlice";
 const baseQuery = fetchBaseQuery({
     
     baseUrl: process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api/v1',
+    credentials: "include",
     prepareHeaders: (headers, { getState }) => {
         const token = getState().auth.accessToken;
         if (token) {
@@ -24,12 +25,10 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     if (result.error && result.error.status === 401) {
         console.log("Access token expired. Attempting refresh...");
 
-        const refreshToken = api.getState().auth.refreshToken;
         const refreshResult = await baseQuery(
             {
                 url: "/auth/refresh-token",
                 method: "POST",
-                body: { refreshToken },
             },
             api,
             extraOptions
@@ -37,7 +36,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 
         if (refreshResult.data) {
             const authState = api.getState().auth;
-            api.dispatch(setAuth({ ...authState, accessToken: refreshResult.data.accessToken, refreshToken }));
+            api.dispatch(setAuth({ ...authState, accessToken: refreshResult.data.accessToken }));
 
             result = await baseQuery(args, api, extraOptions);
         } else {
@@ -62,8 +61,7 @@ export const apiSlice = createApi({
                     const { data } = await queryFulfilled;
                     const {roles, sub, tenantId, exp} = jwtDecode(data.accessToken);
             
-                    dispatch(setAuth({roles, user: sub, accessToken: data.accessToken, refreshToken: data.refreshToken, tenantId, expiryTime: exp*1000})); 
-                    localStorage.setItem('refreshToken', data.refreshToken);
+                    dispatch(setAuth({roles, user: sub, accessToken: data.accessToken, tenantId, expiryTime: exp*1000})); 
                     dispatch(setAlert({alert: "Login Successful!!", type: "success"}));
                 } catch (error) {
                     console.error("Failed to login", error);
@@ -97,10 +95,9 @@ export const apiSlice = createApi({
 
         }),
         logout: builder.mutation({
-            query: (refreshToken) => ({
+            query: () => ({
                 url: "auth/logout",
                 method: "POST",
-                body: { refreshToken },
             }),
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {

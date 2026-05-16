@@ -1,5 +1,6 @@
 package tech.smdey.toms.dto;
 
+@Deprecated(since = "2024-06", forRemoval = true)
 public class RefreshRequest {
     private String refreshToken;
 

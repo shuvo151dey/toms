@@ -54,9 +54,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:3000"); // Allow frontend origin
-        config.addAllowedOrigin("http://frontend"); // Dockerized frontend container
-        config.addAllowedOrigin(REACT_FRONTEND_URL);
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001")); // Allow frontend origin
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         

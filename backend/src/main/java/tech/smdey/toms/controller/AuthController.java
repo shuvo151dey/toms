@@ -6,15 +6,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import tech.smdey.toms.entity.User;
 import tech.smdey.toms.entity.UserRole;
 import tech.smdey.toms.repository.UserRepository;
 import tech.smdey.toms.dto.AuthRequest;
 import tech.smdey.toms.dto.AuthResponse;
 import tech.smdey.toms.dto.SignupRequest;
-import tech.smdey.toms.dto.RefreshRequest;
 import tech.smdey.toms.util.JwtTokenUtil;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -33,7 +36,7 @@ public class AuthController {
     private JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request, HttpServletResponse response) {
         String tenantId = "NSE"; 
 
         User user = userRepository.findByUsernameAndTenantId(request.getUsername(), tenantId)
@@ -47,10 +50,16 @@ public class AuthController {
         String accessToken = jwtTokenUtil.generateToken(user);
         String refreshToken = jwtTokenUtil.generateRefreshToken(user);
 
+        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(true);
+        refreshCookie.setPath("/api/v1/auth");
+        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+        response.addCookie(refreshCookie);
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
 
-        return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken));
+        return ResponseEntity.ok(new AuthResponse(accessToken));
     }
 
     @PostMapping("/register")
@@ -76,8 +85,15 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshRequest request) {
-        String refreshToken = request.getRefreshToken();
+    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            refreshToken = Arrays.stream(request.getCookies())
+                    .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .orElse(null);
+        }
         if (refreshToken == null || refreshToken.isEmpty()) {
             return ResponseEntity.badRequest().body("Refresh token is missing");
         }
@@ -97,8 +113,15 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody RefreshRequest request) {
-        String refreshToken = request.getRefreshToken();
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            refreshToken = Arrays.stream(request.getCookies())
+                    .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .orElse(null);
+        }
         if (refreshToken != null) {
             userRepository.findByRefreshToken(refreshToken)
                     .ifPresent(user -> {
@@ -106,6 +129,12 @@ public class AuthController {
                         userRepository.save(user);
                     });
         }
+        Cookie cookie = new Cookie("refreshToken", "");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/api/v1/auth");
+        cookie.setMaxAge(0); 
+        response.addCookie(cookie);
         return ResponseEntity.ok("Logged out successfully");
     }
 }
