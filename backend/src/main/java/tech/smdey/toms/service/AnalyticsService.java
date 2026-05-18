@@ -23,8 +23,8 @@ public class AnalyticsService {
     @Autowired
     private OrderRepository orderRepository;
 
-    public Map<String, Object> getTradeAnalytics(String symbol, LocalDateTime from, LocalDateTime to) {
-        List<Trade> trades = tradeRepository.findTrades(symbol, from, to);
+    public Map<String, Object> getTradeAnalytics(String symbol, String tenantId, LocalDateTime from, LocalDateTime to) {
+        List<Trade> trades = tradeRepository.findTrades(symbol, tenantId, from, to);
     
         if (trades.isEmpty()) {
             // Handle case where no trades are found
@@ -49,8 +49,8 @@ public class AnalyticsService {
     }
     
 
-    public Map<String, Object> getOrderAnalytics(String symbol) {
-        List<TradeOrder> orders = orderRepository.findOrdersBySymbol(symbol);
+    public Map<String, Object> getOrderAnalytics(String symbol, String tenantId) {
+        List<TradeOrder> orders = orderRepository.findOrdersBySymbol(symbol, tenantId);
     
         long totalOrders = orders.size();
         if (totalOrders == 0) {

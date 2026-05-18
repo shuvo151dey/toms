@@ -154,7 +154,7 @@ public class MatchingEngineService {
 
     // Trigger stop orders based on market price
     public void triggerStopOrders(String symbol, double marketPrice, String tenantId) {
-        List<TradeOrder> stopOrders = orderRepository.findStopOrders(symbol);
+        List<TradeOrder> stopOrders = orderRepository.findStopOrders(symbol, tenantId);
         for (TradeOrder stopOrder : stopOrders) {
             boolean shouldTrigger = (stopOrder.getOrderAction() == OrderAction.BUY && marketPrice >= stopOrder.getStopPrice()) ||
                                     (stopOrder.getOrderAction() == OrderAction.SELL && marketPrice <= stopOrder.getStopPrice());

@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,6 +15,7 @@ import tech.smdey.toms.entity.OrderAction;
 import tech.smdey.toms.entity.OrderMethod;
 import tech.smdey.toms.entity.OrderStatus;
 import tech.smdey.toms.entity.TradeOrder;
+import tech.smdey.toms.entity.User;
 import tech.smdey.toms.repository.OrderRepository;
 import tech.smdey.toms.service.KafkaProducerService;
 import tech.smdey.toms.service.OrderCacheService;
@@ -85,6 +87,7 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<Page<TradeOrder>> getOrders(
+            @AuthenticationPrincipal User user,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -97,7 +100,7 @@ public class OrderController {
         // Fetch paginated and filtered data
         Page<TradeOrder> orders;
         if (status != null) {
-            orders = orderRepository.findByStatus(status, pageable);
+            orders = orderRepository.findByStatusAndTenantId(status, user.getTenantId(), pageable);
         } else {
             orders = orderRepository.findAll(pageable);
         }
