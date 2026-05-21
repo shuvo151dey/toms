@@ -52,6 +52,18 @@ public class User implements UserDetails {
     @Column(name = "refresh_token")
     private String refreshToken;
 
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private int failedLoginAttempts = 0;
+
+    @Column
+    private LocalDateTime accountLockedUntil;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean enabled = false;
+
+    @Column
+    private String verificationToken;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -113,7 +125,23 @@ public class User implements UserDetails {
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public void setFailedLoginAttempts(int attempts) {
+        this.failedLoginAttempts = attempts;
+    }
     
+    public LocalDateTime getAccountLockedUntil() {
+        return accountLockedUntil;
+    }
+
+    public void setAccountLockedUntil(LocalDateTime time) {
+        this.accountLockedUntil = time;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // Convert UserRole enums to GrantedAuthority instances
@@ -130,7 +158,8 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        if (accountLockedUntil == null) return true;
+        return LocalDateTime.now().isAfter(accountLockedUntil);
     }
 
     @Override
@@ -140,7 +169,20 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
+
+    public void setEnabled(boolean state) {
+        this.enabled = state;
+    }
+
+    public String getVerificationToken() {
+        return this.verificationToken;
+    }
+
+    public void setVerificationToken(String token) {
+        this.verificationToken = token;
+    }
+
 
 }
