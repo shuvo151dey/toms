@@ -61,8 +61,18 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<TradeOrder> createOrder(@Valid @RequestBody OrderRequest order,
-            @RequestHeader("Authorization") String authheader) {
+    public ResponseEntity<TradeOrder> createOrder(
+        @Valid @RequestBody OrderRequest order,
+        @RequestHeader("Authorization") String authheader,
+        @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+
+        
+        if (idempotencyKey != null) {
+            Optional<TradeOrder> cached = orderCacheService.getIdempotentResponse(idempotencyKey);
+            if (cached.isPresent()){
+                return ResponseEntity.ok(cached.get());
+            }
+        }
 
         String token = authheader.replace("Bearer ", "").trim();
 
@@ -82,6 +92,10 @@ public class OrderController {
         orderCacheService.saveToCache(newOrder.getId(), newOrder);
 
         kafkaProducerService.sendOrderMessage(newOrder);
+
+        if (idempotencyKey != null) {
+            orderCacheService.saveIdempotentResponse(idempotencyKey, newOrder);
+        }
         return ResponseEntity.ok(newOrder);
     }
 

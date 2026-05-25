@@ -34,21 +34,26 @@ services:
     restart: unless-stopped
 
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
+    image: confluentinc/cp-kafka:7.5.0    # ← without this Docker doesn't know what to run
     container_name: kafka
     ports:
-      - "9092:9092"
+      - "9092:9092"                        # ← without this port 9092 isn't exposed to the host
+    depends_on:
+      - zookeeper
+    restart: unless-stopped 
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: SASL_PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SASL_PLAINTEXT:SASL_PLAINTEXT
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_INTER_BROKER_LISTENER_NAME: SASL_PLAINTEXT
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    depends_on:
-      - zookeeper
     volumes:
       - kafka_data:/var/lib/kafka/data
-    restart: unless-stopped
+      - ./kafka_jaas.conf:/etc/kafka/kafka_server_jaas.conf:ro  # ← mounts your file into the container
 
   redis:
     image: redis:7

@@ -136,6 +136,9 @@ export const apiSlice = createApi({
                 url: "orders",
                 method: "POST",
                 body: order,
+                headers: {
+                    "Idempotency-Key": crypto.randomUUID(),
+                }
             }),
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {

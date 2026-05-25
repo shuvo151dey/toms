@@ -6,11 +6,14 @@ import org.springframework.stereotype.Service;
 import tech.smdey.toms.entity.TradeOrder;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class OrderCacheService {
 
     private static final String CACHE_KEY = "orders";
+
+    private static final String IDEMPOTENCY_PREFIX = "Idempotency:";
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -26,5 +29,14 @@ public class OrderCacheService {
 
     public void deleteFromCache(Long id) {
         redisTemplate.opsForHash().delete(CACHE_KEY, id.toString());
+    }
+
+    public Optional<TradeOrder> getIdempotentResponse(String key) {
+        Object cached = redisTemplate.opsForValue().get(IDEMPOTENCY_PREFIX + key);
+        return Optional.ofNullable((TradeOrder) cached);
+    }
+
+    public void saveIdempotentResponse(String key, TradeOrder order) {
+        redisTemplate.opsForValue().set(IDEMPOTENCY_PREFIX + key, order, 24, TimeUnit.HOURS);
     }
 }
