@@ -23,7 +23,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     let result = await baseQuery(args, api, extraOptions);
 
     if (result.error && result.error.status === 401) {
-        console.log("Access token expired. Attempting refresh...");
+        logger.log("Access token expired. Attempting refresh...");
 
         const refreshResult = await baseQuery(
             {
@@ -64,7 +64,7 @@ export const apiSlice = createApi({
                     dispatch(setAuth({roles, user: sub, accessToken: data.accessToken, tenantId, expiryTime: exp*1000})); 
                     dispatch(setAlert({alert: "Login Successful!!", type: "success"}));
                 } catch (error) {
-                    console.error("Failed to login", error);
+                    logger.error("Failed to login", error);
                     dispatch(setAlert({alert: "Failed to login", type: "error"}));
                 }
 
@@ -81,7 +81,7 @@ export const apiSlice = createApi({
                     await queryFulfilled;
                     dispatch(setAlert({alert: "User Registered!!", type: "success"}));
                 } catch (error) {
-                    console.error("Failed to register", error);
+                    logger.error("Failed to register", error);
                     dispatch(setAlert({alert: "Failed to register", type: "error"}));
                 }
 
@@ -105,7 +105,7 @@ export const apiSlice = createApi({
                     dispatch(setAlert({alert: "Logging out"}))
                     dispatch(logout());
                 } catch (error) {
-                    console.error("Logout Error", error);
+                    logger.error("Logout Error", error);
                     dispatch(setAlert({alert: "Failed to logout", type: "error"}));
                 }
 
@@ -124,7 +124,7 @@ export const apiSlice = createApi({
                     dispatch(setOrders(data.content));
                     dispatch(setAlert({alert: "Orders fetched", type: "success"}));
                 } catch (error) {
-                    console.error("Failed to fetch orders", error);
+                    logger.error("Failed to fetch orders", error);
                     dispatch(setAlert({alert:"Failed to fetch orders", type: "error"}))
                 }
 
@@ -145,7 +145,7 @@ export const apiSlice = createApi({
                     await queryFulfilled;
                     dispatch(setAlert({alert: "Order placed!!", type: "success"}));
                 } catch (error) {
-                    console.error("Failed to place order", error);
+                    logger.error("Failed to place order", error);
                     dispatch(setAlert({alert: "Failed to place order", type: "error"}));
                 }
 
@@ -159,7 +159,7 @@ export const apiSlice = createApi({
                     dispatch(setTrades(data));
                     dispatch(setAlert({alert: "Trades loaded", type: "success"}))
                 } catch (error) {
-                    console.error("Failed to fetch trades", error);
+                    logger.error("Failed to fetch trades", error);
                     dispatch(setAlert({alert: "Failed to fetch trades", type: "error"}))
                 }
             },
@@ -172,7 +172,7 @@ export const apiSlice = createApi({
                     await queryFulfilled;
                     dispatch(setAlert({alert: "Order cancelled", type: "info"}))
                 } catch (error) {
-                    console.error("Failed to cancel order", error);
+                    logger.error("Failed to cancel order", error);
                     dispatch(setAlert({alert: "Failed to cancel order", type: "error"}))
                 }
             },
@@ -184,7 +184,7 @@ export const apiSlice = createApi({
                     await queryFulfilled;
                     dispatch(setAlert({alert: "Order updated", type: "success"}))
                 } catch (error) {
-                    console.error("Failed to update order", error);
+                    logger.error("Failed to update order", error);
                     dispatch(setAlert({alert: "Failed to update order", type: "error"}))
                 }
             },
@@ -196,7 +196,7 @@ export const apiSlice = createApi({
                     await queryFulfilled;
                     dispatch(setAlert({alert: "Order Analytics loaded", type: "success"}))
                 } catch (error) {
-                    console.error("Failed to load analytics", error);
+                    logger.error("Failed to load analytics", error);
                     dispatch(setAlert({alert: "Failed to load analytics", type: "error"}))
                 }
             },
@@ -208,7 +208,7 @@ export const apiSlice = createApi({
                     await queryFulfilled;
                     dispatch(setAlert({alert: "Trade Analytics loaded", type: "success"}))
                 } catch (error) {
-                    console.error("Failed to load analytics", error);
+                    logger.error("Failed to load analytics", error);
                     dispatch(setAlert({alert: "Failed to load analytics", type: "error"}))
                 }
             },
@@ -220,7 +220,7 @@ export const apiSlice = createApi({
                     await queryFulfilled;
                     dispatch(setAlert({alert: "Order matching done", type: "success"}))
                 } catch (error) {
-                    console.error("Failed to match orders", error);
+                    logger.error("Failed to match orders", error);
                     dispatch(setAlert({alert: "Failed to match orders", type: "error"}))
                 }
             },

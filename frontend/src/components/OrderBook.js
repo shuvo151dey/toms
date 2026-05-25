@@ -15,7 +15,7 @@ import OrderModal from "./OrderModal";
 import { useSelector, useDispatch } from "react-redux";
 import { setOrder } from "../redux/OrderSlice";
 import { useCancelOrderMutation } from "../redux/ApiSlice";
-
+import logger from "../utils/logger";
 const OrderBook = () => {
     const [open, setOpen] = React.useState(false);
     const dispatch = useDispatch();
@@ -34,9 +34,9 @@ const OrderBook = () => {
     const handleCancel = async (order) => {
         try {
             await cancelOrder(order.id).unwrap();
-            console.log('Order Cancelled');
+            logger.log('Order Cancelled');
         } catch (error) {
-            console.log('Error in cancelling order');
+            logger.error('Error in cancelling order', error);
         }
     }
     return (<>

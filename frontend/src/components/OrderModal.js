@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useCreateOrderMutation, useUpdateOrderMutation } from '../redux/ApiSlice';
 import { useDispatch } from 'react-redux';
 import { setAlert } from '../redux/AppSlice';
-
+import logger from '../utils/logger';
 
 const OrderModal = ({ open, handleOpen, handleClose }) => {
     const [isEdit, setIsEdit] = useState(false);
@@ -60,7 +60,7 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
             }
         } catch (error) {
             dispatch(setAlert({ message: 'Order creation failed', type: 'error' }));
-            console.error(error);
+            logger.error(error);
         }
         handleClose();
     };

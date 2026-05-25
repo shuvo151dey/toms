@@ -44,7 +44,6 @@ export default function App() {
     const expiryTime = useSelector(state => state.auth.expiryTime);
     const alert = useSelector(state => state.app.alert);
     const alertType = useSelector(state => state.app.alertType);
-    console.log(process.env.REACT_APP_BACKEND_URL);
     useEffect(() => {
         if(isAuthenticated){
         triggerGetOrders({
@@ -113,14 +112,14 @@ export default function App() {
         try {
             await matchOrders(symbol).unwrap();
         } catch(error) {
-            console.error(error);
+            logger.error(error);
         }
     };
     const logoutHandler = async () => {
         try{
             await logout(refreshToken).unwrap();
         } catch(error){
-            console.log(error)
+            logger.log(error)
         }
     }
     const AppLayout = () => {

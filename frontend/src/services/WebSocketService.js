@@ -9,7 +9,7 @@ let retryCounts = 0;
 
 export const connect = (onMessage, tenantId) => {
     if (stompClient && stompClient.connected) {
-        console.log("WebSocket is already connected.");
+        logger.log("WebSocket is already connected.");
         return;
     }
 
@@ -18,7 +18,7 @@ export const connect = (onMessage, tenantId) => {
     
     const connectWithRetry = () => {
         stompClient.connect({}, () => {
-            console.log("Connected to WebSocket");
+            logger.log("Connected to WebSocket");
     
             
             subscriptions = [
@@ -31,7 +31,7 @@ export const connect = (onMessage, tenantId) => {
             ];
             retryCounts = 0;
         }, (error) => {
-            console.log("Websocket error:", error);
+            logger.log("Websocket error:", error);
             retryCounts++;
             const delay = Math.min(retryCounts*5000, 30000);
             setTimeout(connectWithRetry,delay);
@@ -44,6 +44,6 @@ export const disconnect = () => {
     if (stompClient) {
         subscriptions.forEach((sub) => sub.unsubscribe());
         stompClient.disconnect();
-        console.log("Disconnected from WebSocket");
+        logger.log("Disconnected from WebSocket");
     }
 };

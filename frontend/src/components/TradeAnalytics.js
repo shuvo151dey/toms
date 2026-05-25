@@ -1,6 +1,7 @@
 import { Card, CardContent, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import {useFetchTradeAnalyticsQuery} from "../redux/ApiSlice";
+import logger from "../utils/logger";
 
 const TradeAnalytics = () => {
     const selectedSymbol = useSelector((state) => state.app.selectedSymbol)
@@ -9,7 +10,7 @@ const TradeAnalytics = () => {
         from: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString(),
         to: new Date().toISOString(),
     });
-    console.log(data, error, isLoading)
+    logger.log(data, error, isLoading)
     return (
         <Card>
             <CardContent>

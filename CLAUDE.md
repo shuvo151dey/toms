@@ -139,7 +139,7 @@ Items are grouped by theme and roughly ordered by impact within each group. "Kno
 | S6 | ~~**Email verification on signup**~~ | ~~Send a verification link (via `JavaMailSender`) before activating the account. `User.isEnabled()` is already present — just needs to start as `false`.~~ |
 | S7 | ~~**Idempotency keys on order creation**~~ | ~~Accept an `Idempotency-Key` header in `POST /api/v1/orders`; deduplicate by storing the key in Redis with a TTL. Prevents double-orders on client retries.~~ |
 | S8 | ~~**Secure Kafka with SASL/TLS**~~ | ~~Add `security.protocol`, `sasl.mechanism`, and keystore config to `KafkaConfig`. The broker currently accepts unauthenticated connections.~~ |
-| S9 | **Remove console.log from frontend** | `App.js` logs `REACT_APP_BACKEND_URL` to the browser console. Strip all production `console.log/error` calls or gate them behind `process.env.NODE_ENV === "development"`. |
+| S9 | ~~**Remove console.log from frontend**~~ | ~~`App.js` logs `REACT_APP_BACKEND_URL` to the browser console. Strip all production `console.log/error` calls or gate them behind `process.env.NODE_ENV === "development"`.~~ |
 | S10 | **Add `/unauthorized` page** | `ProtectedRoute` redirects to `/unauthorized` but no route exists — the user sees a blank screen. Create a simple `UnauthorizedPage` component and register the route in `App.js`. |
 
 ---

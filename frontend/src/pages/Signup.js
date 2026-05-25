@@ -4,7 +4,7 @@ import { Box, TextField, Button, Typography, Paper, CircularProgress, Link } fro
 import { useNavigate } from 'react-router-dom';
 import { setAlert } from '../redux/AppSlice';
 import { useDispatch } from 'react-redux';
-
+import logger from '../utils/logger';
 const Signup = () => {
     const [formData, setFormData] = useState({
         username: '',
@@ -35,7 +35,7 @@ const Signup = () => {
             dispatch(setAlert({ message: 'Signup successful. Please login.', type: 'success' }));
             navigate('/login');
         } catch (err) {
-            console.error(err);
+            logger.error(err);
             dispatch(setAlert({ message: 'Signup failed. Please try again.', type: 'error' }));
         }
     };
