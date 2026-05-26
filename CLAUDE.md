@@ -67,9 +67,19 @@ Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All re
 ### JWT Auth
 
 - Tokens are generated in `JwtTokenUtil` and carry `username`, `tenantId`, and `roles` claims.
-- **Known issue**: the signing key is currently generated randomly on startup (`Keys.secretKeyFor(...)`), meaning all tokens are invalidated on backend restart. Fix: externalize via `JWT_SECRET` env var.
+- The signing key is loaded from the `JWT_SECRET_KEY` env var (`Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret))`), so tokens survive backend restarts.
+- Refresh tokens are stored in an `httpOnly; Secure` cookie (set by `AuthController`, read by `JwtAuthenticationFilter`). They are never exposed to JavaScript.
 - `JwtAuthenticationFilter` skips processing for paths starting with `/api/v1/auth/` and `/ws/`.
 - The frontend (`ApiSlice`) auto-retries with a refreshed token on 401 responses.
+
+### Security
+
+- **Rate limiting**: `RateLimitInterceptor` (Bucket4j) caps login attempts at 5/min per IP and order submissions at 20/min per username. Returns HTTP 429 with a JSON body on breach. Registered via `WebMvcConfig`.
+- **Account lockout**: `User` tracks `failedLoginAttempts` and `accountLockedUntil`. After 5 consecutive failures the account is locked for 15 minutes. Admins can unlock via `POST /api/v1/auth/unlock/{username}`.
+- **Email verification**: New accounts start with `enabled=false`. `AuthController` sends a verification link via `EmailService` (`JavaMailSender`). `GET /api/v1/auth/verify?token=...` activates the account.
+- **Idempotency**: `POST /api/v1/orders` accepts an `Idempotency-Key` header. The key and response are stored in Redis (24h TTL via `OrderCacheService`) to prevent duplicate orders on client retries.
+- **Kafka**: Broker requires SASL/PLAIN authentication. Credentials are configured via env vars (`KAFKA_SECURITY_PROTOCOL`, `KAFKA_SASL_USERNAME`, `KAFKA_SASL_PASSWORD`) and picked up by `KafkaConfig`. The JAAS config is mounted into the Kafka container via `kafka_jaas.conf`.
+- **Role enforcement**: `@EnableMethodSecurity` is active on `SecurityConfig`; `@PreAuthorize` guards admin endpoints. The frontend mirrors this with `ProtectedRoute` (role-gated) and `PrivateRoute` (auth-gated). `/unauthorized` renders a 403 page instead of a blank screen.
 
 ### Matching Engine (`MatchingEngineService`)
 
@@ -102,14 +112,21 @@ Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All re
 
 | Path | Purpose |
 |---|---|
-| `backend/src/.../config/SecurityConfig.java` | Spring Security filter chain, CORS, BCrypt config |
+| `backend/src/.../config/SecurityConfig.java` | Spring Security filter chain, CORS, BCrypt config; `@EnableMethodSecurity` |
 | `backend/src/.../config/WebSocketConfig.java` | STOMP endpoint registration, allowed origins |
+| `backend/src/.../config/KafkaConfig.java` | Kafka producer/consumer factories with SASL security props |
+| `backend/src/.../config/WebMvcConfig.java` | Registers `RateLimitInterceptor` on auth and order endpoints |
+| `backend/src/.../component/RateLimitInterceptor.java` | Bucket4j token-bucket rate limiting (IP for auth, username for orders) |
 | `backend/src/.../service/MatchingEngineService.java` | Core order matching algorithm |
-| `backend/src/.../util/JwtTokenUtil.java` | JWT generation and validation |
+| `backend/src/.../service/EmailService.java` | Sends verification emails via `JavaMailSender` |
+| `backend/src/.../service/OrderCacheService.java` | Redis cache for orders + idempotency key storage |
+| `backend/src/.../util/JwtTokenUtil.java` | JWT generation and validation (key loaded from env) |
 | `backend/src/.../service/KafkaConsumerService.java` | Bridges Kafka messages to WebSocket |
-| `frontend/src/redux/ApiSlice.js` | All RTK Query endpoints + token refresh interceptor |
+| `frontend/src/redux/ApiSlice.js` | All RTK Query endpoints + token refresh interceptor; sends `Idempotency-Key` |
 | `frontend/src/services/WebSocketService.js` | STOMP connection, subscriptions, reconnect logic |
+| `frontend/src/services/logger.js` | Dev-only console wrapper (gated by `NODE_ENV`) |
 | `backend/src/main/resources/application.properties` | All Spring config with local-dev defaults |
+| `kafka_jaas.conf` | JAAS credentials mounted into the Kafka container |
 
 ---
 
@@ -123,24 +140,7 @@ Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All re
 
 ## Future Scope
 
-Items are grouped by theme and roughly ordered by impact within each group. "Known issue" items already documented above are included here with their fix strategy.
-
----
-
-### 🔐 Security — Critical Fixes
-
-| # | Item | What to do |
-|---|------|------------|
-| S1 | ~~**Externalize JWT secret**~~ | ~~Replace `Keys.secretKeyFor(...)` in `JwtTokenUtil` with a key loaded from `JWT_SECRET` env var. Tokens currently invalidate on every restart.~~ |
-| S2 | ~~**Move refresh token off localStorage**~~ | ~~Store refresh token in an `httpOnly; Secure` cookie instead of `localStorage.setItem(...)` in `ApiSlice.js`. Prevents XSS theft.~~ |
-| S3 | ~~**Rate-limit auth & order endpoints**~~ | ~~Add Bucket4j or Spring's `HandlerInterceptor` to cap login attempts (e.g., 5/min per IP) and order submissions per user.~~ |
-| S4 | ~~**Fix tenant isolation in repositories**~~ | ~~`findOrdersBySymbol()` and `findStopOrders()` in `OrderRepository` omit the `tenantId` filter — cross-tenant data leakage is possible. Add `AND tenant_id = :tenantId` to every query.~~ |
-| S5 | ~~**Account lockout on failed logins**~~ | ~~`User.isAccountNonLocked()` is hardcoded `true`. Track failed attempts in a `login_attempts` table and lock after N failures; expose an admin unlock endpoint.~~ |
-| S6 | ~~**Email verification on signup**~~ | ~~Send a verification link (via `JavaMailSender`) before activating the account. `User.isEnabled()` is already present — just needs to start as `false`.~~ |
-| S7 | ~~**Idempotency keys on order creation**~~ | ~~Accept an `Idempotency-Key` header in `POST /api/v1/orders`; deduplicate by storing the key in Redis with a TTL. Prevents double-orders on client retries.~~ |
-| S8 | ~~**Secure Kafka with SASL/TLS**~~ | ~~Add `security.protocol`, `sasl.mechanism`, and keystore config to `KafkaConfig`. The broker currently accepts unauthenticated connections.~~ |
-| S9 | ~~**Remove console.log from frontend**~~ | ~~`App.js` logs `REACT_APP_BACKEND_URL` to the browser console. Strip all production `console.log/error` calls or gate them behind `process.env.NODE_ENV === "development"`.~~ |
-| S10 | **Add `/unauthorized` page** | `ProtectedRoute` redirects to `/unauthorized` but no route exists — the user sees a blank screen. Create a simple `UnauthorizedPage` component and register the route in `App.js`. |
+Items are grouped by theme and roughly ordered by impact within each group.
 
 ---
 
@@ -148,7 +148,7 @@ Items are grouped by theme and roughly ordered by impact within each group. "Kno
 
 | # | Item | What to do |
 |---|------|------------|
-| T1 | **Auto-trigger matching on order creation** | Call `MatchingEngineService.matchOrders(symbol)` asynchronously (via `@Async` or Kafka event) after every successful order save, instead of requiring a manual admin POST. |
+| T1 | ~~**Auto-trigger matching on order creation**~~ | ~~Call `MatchingEngineService.matchOrders(symbol)` asynchronously (via `@Async` or Kafka event) after every successful order save, instead of requiring a manual admin POST.~~ |
 | T2 | **Dynamic symbol catalogue** | Replace the hardcoded `["AAPL", "GOOGL", "MSFT"]` list in `OrderService` and the frontend dropdowns with a `Symbol` entity/table; expose `GET /api/v1/symbols` and populate the dropdowns dynamically. |
 | T3 | **Real-time stop order evaluation** | Connect a `MarketDataService` (or a mock price-tick publisher) that periodically evaluates pending STOP orders against current prices instead of requiring `POST /api/v1/matching/triggerstop/{symbol}`. |
 | T4 | **Market data feed (simulated or live)** | Add a `MarketDataService` that generates OHLCV tick data (simulated via random walk, or via a free provider like Yahoo Finance / Alpaca). Publish ticks to Kafka; subscribe on the frontend for live price display. |

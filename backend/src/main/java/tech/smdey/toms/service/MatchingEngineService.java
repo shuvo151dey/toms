@@ -7,6 +7,7 @@ import java.util.PriorityQueue;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,11 @@ public class MatchingEngineService {
             matchOrdersForSymbol(symbol, tenantId);
         }
 
+    }
+
+    @Async
+    public void asyncMatchOrdersForSymbol(String symbol, String tenantId) {
+        matchOrdersForSymbol(symbol, tenantId);
     }
 
     // Match orders for a specific symbol

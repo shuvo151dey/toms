@@ -19,6 +19,7 @@ import Home from './pages/Home';
 import Analytics from './pages/Analytics';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Unauthorized from './pages/Unauthorized';
 
 import OrderModal from './components/OrderModal';
 import PrivateRoute from './components/PrivateRouter';
@@ -171,6 +172,7 @@ export default function App() {
                         <Route path="/analytics" element={<ProtectedRoute roles={['ADMIN']}><Analytics /></ProtectedRoute>} />
                         <Route path="/" element={<Home />} />
                     </Route>
+                    <Route path="/unauthorized" element={<Unauthorized />} />
                 </Route>
             </Routes>
         </Router>

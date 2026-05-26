@@ -20,6 +20,7 @@ import tech.smdey.toms.repository.OrderRepository;
 import tech.smdey.toms.service.KafkaProducerService;
 import tech.smdey.toms.service.OrderCacheService;
 import tech.smdey.toms.service.OrderService;
+import tech.smdey.toms.service.MatchingEngineService;
 import tech.smdey.toms.util.JwtTokenUtil;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,13 +52,16 @@ public class OrderController {
 
     private final JwtTokenUtil jwtTokenUtil;
 
+    private final MatchingEngineService matchingEngineService;
+
     public OrderController(OrderRepository orderRepository, OrderService orderService,
-            OrderCacheService orderCacheService, KafkaProducerService kafkaProducerService, JwtTokenUtil jwtTokenUtil) {
+            OrderCacheService orderCacheService, KafkaProducerService kafkaProducerService, JwtTokenUtil jwtTokenUtil, MatchingEngineService matchingEngineService) {
         this.orderRepository = orderRepository;
         this.orderService = orderService;
         this.orderCacheService = orderCacheService;
         this.kafkaProducerService = kafkaProducerService;
         this.jwtTokenUtil = jwtTokenUtil;
+        this.matchingEngineService = matchingEngineService;
     }
 
     @PostMapping
@@ -89,6 +93,7 @@ public class OrderController {
         newOrder.setTenantId(tenantId);
         orderService.validateOrder(newOrder);
         orderRepository.save(newOrder);
+        matchingEngineService.asyncMatchOrdersForSymbol(newOrder.getSymbol(), tenantId);
         orderCacheService.saveToCache(newOrder.getId(), newOrder);
 
         kafkaProducerService.sendOrderMessage(newOrder);
