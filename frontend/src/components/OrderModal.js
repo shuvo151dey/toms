@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Box, Typography, Button, TextField, MenuItem } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { useCreateOrderMutation, useUpdateOrderMutation } from '../redux/ApiSlice';
+import { useCreateOrderMutation, useUpdateOrderMutation, useGetSymbolsQuery } from '../redux/ApiSlice';
 import { useDispatch } from 'react-redux';
 import { setAlert } from '../redux/AppSlice';
 import logger from '../utils/logger';
@@ -18,6 +18,7 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
     const order = useSelector((state) => state.order.order);
     const [createOrder] = useCreateOrderMutation();
     const [updateOrder] = useUpdateOrderMutation();
+    const { data: symbols } = useGetSymbolsQuery();
     const dispatch = useDispatch();
     useEffect(() => {
         if (order) {
@@ -99,9 +100,9 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                         margin="normal"
                         disabled={isEdit}
                     >
-                        <MenuItem value="AAPL">AAPL</MenuItem>
-                        <MenuItem value="GOOGL">GOOGL</MenuItem>
-                        <MenuItem value="MSFT">MSFT</MenuItem>
+                        {symbols && symbols.map((s) => (
+                            <MenuItem key={s.ticker} value={s.ticker}>{s.ticker}</MenuItem>
+                        ))}
                     </TextField>
                     <TextField
                         select

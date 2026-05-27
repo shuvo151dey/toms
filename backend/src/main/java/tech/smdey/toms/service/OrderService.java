@@ -1,21 +1,29 @@
 package tech.smdey.toms.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import tech.smdey.toms.entity.Symbol;
 import tech.smdey.toms.entity.TradeOrder;
-
-import java.util.Arrays;
-import java.util.List;
+import tech.smdey.toms.repository.SymbolRepository;
 
 @Service
 public class OrderService {
 
-    private static final List<String> ALLOWED_SYMBOLS = Arrays.asList("AAPL", "GOOGL", "MSFT");
-    
+    private SymbolRepository symbolRepository;
+
+    @Autowired
+    public OrderService(SymbolRepository symbolRepository) {
+        this.symbolRepository = symbolRepository;
+    }
 
     public boolean validateOrder(TradeOrder order) {
-        if (!ALLOWED_SYMBOLS.contains(order.getSymbol())) {
+        List<String> allowed = symbolRepository.findAll().stream()
+                .map(Symbol::getTicker)
+                .collect(Collectors.toList());
+
+        if (!allowed.contains(order.getSymbol())) {
             throw new IllegalArgumentException("Symbol " + order.getSymbol() + " is not allowed");
         }
 

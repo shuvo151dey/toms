@@ -225,6 +225,9 @@ export const apiSlice = createApi({
                 }
             },
         }),
+        getSymbols: builder.query({
+            query: () => ({ url: `/symbols` }),
+        }),
     }),
 });
 
@@ -241,7 +244,8 @@ export const {
     useLazyGetTradesQuery,
     useLoginMutation,
     useSignupMutation,
-    useLogoutMutation
+    useLogoutMutation,
+    useGetSymbolsQuery
 } = apiSlice;
 
 

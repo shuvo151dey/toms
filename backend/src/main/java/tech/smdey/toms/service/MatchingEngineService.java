@@ -1,6 +1,5 @@
 package tech.smdey.toms.service;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -17,6 +16,7 @@ import tech.smdey.toms.entity.OrderStatus;
 import tech.smdey.toms.entity.Trade;
 import tech.smdey.toms.entity.TradeOrder;
 import tech.smdey.toms.repository.OrderRepository;
+import tech.smdey.toms.repository.SymbolRepository;
 import tech.smdey.toms.repository.TradeRepository;
 
 @Service
@@ -31,16 +31,11 @@ public class MatchingEngineService {
     @Autowired
     private KafkaProducerService kafkaProducerService;
 
+    @Autowired
+    private SymbolRepository symbolRepository;
+
     public void matchOrders(String tenantId) {
-        List<String> symbols = new ArrayList<String>();
-        symbols.add("AAPL");
-        symbols.add("GOOGL");
-        symbols.add("MSFT");
-
-        for (String symbol : symbols) {
-            matchOrdersForSymbol(symbol, tenantId);
-        }
-
+        symbolRepository.findAll().forEach(s -> matchOrdersForSymbol(s.getTicker(), tenantId));
     }
 
     @Async

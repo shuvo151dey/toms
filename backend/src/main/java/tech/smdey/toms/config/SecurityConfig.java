@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
                 .requestMatchers("/api/v1/auth/**").permitAll() // Allow authentication endpoints
+                .requestMatchers(HttpMethod.GET, "/api/v1/symbols").permitAll() // Public symbol list
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight CORS requests
                 .anyRequest().authenticated()) // Protect all other endpoints
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
