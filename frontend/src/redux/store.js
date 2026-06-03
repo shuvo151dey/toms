@@ -5,6 +5,7 @@ import appReducer from './AppSlice';
 import orderReducer from './OrderSlice';
 import tradeReducer from './TradeSlice';
 import authReducer from './AuthSlice';
+import priceReducer from './PriceSlice';
 
 
 const store = configureStore({
@@ -14,6 +15,7 @@ const store = configureStore({
         order: orderReducer,
         trade: tradeReducer,
         auth: authReducer,
+        price: priceReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(apiSlice.middleware),

@@ -1,5 +1,7 @@
 package tech.smdey.toms.service;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -21,6 +23,19 @@ public class KafkaProducerService {
 
     private static final String TRADES_TOPIC = "trades";
     private static final String ORDERS_TOPIC = "orders";
+    private static final String PRICES_TOPIC = "market-data";
+
+    public void sendPriceMessage(String ticker, String tenantId, double price) {
+        String message = convertToJson(Map.of("ticker", ticker, "price", price));
+        kafkaTemplate.send(
+            MessageBuilder
+                .withPayload(message)
+                .setHeader(KafkaHeaders.TOPIC, PRICES_TOPIC)
+                .setHeader("tenantId", tenantId)
+                .setHeader("ticker", ticker)
+                .build()
+        );
+    }
 
     public void sendTradeMessage(Trade trade) {
         String tenantId = trade.getTenantId();

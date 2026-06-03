@@ -21,6 +21,7 @@ import tech.smdey.toms.service.KafkaProducerService;
 import tech.smdey.toms.service.OrderCacheService;
 import tech.smdey.toms.service.OrderService;
 import tech.smdey.toms.service.MatchingEngineService;
+import tech.smdey.toms.service.RiskService;
 import tech.smdey.toms.util.JwtTokenUtil;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,31 +55,31 @@ public class OrderController {
 
     private final MatchingEngineService matchingEngineService;
 
+    private final RiskService riskService;
+
     public OrderController(OrderRepository orderRepository, OrderService orderService,
-            OrderCacheService orderCacheService, KafkaProducerService kafkaProducerService, JwtTokenUtil jwtTokenUtil, MatchingEngineService matchingEngineService) {
+            OrderCacheService orderCacheService, KafkaProducerService kafkaProducerService, JwtTokenUtil jwtTokenUtil, MatchingEngineService matchingEngineService, RiskService riskService) {
         this.orderRepository = orderRepository;
         this.orderService = orderService;
         this.orderCacheService = orderCacheService;
         this.kafkaProducerService = kafkaProducerService;
         this.jwtTokenUtil = jwtTokenUtil;
         this.matchingEngineService = matchingEngineService;
+        this.riskService = riskService;
     }
 
     @PostMapping
     public ResponseEntity<TradeOrder> createOrder(
         @Valid @RequestBody OrderRequest order,
-        @RequestHeader("Authorization") String authheader,
+        @AuthenticationPrincipal User user,
         @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
 
-        
         if (idempotencyKey != null) {
             Optional<TradeOrder> cached = orderCacheService.getIdempotentResponse(idempotencyKey);
             if (cached.isPresent()){
                 return ResponseEntity.ok(cached.get());
             }
         }
-
-        String token = authheader.replace("Bearer ", "").trim();
 
         TradeOrder newOrder = new TradeOrder();
         newOrder.setSymbol(order.getSymbol());
@@ -89,13 +90,13 @@ public class OrderController {
         newOrder.setOrderAction(OrderAction.valueOf(order.getOrderAction()));
         newOrder.setOrderMethod(OrderMethod.valueOf(order.getOrderMethod()));
         newOrder.setStatus(OrderStatus.PENDING);
-        String tenantId = jwtTokenUtil.extractTenantId(token);
-        newOrder.setTenantId(tenantId);
+        newOrder.setUsername(user.getUsername());
+        newOrder.setTenantId(user.getTenantId());
         orderService.validateOrder(newOrder);
+        riskService.checkRisk(newOrder);
         orderRepository.save(newOrder);
-        matchingEngineService.asyncMatchOrdersForSymbol(newOrder.getSymbol(), tenantId);
+        matchingEngineService.asyncMatchOrdersForSymbol(newOrder.getSymbol(), user.getTenantId());
         orderCacheService.saveToCache(newOrder.getId(), newOrder);
-
         kafkaProducerService.sendOrderMessage(newOrder);
 
         if (idempotencyKey != null) {

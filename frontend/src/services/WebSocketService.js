@@ -7,7 +7,7 @@ let stompClient = null;
 let subscriptions = [];
 let retryCounts = 0;
 
-export const connect = (onMessage, tenantId) => {
+export const connect = (onMessage, tenantId, symbols = []) => {
     if (stompClient && stompClient.connected) {
         logger.log("WebSocket is already connected.");
         return;
@@ -29,6 +29,13 @@ export const connect = (onMessage, tenantId) => {
                     onMessage(JSON.parse(message.body), "trades");
                 }),
             ];
+            symbols.forEach(ticker => {
+                subscriptions.push(
+                    stompClient.subscribe(`/topic/prices/${tenantId}/${ticker}`, (message) => {
+                        onMessage(JSON.parse(message.body), "prices", ticker);
+                    })
+                );
+            });
             retryCounts = 0;
         }, (error) => {
             logger.log("Websocket error:", error);

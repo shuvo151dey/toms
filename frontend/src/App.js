@@ -5,10 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppBar, Toolbar, Typography, Button, Drawer, MenuList, MenuItem } from '@mui/material';
 
 import store from './redux/store';
-import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery, useLogoutMutation } from './redux/ApiSlice';
+import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery, useLogoutMutation, useGetSymbolsQuery } from './redux/ApiSlice';
 import { setOrders } from './redux/OrderSlice';
 import { setTrades } from './redux/TradeSlice';
 import { clearAlert, setAlert } from './redux/AppSlice';
+import { setPrice } from './redux/PriceSlice';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
@@ -45,6 +46,7 @@ export default function App() {
     const expiryTime = useSelector(state => state.auth.expiryTime);
     const alert = useSelector(state => state.app.alert);
     const alertType = useSelector(state => state.app.alertType);
+    const {data: symbols = []} = useGetSymbolsQuery(undefined, {skip: !isAuthenticated});
     useEffect(() => {
         if(isAuthenticated){
         triggerGetOrders({
@@ -61,11 +63,9 @@ export default function App() {
             connect((message, topic) => {
                 if (topic === 'orders') {
                     const newOrder = message;
-                    const currentOrders = store.getState().order.orders; // Fetch the latest orders state
-    
+                    const currentOrders = store.getState().order.orders;
                     const existingOrder = currentOrders.find((order) => order.id === newOrder.id);
                     let updatedOrders = currentOrders;
-    
                     if (existingOrder) {
                         updatedOrders = currentOrders.map((order) => (order.id === newOrder.id ? newOrder : order));
                     } else {
@@ -73,14 +73,13 @@ export default function App() {
                     }
                     dispatch(setOrders(updatedOrders));
                 } else if (topic === 'trades') {
-                    const newTrade = message;
-                    const currentTrades = store.getState().trade.trades; // Fetch the latest trades state
-                    dispatch(setTrades([newTrade, ...currentTrades]));
+                    const currentTrades = store.getState().trade.trades;
+                    dispatch(setTrades([message, ...currentTrades]));
+                } else if (topic === 'prices') {
+                    dispatch(setPrice({ ticker: message.ticker, price: message.price }));
                 }
-            }, tenantId);
-    
+            }, tenantId, symbols.map(s => s.ticker));
         }
-        
 
     }, [dispatch, isAuthenticated]);
 

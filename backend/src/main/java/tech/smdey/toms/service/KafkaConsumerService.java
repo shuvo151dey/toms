@@ -6,6 +6,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Map;
 import tech.smdey.toms.entity.Trade;
 import tech.smdey.toms.entity.TradeOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +23,14 @@ public class KafkaConsumerService {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.messagingTemplate = messagingTemplate;
+    }
+
+    @KafkaListener(topics = "market-data", groupId = "toms-group", concurrency = "3")
+    public void consumePrice(ConsumerRecord<String, String> record) {
+        String tenantId = extractTenantId(record);
+        String ticker = new String(record.headers().lastHeader("ticker").value());
+        Map<String, Object> priceUpdate = convertFromJson(record.value(), Map.class);
+        messagingTemplate.convertAndSend("/topic/prices/" + tenantId + "/" + ticker, priceUpdate);
     }
 
     @KafkaListener(topics = "trades", groupId = "toms-group", concurrency = "3")

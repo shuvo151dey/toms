@@ -16,4 +16,8 @@ public class MarketDataService {
             return base + fluctuation;
         });
     }
+
+    public double getLastPrice(String ticker) {
+        return prices.getOrDefault(ticker, 100.0);
+    }
 }
