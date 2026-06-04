@@ -13,6 +13,12 @@ import tech.smdey.toms.entity.OrderStatus;
 import tech.smdey.toms.entity.TradeOrder;
 
 public interface OrderRepository extends JpaRepository<TradeOrder, Long> {
+    @Query("SELECT o.price, SUM(o.quantity) FROM TradeOrder o WHERE o.symbol = :symbol AND o.tenantId = :tenantId AND o.status IN ('PENDING', 'PARTIALLY_COMPLETED') AND o.orderAction = 'BUY' GROUP BY o.price ORDER BY o.price DESC")
+    List<Object[]> findBidLevels(@Param("symbol") String symbol, @Param("tenantId") String tenantId);
+
+    @Query("SELECT o.price, SUM(o.quantity) FROM TradeOrder o WHERE o.symbol = :symbol AND o.tenantId = :tenantId AND o.status IN ('PENDING', 'PARTIALLY_COMPLETED') AND o.orderAction = 'SELL' GROUP BY o.price ORDER BY o.price ASC")
+    List<Object[]> findAskLevels(@Param("symbol") String symbol, @Param("tenantId") String tenantId);
+
     Page<TradeOrder> findByStatusAndTenantId(OrderStatus status, String tenantId, Pageable pageable);
 
     @Query("SELECT o FROM TradeOrder o WHERE o.symbol = :symbol AND o.tenantId = :tenantId AND o.status = 'PENDING' AND o.orderAction = 'BUY' ORDER BY o.price DESC, o.timestamp ASC")

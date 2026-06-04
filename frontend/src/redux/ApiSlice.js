@@ -111,6 +111,9 @@ export const apiSlice = createApi({
 
             },
         }),
+        getOrderBook: builder.query({
+            query: (symbol) => `orderbook/${symbol}`
+        }),
         getOrders: builder.query({
             query: (params) => {
                 return {
@@ -245,7 +248,8 @@ export const {
     useLoginMutation,
     useSignupMutation,
     useLogoutMutation,
-    useGetSymbolsQuery
+    useGetSymbolsQuery,
+    useGetOrderBookQuery
 } = apiSlice;
 
 

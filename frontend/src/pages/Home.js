@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import OrderBook from "../components/OrderBook";
 import TradeFeed from "../components/TradeFeed";
 import PriceTicker from "../components/PriceTicker";
+import OrderBookDepth from "../components/OrderBookDepth";
 import { Container, Grid2 as Grid } from "@mui/material";
 import OrderModal from "../components/OrderModal";
 
@@ -14,6 +15,7 @@ const App = () => {
         <>
             <Container sx={{ marginTop: 4 }}>
                     <PriceTicker />
+                    <OrderBookDepth />
                     <Grid item="true" xs={12} md={6}>
                         <OrderBook />
                     </Grid>
