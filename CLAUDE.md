@@ -155,7 +155,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 | T5 | ~~**Position & portfolio tracking**~~ | ~~Add a `Position` entity (user × symbol → net quantity, avg cost). Update it on every trade execution. Expose `GET /api/v1/portfolio` so traders can see current holdings and unrealised P&L.~~ |
 | T6 | ~~**Risk controls**~~ | ~~Add a `RiskService` called before order acceptance: position limit per user, notional value cap (price × qty), daily loss limit. Reject orders that breach limits with a clear error code.~~ |
 | T7 | ~~**Order book depth view**~~ | ~~Expose `GET /api/v1/orderbook/{symbol}` returning aggregated bid/ask levels; render a depth chart on the frontend so traders can see the book before submitting.~~ |
-| T8 | **Configurable order constraints** | Move `MAX_QUANTITY=100` and allowed symbols to application config (or DB), not source code, so they can be changed without a redeploy. |
+| T8 | ~~**Configurable order constraints**~~ | ~~Move `MAX_QUANTITY=100` and allowed symbols to application config (or DB), not source code, so they can be changed without a redeploy.~~ |
 
 ---
 

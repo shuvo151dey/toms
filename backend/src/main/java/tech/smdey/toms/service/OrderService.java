@@ -3,6 +3,7 @@ package tech.smdey.toms.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tech.smdey.toms.entity.Symbol;
 import tech.smdey.toms.entity.TradeOrder;
@@ -12,6 +13,9 @@ import tech.smdey.toms.repository.SymbolRepository;
 public class OrderService {
 
     private SymbolRepository symbolRepository;
+
+    @Value("${order.constraints.max-quantity:100}")
+    private int maxOrderQuantity;
 
     @Autowired
     public OrderService(SymbolRepository symbolRepository) {
@@ -27,7 +31,7 @@ public class OrderService {
             throw new IllegalArgumentException("Symbol " + order.getSymbol() + " is not allowed");
         }
 
-        if (order.getQuantity() > 100) {
+        if (order.getQuantity() > maxOrderQuantity) {
             throw new IllegalArgumentException("Quantity " + order.getQuantity() + " exceeds the limit");
         }
 
