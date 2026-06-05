@@ -3,6 +3,7 @@ package tech.smdey.toms.config;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,6 +25,7 @@ import org.springframework.web.filter.CorsFilter;
 import tech.smdey.toms.component.JwtAuthenticationFilter;
 import tech.smdey.toms.service.CustomUserDetailsService;
 
+@EnableCaching
 @EnableScheduling
 @EnableAsync
 @EnableMethodSecurity

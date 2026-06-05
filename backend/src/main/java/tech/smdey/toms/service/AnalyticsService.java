@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import tech.smdey.toms.entity.OrderStatus;
@@ -23,6 +24,7 @@ public class AnalyticsService {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Cacheable(value = "tradeAnalytics", key = "#symbol + '_' + #tenantId")
     public Map<String, Object> getTradeAnalytics(String symbol, String tenantId, LocalDateTime from, LocalDateTime to) {
         List<Trade> trades = tradeRepository.findTrades(symbol, tenantId, from, to);
     
@@ -48,7 +50,7 @@ public class AnalyticsService {
         return result;
     }
     
-
+    @Cacheable(value = "orderAnalytics", key = "#order + '_' + #tenantId")
     public Map<String, Object> getOrderAnalytics(String symbol, String tenantId) {
         List<TradeOrder> orders = orderRepository.findOrdersBySymbol(symbol, tenantId);
     
