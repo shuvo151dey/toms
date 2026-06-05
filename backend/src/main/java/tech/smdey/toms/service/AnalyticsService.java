@@ -50,7 +50,7 @@ public class AnalyticsService {
         return result;
     }
     
-    @Cacheable(value = "orderAnalytics", key = "#order + '_' + #tenantId")
+    @Cacheable(value = "orderAnalytics", key = "#symbol + '_' + #tenantId")
     public Map<String, Object> getOrderAnalytics(String symbol, String tenantId) {
         List<TradeOrder> orders = orderRepository.findOrdersBySymbol(symbol, tenantId);
     
