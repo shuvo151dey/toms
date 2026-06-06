@@ -16,4 +16,11 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
     List<Trade> findTrades(@Param("symbol") String symbol, @Param("tenantId") String tenantId, LocalDateTime from, LocalDateTime to);
 
     List<Trade> findByTenantId(String tenantId);
+
+    @Query("SELECT t FROM Trade t WHERE t.sellOrder.username = :username AND t.tenantId = :tenantId")
+    List<Trade> findSellTradesByUsername(@Param("username") String username, @Param("tenantId") String tenantId);
+
+    @Query("SELECT t FROM Trade t WHERE t.buyOrder.username = :username AND t.tenantId = :tenantId")
+    List<Trade> findBuyTradesByUsername(@Param("username") String username, @Param("tenantId") String tenantId);
+
 }

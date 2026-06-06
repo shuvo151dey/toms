@@ -231,6 +231,12 @@ export const apiSlice = createApi({
         getSymbols: builder.query({
             query: () => ({ url: `/symbols` }),
         }),
+        getPnl: builder.query({
+            query: () => ({ url: `/analytics/pnl` }),
+        }),
+        getSnapshots: builder.query({
+            query: (symbol) => ({ url: `/analytics/snapshots`, params: { symbol } }),
+        }),
     }),
 });
 
@@ -249,7 +255,9 @@ export const {
     useSignupMutation,
     useLogoutMutation,
     useGetSymbolsQuery,
-    useGetOrderBookQuery
+    useGetOrderBookQuery,
+    useGetPnlQuery,
+    useGetSnapshotsQuery
 } = apiSlice;
 
 

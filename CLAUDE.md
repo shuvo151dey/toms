@@ -83,21 +83,54 @@ Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All re
 
 ### Matching Engine (`MatchingEngineService`)
 
-- Triggered manually via `POST /api/v1/matching/` (admin only) — **not** auto-triggered on order creation.
+- Auto-triggered via `@Async` (`asyncMatchOrdersForSymbol`) after every successful order save — no manual admin trigger needed.
+- Admin can still manually trigger all symbols via `POST /api/v1/matching/` (runs synchronously).
 - Uses `PriorityQueue`: MARKET orders → FIFO (timestamp); LIMIT orders → price-time priority (best price first).
 - Partial fills are supported: order status becomes `PARTIALLY_COMPLETED`, quantity decremented.
-- Stop orders convert to MARKET only when `POST /api/v1/matching/triggerstop/{symbol}` is called with a market price.
-- Allowed symbols are hardcoded in `OrderService`: `["AAPL", "GOOGL", "MSFT"]`. Max quantity per order: 100.
+- Stop orders are evaluated automatically every 30s by `StopOrderScheduler` against simulated market prices.
+- Allowed symbols are loaded from the `Symbol` entity/table (seeded with AAPL, GOOGL, MSFT). Managed via `GET /api/v1/symbols`.
+- Max quantity per order is configurable via `order.constraints.max-quantity` in `application.properties` (default: 100).
+
+### Market Data
+
+- `MarketDataService` simulates prices via a random walk (±2% per tick), seeded at $100 per symbol.
+- `StopOrderScheduler` runs every 30s: calls `getPrice()` per symbol, publishes to the `market-data` Kafka topic, then evaluates stop orders.
+- `KafkaConsumerService` routes price updates to `/topic/prices/{tenantId}/{ticker}` — one WebSocket channel per symbol.
+- Frontend subscribes per ticker in `WebSocketService`, dispatches to `PriceSlice`, and displays live prices in the `PriceTicker` component.
+- `getLastPrice()` is a read-only variant used by `PortfolioController` and `RiskService` to avoid advancing the random walk on reads.
+
+### Position & Portfolio
+
+- `Position` entity tracks `(username, symbol, tenantId) → netQuantity, avgCost` (weighted average updated on every buy).
+- Updated inside `MatchingEngineService.executeTrade()` for both the buyer and seller on every trade.
+- `GET /api/v1/portfolio` returns open positions with unrealised P&L against last simulated price.
+- `GET /api/v1/analytics/pnl` returns total and per-symbol realised P&L (`totalSellAmount - totalBuyAmount` per symbol).
+
+### Risk Controls (`RiskService`)
+
+Called before every order save in `OrderController`, after `OrderService.validateOrder()`. Three checks:
+- **Notional cap**: `price × quantity` must not exceed `risk.limits.max-notional` (default $50,000).
+- **Position limit**: BUY orders may not push a user's holdings past `risk.limits.max-position` (default 500 shares per symbol).
+- **Daily loss limit**: Unrealised loss across all open positions must not exceed `risk.limits.daily-loss-limit` (default $5,000).
+
+All limits are configurable in `application.properties` with Spring env-var override support.
+
+### Order Book Depth
+
+- `GET /api/v1/orderbook/{symbol}` returns aggregated bid and ask levels (price → total quantity) for PENDING and PARTIALLY_COMPLETED orders.
+- `OrderBookDepth` component on the frontend polls every 10s with a symbol selector dropdown.
 
 ### Caching
 
-`OrderCacheService` wraps a Redis hash. The get-by-ID path in `OrderController` checks Redis before hitting PostgreSQL. Cache is invalidated on update and delete. Configured in `RedisConfig` with Jackson JSON serialization including `JavaTimeModule`.
+- `OrderCacheService` wraps a Redis hash. The get-by-ID path in `OrderController` checks Redis before hitting PostgreSQL. Cache is invalidated on update and delete.
+- `AnalyticsService` methods are cached via `@Cacheable` with a 5-minute Redis TTL (`spring.cache.type=redis`). `@EnableCaching` is on `SecurityConfig`.
+- Configured in `RedisConfig` with Jackson JSON serialization including `JavaTimeModule`.
 
 ### Frontend State
 
-- Redux store has four slices: `auth`, `order`, `trade`, `app`.
+- Redux store has five slices: `auth`, `order`, `trade`, `app`, `price`.
 - All API calls go through RTK Query (`ApiSlice`) — mutations invalidate relevant cache tags automatically.
-- WebSocket connection is managed by `WebSocketService` (SockJS + STOMP), with exponential backoff reconnect. It dispatches directly to Redux on message receipt.
+- WebSocket connection is managed by `WebSocketService` (SockJS + STOMP), with exponential backoff reconnect. Subscribes to orders, trades, and per-ticker price channels. Dispatches directly to Redux on message receipt.
 - `AppSlice` has `theme: "light"/"dark"` with a `toggleTheme` action, but a MUI `ThemeProvider` is not yet wired up in the app root.
 
 ### Role-Based Access
@@ -112,19 +145,33 @@ Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All re
 
 | Path | Purpose |
 |---|---|
-| `backend/src/.../config/SecurityConfig.java` | Spring Security filter chain, CORS, BCrypt config; `@EnableMethodSecurity` |
+| `backend/src/.../config/SecurityConfig.java` | Spring Security filter chain, CORS, BCrypt; `@EnableMethodSecurity`, `@EnableAsync`, `@EnableScheduling`, `@EnableCaching` |
 | `backend/src/.../config/WebSocketConfig.java` | STOMP endpoint registration, allowed origins |
 | `backend/src/.../config/KafkaConfig.java` | Kafka producer/consumer factories with SASL security props |
 | `backend/src/.../config/WebMvcConfig.java` | Registers `RateLimitInterceptor` on auth and order endpoints |
 | `backend/src/.../component/RateLimitInterceptor.java` | Bucket4j token-bucket rate limiting (IP for auth, username for orders) |
-| `backend/src/.../service/MatchingEngineService.java` | Core order matching algorithm |
+| `backend/src/.../component/StopOrderScheduler.java` | `@Scheduled` job — evaluates stop orders and publishes price ticks every 30s |
+| `backend/src/.../component/SymbolSeed.java` | `ApplicationRunner` — seeds AAPL, GOOGL, MSFT into Symbol table on first startup |
+| `backend/src/.../service/MatchingEngineService.java` | Core order matching algorithm; `@Async` wrapper for post-order-save auto-trigger |
+| `backend/src/.../service/MarketDataService.java` | Simulated price feed via random walk; `getPrice()` advances tick, `getLastPrice()` is read-only |
+| `backend/src/.../service/RiskService.java` | Pre-save risk checks: notional cap, position limit, daily loss limit (all configurable) |
+| `backend/src/.../service/AnalyticsService.java` | Trade/order analytics + P&L; responses cached via `@Cacheable` with 5-min Redis TTL |
 | `backend/src/.../service/EmailService.java` | Sends verification emails via `JavaMailSender` |
 | `backend/src/.../service/OrderCacheService.java` | Redis cache for orders + idempotency key storage |
+| `backend/src/.../service/KafkaConsumerService.java` | Bridges Kafka messages to WebSocket (orders, trades, per-ticker prices) |
+| `backend/src/.../controller/OrderBookController.java` | `GET /api/v1/orderbook/{symbol}` — aggregated bid/ask depth levels |
+| `backend/src/.../controller/PortfolioController.java` | `GET /api/v1/portfolio` — open positions with unrealised P&L |
+| `backend/src/.../controller/SymbolController.java` | `GET /api/v1/symbols` — public symbol list (permit-all) |
+| `backend/src/.../entity/Position.java` | Tracks per-user per-symbol netQuantity and avgCost |
+| `backend/src/.../repository/PositionRepository.java` | Queries by username + symbol + tenantId |
 | `backend/src/.../util/JwtTokenUtil.java` | JWT generation and validation (key loaded from env) |
-| `backend/src/.../service/KafkaConsumerService.java` | Bridges Kafka messages to WebSocket |
 | `frontend/src/redux/ApiSlice.js` | All RTK Query endpoints + token refresh interceptor; sends `Idempotency-Key` |
-| `frontend/src/services/WebSocketService.js` | STOMP connection, subscriptions, reconnect logic |
+| `frontend/src/redux/PriceSlice.js` | Redux slice for live price map `{ ticker → price }` |
+| `frontend/src/services/WebSocketService.js` | STOMP connection, per-ticker price subscriptions, exponential backoff reconnect |
 | `frontend/src/services/logger.js` | Dev-only console wrapper (gated by `NODE_ENV`) |
+| `frontend/src/components/PriceTicker.js` | Live price chips updated via WebSocket |
+| `frontend/src/components/OrderBookDepth.js` | Bid/ask depth table with symbol selector, polls every 10s |
+| `frontend/src/components/PnlReport.js` | Realised P&L summary — overall and per-symbol breakdown |
 | `backend/src/main/resources/application.properties` | All Spring config with local-dev defaults |
 | `kafka_jaas.conf` | JAAS credentials mounted into the Kafka container |
 
@@ -144,30 +191,15 @@ Items are grouped by theme and roughly ordered by impact within each group.
 
 ---
 
-### ⚙️ Core Trading Features
-
-| # | Item | What to do |
-|---|------|------------|
-| T1 | ~~**Auto-trigger matching on order creation**~~ | ~~Call `MatchingEngineService.matchOrders(symbol)` asynchronously (via `@Async` or Kafka event) after every successful order save, instead of requiring a manual admin POST.~~ |
-| T2 | ~~**Dynamic symbol catalogue**~~ | ~~Replace the hardcoded `["AAPL", "GOOGL", "MSFT"]` list in `OrderService` and the frontend dropdowns with a `Symbol` entity/table; expose `GET /api/v1/symbols` and populate the dropdowns dynamically.~~ |
-| T3 | ~~**Real-time stop order evaluation**~~ | ~~Connect a `MarketDataService` (or a mock price-tick publisher) that periodically evaluates pending STOP orders against current prices instead of requiring `POST /api/v1/matching/triggerstop/{symbol}`.~~ |
-| T4 | ~~**Market data feed (simulated or live)**~~ | ~~Add a `MarketDataService` that generates OHLCV tick data (simulated via random walk, or via a free provider like Yahoo Finance / Alpaca). Publish ticks to Kafka; subscribe on the frontend for live price display.~~ |
-| T5 | ~~**Position & portfolio tracking**~~ | ~~Add a `Position` entity (user × symbol → net quantity, avg cost). Update it on every trade execution. Expose `GET /api/v1/portfolio` so traders can see current holdings and unrealised P&L.~~ |
-| T6 | ~~**Risk controls**~~ | ~~Add a `RiskService` called before order acceptance: position limit per user, notional value cap (price × qty), daily loss limit. Reject orders that breach limits with a clear error code.~~ |
-| T7 | ~~**Order book depth view**~~ | ~~Expose `GET /api/v1/orderbook/{symbol}` returning aggregated bid/ask levels; render a depth chart on the frontend so traders can see the book before submitting.~~ |
-| T8 | ~~**Configurable order constraints**~~ | ~~Move `MAX_QUANTITY=100` and allowed symbols to application config (or DB), not source code, so they can be changed without a redeploy.~~ |
-
----
-
 ### 📊 Analytics & Reporting
 
 | # | Item | What to do |
 |---|------|------------|
-| A1 | **P&L reporting** | Calculate realised P&L per user per symbol (FIFO cost basis). Expose via `GET /api/v1/analytics/pnl` and add a P&L breakdown page in the frontend. |
-| A2 | **Time-series analytics** | Store VWAP, volume, and trade count in a pre-computed `AnalyticsSnapshot` table (populated by a scheduled job), so `AnalyticsService` returns history rather than recalculating from scratch each call. |
+| A1 | ~~**P&L reporting**~~ | ~~Calculate realised P&L per user per symbol (FIFO cost basis). Expose via `GET /api/v1/analytics/pnl` and add a P&L breakdown page in the frontend.~~ |
+| A2 | ~~**Time-series analytics**~~ | ~~Store VWAP, volume, and trade count in a pre-computed `AnalyticsSnapshot` table (populated by a scheduled job), so `AnalyticsService` returns history rather than recalculating from scratch each call.~~ |
 | A3 | **End-of-day summary report** | Scheduled job (`@Scheduled` or Quartz) that generates a daily summary (trades, volume, fills) and optionally emails it to admins. |
 | A4 | **Volatility & spread metrics** | Add intraday high/low/volatility to `AnalyticsController`; display on a candlestick chart (e.g., `recharts` or `lightweight-charts`) in the analytics page. |
-| A5 | **Analytics caching** | Cache `AnalyticsService` responses in Redis with a short TTL (e.g., 30 s) so repeated admin queries don't hit the DB on every call. |
+| A5 | ~~**Analytics caching**~~ | ~~Cache `AnalyticsService` responses in Redis with a short TTL (e.g., 30 s) so repeated admin queries don't hit the DB on every call.~~ |
 
 ---
 

@@ -1,6 +1,7 @@
 package tech.smdey.toms.controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import tech.smdey.toms.entity.AnalyticsSnapshot;
 import tech.smdey.toms.entity.User;
+import tech.smdey.toms.repository.SnapshotRepository;
 import tech.smdey.toms.service.AnalyticsService;
 
 @RestController
@@ -21,6 +24,9 @@ public class AnalyticsController {
 
     @Autowired
     private AnalyticsService analyticsService;
+
+    @Autowired
+    private SnapshotRepository snapshotRepository;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/trades")
@@ -41,4 +47,16 @@ public class AnalyticsController {
         return analyticsService.getOrderAnalytics(symbol, user.getTenantId());
     }
 
+    @GetMapping("/pnl")
+    public Map<String, Object> getPnl(@AuthenticationPrincipal User user) {
+        return analyticsService.getPnl(user.getUsername(), user.getTenantId());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/snapshots")
+    public List<AnalyticsSnapshot> getSnapshots(
+            @AuthenticationPrincipal User user,
+            @RequestParam String symbol) {
+        return snapshotRepository.findBySymbolAndTenantIdOrderByTimestampAsc(symbol, user.getTenantId());
+    }
 }

@@ -1,6 +1,7 @@
 import { Container, Grid2 as Grid, MenuItem, Select, Typography } from "@mui/material";
 import OrderAnalytics from "../components/OrderAnalytics";
 import TradeAnalytics from "../components/TradeAnalytics";
+import AnalyticsChart from "../components/AnalyticsChart";
 import { useDispatch, useSelector } from "react-redux";
 import { setSelectedSymbol } from "../redux/AppSlice";    
 
@@ -29,6 +30,9 @@ const Analytics = () => {
             </Select>
             </Grid>
             <Grid container spacing={4}>
+                <Grid item="true" xs={12}>
+                    <AnalyticsChart />
+                </Grid>
                 <Grid item="true" xs={12} md={6}>
                     <OrderAnalytics />
                 </Grid>

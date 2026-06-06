@@ -2,8 +2,11 @@ package tech.smdey.toms.service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -23,6 +26,40 @@ public class AnalyticsService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    public Map<String, Object> getPnl(String username, String tenantId) {
+        List<Trade> buyTrades = tradeRepository.findBuyTradesByUsername(username, tenantId);
+        List<Trade> sellTrades = tradeRepository.findSellTradesByUsername(username, tenantId);
+
+        // Overall totals
+        double totalBuyAmount = buyTrades.stream().mapToDouble(t -> t.getPrice() * t.getQuantity()).sum();
+        double totalSellAmount = sellTrades.stream().mapToDouble(t -> t.getPrice() * t.getQuantity()).sum();
+
+        // Symbol-wise: aggregate buy and sell amounts per symbol, then compute pnl
+        Map<String, Double> buyBySymbol = buyTrades.stream().collect(
+            Collectors.groupingBy(Trade::getSymbol,
+                Collectors.summingDouble(t -> t.getPrice() * t.getQuantity())));
+        Map<String, Double> sellBySymbol = sellTrades.stream().collect(
+            Collectors.groupingBy(Trade::getSymbol,
+                Collectors.summingDouble(t -> t.getPrice() * t.getQuantity())));
+
+        Set<String> allSymbols = new HashSet<>();
+        allSymbols.addAll(buyBySymbol.keySet());
+        allSymbols.addAll(sellBySymbol.keySet());
+
+        Map<String, Double> pnlBySymbol = allSymbols.stream().collect(
+            Collectors.toMap(
+                symbol -> symbol,
+                symbol -> sellBySymbol.getOrDefault(symbol, 0.0) - buyBySymbol.getOrDefault(symbol, 0.0)
+            ));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalBuyAmount", totalBuyAmount);
+        result.put("totalSellAmount", totalSellAmount);
+        result.put("pnl", totalSellAmount - totalBuyAmount);
+        result.put("pnlBySymbol", pnlBySymbol);
+        return result;
+    }
 
     @Cacheable(value = "tradeAnalytics", key = "#symbol + '_' + #tenantId")
     public Map<String, Object> getTradeAnalytics(String symbol, String tenantId, LocalDateTime from, LocalDateTime to) {
