@@ -197,7 +197,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 |---|------|------------|
 | A1 | ~~**P&L reporting**~~ | ~~Calculate realised P&L per user per symbol (FIFO cost basis). Expose via `GET /api/v1/analytics/pnl` and add a P&L breakdown page in the frontend.~~ |
 | A2 | ~~**Time-series analytics**~~ | ~~Store VWAP, volume, and trade count in a pre-computed `AnalyticsSnapshot` table (populated by a scheduled job), so `AnalyticsService` returns history rather than recalculating from scratch each call.~~ |
-| A3 | **End-of-day summary report** | Scheduled job (`@Scheduled` or Quartz) that generates a daily summary (trades, volume, fills) and optionally emails it to admins. |
+| A3 | ~~**End-of-day summary report**~~ | ~~Scheduled job (`@Scheduled` or Quartz) that generates a daily summary (trades, volume, fills) and optionally emails it to admins.~~ |
 | A4 | **Volatility & spread metrics** | Add intraday high/low/volatility to `AnalyticsController`; display on a candlestick chart (e.g., `recharts` or `lightweight-charts`) in the analytics page. |
 | A5 | ~~**Analytics caching**~~ | ~~Cache `AnalyticsService` responses in Redis with a short TTL (e.g., 30 s) so repeated admin queries don't hit the DB on every call.~~ |
 
