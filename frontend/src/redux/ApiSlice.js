@@ -237,6 +237,18 @@ export const apiSlice = createApi({
         getSnapshots: builder.query({
             query: (symbol) => ({ url: `/analytics/snapshots`, params: { symbol } }),
         }),
+        getVolatility: builder.query({
+            query: (symbol) => ({ url: `/analytics/volatility`, params: { symbol } }),
+        }),
+        getNotifications: builder.query({
+            query: () => ({ url: `/notifications` }),
+        }),
+        markNotificationRead: builder.mutation({
+            query: (id) => ({ url: `/notifications/${id}/read`, method: 'PUT' }),
+        }),
+        markAllRead: builder.mutation({
+            query: () => ({ url: `/notifications/read-all`, method: 'PUT' }),
+        }),
     }),
 });
 
@@ -257,7 +269,11 @@ export const {
     useGetSymbolsQuery,
     useGetOrderBookQuery,
     useGetPnlQuery,
-    useGetSnapshotsQuery
+    useGetSnapshotsQuery,
+    useGetVolatilityQuery,
+    useGetNotificationsQuery,
+    useMarkNotificationReadMutation,
+    useMarkAllReadMutation
 } = apiSlice;
 
 

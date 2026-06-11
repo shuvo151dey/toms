@@ -35,7 +35,6 @@ public class AnalyticsController {
             @RequestParam(required = false) String symbol,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
-
         return analyticsService.getTradeAnalytics(symbol, user.getTenantId(), from, to);
     }
 
@@ -58,5 +57,13 @@ public class AnalyticsController {
             @AuthenticationPrincipal User user,
             @RequestParam String symbol) {
         return snapshotRepository.findBySymbolAndTenantIdOrderByTimestampAsc(symbol, user.getTenantId());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/volatility")
+    public Map<String, Object> getVolatilityMetrics(
+            @AuthenticationPrincipal User user,
+            @RequestParam String symbol) {
+        return analyticsService.getVolatilityMetrics(symbol, user.getTenantId());
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Map;
 import tech.smdey.toms.entity.Trade;
 import tech.smdey.toms.entity.TradeOrder;
+import tech.smdey.toms.service.NotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -17,12 +18,14 @@ public class KafkaConsumerService {
 
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService;
 
     @Autowired
-    public KafkaConsumerService(SimpMessagingTemplate messagingTemplate) {
+    public KafkaConsumerService(SimpMessagingTemplate messagingTemplate, NotificationService notificationService) {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.messagingTemplate = messagingTemplate;
+        this.notificationService = notificationService;
     }
 
     @KafkaListener(topics = "market-data", groupId = "toms-group", concurrency = "3")
@@ -49,6 +52,16 @@ public class KafkaConsumerService {
 
         TradeOrder order = convertFromJson(record.value(), TradeOrder.class);
         messagingTemplate.convertAndSend("/topic/orders/" + tenantId, order);
+    }
+
+    @KafkaListener(topics = "notifications", groupId = "toms-group", concurrency = "3")
+    public void consumeNotification(ConsumerRecord<String, String> record) {
+        String username = new String(record.headers().lastHeader("username").value());
+        String tenantId = new String(record.headers().lastHeader("tenantId").value());
+        String type = new String(record.headers().lastHeader("type").value());
+        String message = record.value();
+
+        notificationService.notify(username, tenantId, type, message);
     }
 
     private <T> T convertFromJson(String json, Class<T> clazz) {

@@ -173,6 +173,8 @@ public class MatchingEngineService {
 
         // Notify via Kafka
         kafkaProducerService.sendTradeMessage(trade);
+        kafkaProducerService.sendNotification(buy.getUsername(), buy.getTenantId(), "Order filled: " + quantity + " shares of " + symbol + " at $" + sell.getPrice(), "ORDER_FILLED");
+        kafkaProducerService.sendNotification(sell.getUsername(), sell.getTenantId(), "Order filled: " + quantity + " shares of " + symbol + " at $" + sell.getPrice(), "ORDER_FILLED");
     }
 
     // Update order status
@@ -199,6 +201,7 @@ public class MatchingEngineService {
                 stopOrder.setOrderMethod(OrderMethod.MARKET);
                 orderRepository.save(stopOrder);
                 matchOrdersForSymbol(stopOrder.getSymbol(), tenantId); // Reprocess the market orders
+                kafkaProducerService.sendNotification(stopOrder.getUsername(), stopOrder.getTenantId(), "Stop order triggered: " + stopOrder.getQuantity() + " shares of " + stopOrder.getSymbol() + " at $" + stopOrder.getStopPrice(), "STOP_TRIGGERED");
             }
         }
     }

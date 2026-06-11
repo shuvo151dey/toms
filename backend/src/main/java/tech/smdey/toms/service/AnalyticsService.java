@@ -1,6 +1,8 @@
 package tech.smdey.toms.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -116,5 +118,43 @@ public class AnalyticsService {
         result.put("fillRate", (double) completedOrders / totalOrders * 100);
         return result;
     }
-    
+
+    public Map<String, Object> getVolatilityMetrics(String symbol, String tenantId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        List<Trade> trades = tradeRepository.findTrades(symbol, tenantId, startOfDay, LocalDateTime.now());
+
+        Map<String, Object> result = new HashMap<>();
+        if (trades.isEmpty()) {
+            result.put("high", 0.0);
+            result.put("low", 0.0);
+            result.put("open", 0.0);
+            result.put("close", 0.0);
+            result.put("spread", 0.0);
+            result.put("volatility", 0.0);
+            return result;
+        }
+
+        List<Trade> sorted = trades.stream()
+            .sorted(Comparator.comparing(Trade::getTradeTimestamp))
+            .collect(Collectors.toList());
+
+        double high = sorted.stream().mapToDouble(Trade::getPrice).max().orElse(0.0);
+        double low = sorted.stream().mapToDouble(Trade::getPrice).min().orElse(0.0);
+        double open = sorted.get(0).getPrice();
+        double close = sorted.get(sorted.size() - 1).getPrice();
+        double spread = high - low;
+
+        double mean = sorted.stream().mapToDouble(Trade::getPrice).average().orElse(0.0);
+        double variance = sorted.stream().mapToDouble(t -> Math.pow(t.getPrice() - mean, 2)).average().orElse(0.0);
+        double volatility = Math.sqrt(variance);
+
+        result.put("high", high);
+        result.put("low", low);
+        result.put("open", open);
+        result.put("close", close);
+        result.put("spread", spread);
+        result.put("volatility", volatility);
+        return result;
+    }
+
 }

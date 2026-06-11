@@ -23,6 +23,7 @@ import Signup from './pages/Signup';
 import Unauthorized from './pages/Unauthorized';
 
 import OrderModal from './components/OrderModal';
+import NotificationBell from './components/NotificationBell';
 import PrivateRoute from './components/PrivateRouter';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomAlert from './components/CustomAlert';
@@ -136,6 +137,7 @@ export default function App() {
                         {userRoles.includes('ADMIN') && <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} onClick={() => handleMatchOrders("AAPL")}>
                             Match Orders
                         </Button>}
+                        {isAuthenticated && <NotificationBell />}
                         {isAuthenticated && (<Button color='white' onClick={() => toggleDrawer(true)}>
                             <MenuIcon color='white' />
                         </Button>)}

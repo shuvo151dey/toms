@@ -93,7 +93,13 @@ public class OrderController {
         newOrder.setUsername(user.getUsername());
         newOrder.setTenantId(user.getTenantId());
         orderService.validateOrder(newOrder);
-        riskService.checkRisk(newOrder);
+        try {
+            riskService.checkRisk(newOrder);
+
+        } catch (RuntimeException e) {
+            kafkaProducerService.sendNotification(user.getUsername(), user.getTenantId(), "Order rejected: " + e.getMessage(), "ORDER_REJECTED");
+            throw e;
+        }
         orderRepository.save(newOrder);
         matchingEngineService.asyncMatchOrdersForSymbol(newOrder.getSymbol(), user.getTenantId());
         orderCacheService.saveToCache(newOrder.getId(), newOrder);
