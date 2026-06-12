@@ -9,23 +9,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Map;
 import tech.smdey.toms.entity.Trade;
 import tech.smdey.toms.entity.TradeOrder;
-import tech.smdey.toms.service.NotificationService;
+import tech.smdey.toms.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 @Service
 public class KafkaConsumerService {
 
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @Autowired
-    public KafkaConsumerService(SimpMessagingTemplate messagingTemplate, NotificationService notificationService) {
+    public KafkaConsumerService(SimpMessagingTemplate messagingTemplate, NotificationService notificationService, UserRepository userRepository, EmailService emailService) {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.messagingTemplate = messagingTemplate;
         this.notificationService = notificationService;
+        this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @KafkaListener(topics = "market-data", groupId = "toms-group", concurrency = "3")
@@ -62,6 +65,19 @@ public class KafkaConsumerService {
         String message = record.value();
 
         notificationService.notify(username, tenantId, type, message);
+        userRepository.findByUsername(username).ifPresent(user -> {
+            if (user.getEmail() != null) {
+                String template = switch (type) {
+                    case "ORDER_FILLED" -> "order-filled";
+                    case "ORDER_REJECTED" -> "order-rejected";
+                    case "STOP_TRIGGERED" -> "stop-triggered";
+                    default -> null;
+                };
+                if (template != null) {
+                    emailService.sendHtmlEmail(user.getEmail(), "TOMS - " + type.replace("_", " "), template, Map.of("message", message));
+                }
+            }
+        });
     }
 
     private <T> T convertFromJson(String json, Class<T> clazz) {

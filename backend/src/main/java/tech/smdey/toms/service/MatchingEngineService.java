@@ -173,8 +173,8 @@ public class MatchingEngineService {
 
         // Notify via Kafka
         kafkaProducerService.sendTradeMessage(trade);
-        kafkaProducerService.sendNotification(buy.getUsername(), buy.getTenantId(), "Order filled: " + quantity + " shares of " + symbol + " at $" + sell.getPrice(), "ORDER_FILLED");
-        kafkaProducerService.sendNotification(sell.getUsername(), sell.getTenantId(), "Order filled: " + quantity + " shares of " + symbol + " at $" + sell.getPrice(), "ORDER_FILLED");
+        kafkaProducerService.sendNotification(buy.getUsername(), buy.getTenantId(), "Order filled: " + quantity + " shares of " + sell.getSymbol() + " at $" + sell.getPrice(), "ORDER_FILLED");
+        kafkaProducerService.sendNotification(sell.getUsername(), sell.getTenantId(), "Order filled: " + quantity + " shares of " + sell.getSymbol() + " at $" + sell.getPrice(), "ORDER_FILLED");
     }
 
     // Update order status

@@ -208,7 +208,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 | # | Item | What to do |
 |---|------|------------|
 | N1 | ~~**In-app notification centre**~~ | ~~Add a `Notification` entity; publish events (order filled, order rejected, stop triggered) to it. Show a badge + dropdown in the header; mark as read via API.~~ |
-| N2 | **Email alerts** | Integrate `spring-boot-starter-mail`. Send emails on order fill, rejection, and daily summary. Templates via Thymeleaf. |
+| N2 | ~~**Email alerts**~~ | ~~Integrate `spring-boot-starter-mail`. Send emails on order fill, rejection, and daily summary. Templates via Thymeleaf.~~ |
 | N3 | **WebSocket per-user channels** | Currently all messages go to `/topic/orders/{tenantId}`. Add per-user channels `/user/queue/notifications` using `SimpMessagingTemplate.convertAndSendToUser()` to avoid broadcasting sensitive order data to all tenants. |
 
 ---
