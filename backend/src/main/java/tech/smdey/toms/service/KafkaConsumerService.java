@@ -45,7 +45,9 @@ public class KafkaConsumerService {
         System.out.println("Received trade for tenant: " + tenantId);
 
         Trade trade = convertFromJson(record.value(), Trade.class);
-        messagingTemplate.convertAndSend("/topic/trades/" + tenantId, trade);
+        // messagingTemplate.convertAndSend("/topic/trades/" + tenantId, trade);
+        messagingTemplate.convertAndSendToUser(trade.getBuyOrder().getUsername(), "/queue/trades", trade);
+        messagingTemplate.convertAndSendToUser(trade.getSellOrder().getUsername(), "/queue/trades", trade);
     }
 
     @KafkaListener(topics = "orders", groupId = "toms-group", concurrency = "3")
@@ -54,7 +56,8 @@ public class KafkaConsumerService {
         System.out.println("Received order for tenant: " + tenantId);
 
         TradeOrder order = convertFromJson(record.value(), TradeOrder.class);
-        messagingTemplate.convertAndSend("/topic/orders/" + tenantId, order);
+        // messagingTemplate.convertAndSend("/topic/orders/" + tenantId, order);
+        messagingTemplate.convertAndSendToUser(order.getUsername(), "/queue/orders", order);
     }
 
     @KafkaListener(topics = "notifications", groupId = "toms-group", concurrency = "3")
@@ -75,6 +78,7 @@ public class KafkaConsumerService {
                 };
                 if (template != null) {
                     emailService.sendHtmlEmail(user.getEmail(), "TOMS - " + type.replace("_", " "), template, Map.of("message", message));
+                    messagingTemplate.convertAndSendToUser(username, "/queue/notifications", Map.of("message", message, "type", type));
                 }
             }
         });

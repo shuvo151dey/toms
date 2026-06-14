@@ -29,7 +29,7 @@ public class PortfolioController {
             .map(p -> {
                 double currentPrice = marketDataService.getLastPrice(p.getSymbol());
                 double unrealisedPnl = (currentPrice - p.getAvgCost()) * p.getNetQuantity();
-                return Map.of(
+                return Map.<String, Object>of(
                     "symbol",       p.getSymbol(),
                     "netQuantity",  p.getNetQuantity(),
                     "avgCost",      p.getAvgCost(),

@@ -55,8 +55,8 @@ React (RTK Query) → POST /api/v1/orders
   → JwtAuthenticationFilter (validates Bearer token, extracts tenantId)
   → OrderController (validates, saves to PostgreSQL)
   → KafkaProducerService (publishes to "orders" topic)
-  → KafkaConsumerService (consumes, routes via tenantId header)
-  → WebSocket /topic/orders/{tenantId}
+  → KafkaConsumerService (consumes, routes to user)
+  → WebSocket /user/queue/orders  (per-user, private)
   → Frontend STOMP subscription → Redux dispatch → UI update
 ```
 
@@ -120,17 +120,41 @@ All limits are configurable in `application.properties` with Spring env-var over
 - `GET /api/v1/orderbook/{symbol}` returns aggregated bid and ask levels (price → total quantity) for PENDING and PARTIALLY_COMPLETED orders.
 - `OrderBookDepth` component on the frontend polls every 10s with a symbol selector dropdown.
 
+### Analytics
+
+- **P&L**: `GET /api/v1/analytics/pnl` computes realised P&L per user — `totalSellAmount - totalBuyAmount` overall and per symbol. Displayed in `PnlReport` on the home page.
+- **Time-series snapshots**: `AnalyticsSnapshotScheduler` runs hourly (`@Scheduled(cron = "0 0 * * * *")`), computes VWAP/volume/trade count per symbol from the last hour's trades, and saves an `AnalyticsSnapshot` row. `GET /api/v1/analytics/snapshots?symbol=` returns history for charting in `AnalyticsChart` (recharts dual-axis line chart).
+- **Volatility metrics**: `GET /api/v1/analytics/volatility?symbol=` returns intraday open/high/low/close, spread, and standard deviation of prices. Displayed in `VolatilityMetrics` with a recharts bar chart.
+- **Daily report**: `DailyReportScheduler` runs at 6pm daily, builds a plain-text per-symbol summary (trades, volume, VWAP), and emails it to all `ADMIN` users via `EmailService`.
+- `AnalyticsService` responses for trade and order analytics are cached via `@Cacheable` with a 5-minute Redis TTL. P&L and volatility are not cached (user-specific / real-time).
+
+### Notifications
+
+- **Entity & flow**: `Notification` entity stores per-user in-app notifications with a `NotificationType` enum (`ORDER_FILLED`, `ORDER_REJECTED`, `STOP_TRIGGERED`) and a `read` flag.
+- **Kafka-driven**: event sources (`MatchingEngineService.executeTrade()`, `OrderController` risk rejection, `MatchingEngineService.triggerStopOrders()`) call `KafkaProducerService.sendNotification()` with `username`, `tenantId`, `type`, and `message` as headers. `KafkaConsumerService.consumeNotification()` saves to DB via `NotificationService`, sends an HTML email via `EmailService`, and pushes a real-time WebSocket message to `/user/queue/notifications`.
+- **Email templates**: Thymeleaf HTML templates in `src/main/resources/templates/email/` (`order-filled.html`, `order-rejected.html`, `stop-triggered.html`). `EmailService.sendHtmlEmail()` uses `SpringTemplateEngine` + `MimeMessageHelper`.
+- **API**: `GET /api/v1/notifications`, `GET /api/v1/notifications/unread-count`, `PUT /api/v1/notifications/{id}/read`, `PUT /api/v1/notifications/read-all`.
+- **Frontend**: `NotificationBell` component in the app bar — badge with unread count, popover dropdown with type-coloured chips, polls every 30s and also receives real-time pushes via WebSocket.
+
+### WebSocket (Per-User Channels)
+
+- Orders and trades are routed to private per-user destinations (`/user/queue/orders`, `/user/queue/trades`) via `SimpMessagingTemplate.convertAndSendToUser()` — users only see their own data.
+- Notifications are pushed to `/user/queue/notifications` in real-time.
+- Market prices remain on broadcast channels `/topic/prices/{tenantId}/{ticker}` (not sensitive).
+- `WebSocketAuthInterceptor` (`ChannelInterceptor`) reads the JWT from the STOMP CONNECT frame, validates it via `JwtTokenUtil`, and sets the user principal — enabling Spring to route per-user messages correctly. Registered in `WebSocketConfig.configureClientInboundChannel()`.
+- Frontend sends `Authorization: Bearer <token>` in the STOMP CONNECT headers.
+
 ### Caching
 
 - `OrderCacheService` wraps a Redis hash. The get-by-ID path in `OrderController` checks Redis before hitting PostgreSQL. Cache is invalidated on update and delete.
-- `AnalyticsService` methods are cached via `@Cacheable` with a 5-minute Redis TTL (`spring.cache.type=redis`). `@EnableCaching` is on `SecurityConfig`.
+- `AnalyticsService` trade/order analytics methods are cached via `@Cacheable` with a 5-minute Redis TTL (`spring.cache.type=redis`). `@EnableCaching` is on `SecurityConfig`.
 - Configured in `RedisConfig` with Jackson JSON serialization including `JavaTimeModule`.
 
 ### Frontend State
 
 - Redux store has five slices: `auth`, `order`, `trade`, `app`, `price`.
 - All API calls go through RTK Query (`ApiSlice`) — mutations invalidate relevant cache tags automatically.
-- WebSocket connection is managed by `WebSocketService` (SockJS + STOMP), with exponential backoff reconnect. Subscribes to orders, trades, and per-ticker price channels. Dispatches directly to Redux on message receipt.
+- WebSocket connection is managed by `WebSocketService` (SockJS + STOMP), with exponential backoff reconnect. Subscribes to per-user order/trade/notification channels and per-ticker price broadcast channels. Dispatches directly to Redux on message receipt.
 - `AppSlice` has `theme: "light"/"dark"` with a `toggleTheme` action, but a MUI `ThemeProvider` is not yet wired up in the app root.
 
 ### Role-Based Access
@@ -146,32 +170,46 @@ All limits are configurable in `application.properties` with Spring env-var over
 | Path | Purpose |
 |---|---|
 | `backend/src/.../config/SecurityConfig.java` | Spring Security filter chain, CORS, BCrypt; `@EnableMethodSecurity`, `@EnableAsync`, `@EnableScheduling`, `@EnableCaching` |
-| `backend/src/.../config/WebSocketConfig.java` | STOMP endpoint registration, allowed origins |
+| `backend/src/.../config/WebSocketConfig.java` | STOMP endpoint registration; enables `/queue` broker, `/user` destination prefix; registers `WebSocketAuthInterceptor` |
 | `backend/src/.../config/KafkaConfig.java` | Kafka producer/consumer factories with SASL security props |
 | `backend/src/.../config/WebMvcConfig.java` | Registers `RateLimitInterceptor` on auth and order endpoints |
 | `backend/src/.../component/RateLimitInterceptor.java` | Bucket4j token-bucket rate limiting (IP for auth, username for orders) |
 | `backend/src/.../component/StopOrderScheduler.java` | `@Scheduled` job — evaluates stop orders and publishes price ticks every 30s |
 | `backend/src/.../component/SymbolSeed.java` | `ApplicationRunner` — seeds AAPL, GOOGL, MSFT into Symbol table on first startup |
+| `backend/src/.../component/WebSocketAuthInterceptor.java` | `ChannelInterceptor` — reads JWT from STOMP CONNECT frame, sets user principal for per-user routing |
+| `backend/src/.../component/AnalyticsSnapshotScheduler.java` | Hourly job — computes VWAP/volume/count per symbol and saves `AnalyticsSnapshot` rows |
+| `backend/src/.../component/DailyReportScheduler.java` | Daily 6pm job — builds trade summary and emails all ADMIN users |
 | `backend/src/.../service/MatchingEngineService.java` | Core order matching algorithm; `@Async` wrapper for post-order-save auto-trigger |
 | `backend/src/.../service/MarketDataService.java` | Simulated price feed via random walk; `getPrice()` advances tick, `getLastPrice()` is read-only |
 | `backend/src/.../service/RiskService.java` | Pre-save risk checks: notional cap, position limit, daily loss limit (all configurable) |
-| `backend/src/.../service/AnalyticsService.java` | Trade/order analytics + P&L; responses cached via `@Cacheable` with 5-min Redis TTL |
-| `backend/src/.../service/EmailService.java` | Sends verification emails via `JavaMailSender` |
+| `backend/src/.../service/AnalyticsService.java` | P&L, trade/order analytics, volatility metrics; trade/order responses cached via `@Cacheable` |
+| `backend/src/.../service/NotificationService.java` | Saves `Notification` entities; `markRead` and `markAllRead` operations |
+| `backend/src/.../service/EmailService.java` | `sendVerificationEmail`, `sendEmail` (plain text), `sendHtmlEmail` (Thymeleaf + MimeMessage) |
 | `backend/src/.../service/OrderCacheService.java` | Redis cache for orders + idempotency key storage |
-| `backend/src/.../service/KafkaConsumerService.java` | Bridges Kafka messages to WebSocket (orders, trades, per-ticker prices) |
+| `backend/src/.../service/KafkaConsumerService.java` | Routes Kafka messages: orders/trades to per-user WebSocket queues, prices to broadcast topics, notifications to DB + email + WebSocket push |
+| `backend/src/.../controller/AnalyticsController.java` | `/analytics/pnl`, `/analytics/snapshots`, `/analytics/volatility`, `/analytics/trades`, `/analytics/orders` |
+| `backend/src/.../controller/NotificationController.java` | `GET /notifications`, `GET /notifications/unread-count`, `PUT /notifications/{id}/read`, `PUT /notifications/read-all` |
 | `backend/src/.../controller/OrderBookController.java` | `GET /api/v1/orderbook/{symbol}` — aggregated bid/ask depth levels |
 | `backend/src/.../controller/PortfolioController.java` | `GET /api/v1/portfolio` — open positions with unrealised P&L |
 | `backend/src/.../controller/SymbolController.java` | `GET /api/v1/symbols` — public symbol list (permit-all) |
+| `backend/src/.../entity/AnalyticsSnapshot.java` | Hourly VWAP/volume/trade count snapshot per symbol |
+| `backend/src/.../entity/Notification.java` | Per-user notification with `NotificationType`, `read` flag, `createdAt` |
 | `backend/src/.../entity/Position.java` | Tracks per-user per-symbol netQuantity and avgCost |
+| `backend/src/.../repository/SnapshotRepository.java` | `findBySymbolAndTenantIdOrderByTimestampAsc` for chart history |
+| `backend/src/.../repository/NotificationRepository.java` | `findByUsernameAndTenantIdOrderByCreatedAtDesc`, `countByUsernameAndTenantIdAndReadFalse` |
 | `backend/src/.../repository/PositionRepository.java` | Queries by username + symbol + tenantId |
 | `backend/src/.../util/JwtTokenUtil.java` | JWT generation and validation (key loaded from env) |
+| `backend/src/main/resources/templates/email/` | Thymeleaf HTML templates: `order-filled.html`, `order-rejected.html`, `stop-triggered.html` |
 | `frontend/src/redux/ApiSlice.js` | All RTK Query endpoints + token refresh interceptor; sends `Idempotency-Key` |
 | `frontend/src/redux/PriceSlice.js` | Redux slice for live price map `{ ticker → price }` |
-| `frontend/src/services/WebSocketService.js` | STOMP connection, per-ticker price subscriptions, exponential backoff reconnect |
+| `frontend/src/services/WebSocketService.js` | STOMP connection; sends JWT in CONNECT headers; per-user order/trade/notification queues + broadcast price topics |
 | `frontend/src/services/logger.js` | Dev-only console wrapper (gated by `NODE_ENV`) |
 | `frontend/src/components/PriceTicker.js` | Live price chips updated via WebSocket |
 | `frontend/src/components/OrderBookDepth.js` | Bid/ask depth table with symbol selector, polls every 10s |
 | `frontend/src/components/PnlReport.js` | Realised P&L summary — overall and per-symbol breakdown |
+| `frontend/src/components/AnalyticsChart.js` | Dual-axis recharts line chart of hourly VWAP and volume from snapshots |
+| `frontend/src/components/VolatilityMetrics.js` | Intraday OHLC stats + recharts bar chart; polls every 30s |
+| `frontend/src/components/NotificationBell.js` | AppBar bell icon with unread badge, popover dropdown, mark-read actions |
 | `backend/src/main/resources/application.properties` | All Spring config with local-dev defaults |
 | `kafka_jaas.conf` | JAAS credentials mounted into the Kafka container |
 
@@ -191,33 +229,11 @@ Items are grouped by theme and roughly ordered by impact within each group.
 
 ---
 
-### 📊 Analytics & Reporting
-
-| # | Item | What to do |
-|---|------|------------|
-| A1 | ~~**P&L reporting**~~ | ~~Calculate realised P&L per user per symbol (FIFO cost basis). Expose via `GET /api/v1/analytics/pnl` and add a P&L breakdown page in the frontend.~~ |
-| A2 | ~~**Time-series analytics**~~ | ~~Store VWAP, volume, and trade count in a pre-computed `AnalyticsSnapshot` table (populated by a scheduled job), so `AnalyticsService` returns history rather than recalculating from scratch each call.~~ |
-| A3 | ~~**End-of-day summary report**~~ | ~~Scheduled job (`@Scheduled` or Quartz) that generates a daily summary (trades, volume, fills) and optionally emails it to admins.~~ |
-| A4 | ~~**Volatility & spread metrics**~~ | ~~Add intraday high/low/volatility to `AnalyticsController`; display on a candlestick chart (e.g., `recharts` or `lightweight-charts`) in the analytics page.~~ |
-| A5 | ~~**Analytics caching**~~ | ~~Cache `AnalyticsService` responses in Redis with a short TTL (e.g., 30 s) so repeated admin queries don't hit the DB on every call.~~ |
-
----
-
-### 🔔 Notifications
-
-| # | Item | What to do |
-|---|------|------------|
-| N1 | ~~**In-app notification centre**~~ | ~~Add a `Notification` entity; publish events (order filled, order rejected, stop triggered) to it. Show a badge + dropdown in the header; mark as read via API.~~ |
-| N2 | ~~**Email alerts**~~ | ~~Integrate `spring-boot-starter-mail`. Send emails on order fill, rejection, and daily summary. Templates via Thymeleaf.~~ |
-| N3 | **WebSocket per-user channels** | Currently all messages go to `/topic/orders/{tenantId}`. Add per-user channels `/user/queue/notifications` using `SimpMessagingTemplate.convertAndSendToUser()` to avoid broadcasting sensitive order data to all tenants. |
-
----
-
 ### 🏗️ Reliability & Correctness
 
 | # | Item | What to do |
 |---|------|------------|
-| R1 | **Wrap trade execution in `@Transactional`** | `MatchingEngineService.executeTrade()` currently has no transaction boundary — a crash mid-execution can leave order state inconsistent. Annotate with `@Transactional(isolation = REPEATABLE_READ)`. |
+| R1 | ~~**Wrap trade execution in `@Transactional`**~~ | ~~`MatchingEngineService.executeTrade()` currently has no transaction boundary — a crash mid-execution can leave order state inconsistent. Annotate with `@Transactional(isolation = REPEATABLE_READ)`.~~ |
 | R2 | **Optimistic locking on orders** | Add `@Version` to `TradeOrder` to prevent lost-update race conditions when two matching cycles run concurrently on the same order. |
 | R3 | **Redis cache coherence** | Use Redisson distributed lock (or Lua CAS) around the read-modify-write cycle in `OrderCacheService` to close the window between DB write and cache invalidation. |
 | R4 | **Global exception handler** | Add `@ControllerAdvice GlobalExceptionHandler` with typed exceptions (`OrderNotFoundException`, `InsufficientFundsException`, `SymbolNotAllowedException`) returning structured JSON error bodies, replacing the current ad-hoc `RuntimeException` throws. |

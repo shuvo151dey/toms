@@ -7,7 +7,7 @@ let stompClient = null;
 let subscriptions = [];
 let retryCounts = 0;
 
-export const connect = (onMessage, tenantId, symbols = []) => {
+export const connect = (onMessage, tenantId, symbols = [], token = null) => {
     if (stompClient && stompClient.connected) {
         logger.log("WebSocket is already connected.");
         return;
@@ -15,20 +15,25 @@ export const connect = (onMessage, tenantId, symbols = []) => {
 
     const socket = new SockJS(SOCKET_URL);
     stompClient = Stomp.over(socket);
-    
+
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const connectWithRetry = () => {
-        stompClient.connect({}, () => {
+        stompClient.connect(headers, () => {
             logger.log("Connected to WebSocket");
-    
-            
+
             subscriptions = [
-                stompClient.subscribe(`/topic/orders/${tenantId}`, (message) => {
+                stompClient.subscribe(`/user/queue/orders`, (message) => {
                     onMessage(JSON.parse(message.body), "orders");
                 }),
-                stompClient.subscribe(`/topic/trades/${tenantId}`, (message) => {
+                stompClient.subscribe(`/user/queue/trades`, (message) => {
                     onMessage(JSON.parse(message.body), "trades");
                 }),
+                stompClient.subscribe(`/user/queue/notifications`, (message) => {
+                    onMessage(JSON.parse(message.body), "notifications");
+                }),
             ];
+
             symbols.forEach(ticker => {
                 subscriptions.push(
                     stompClient.subscribe(`/topic/prices/${tenantId}/${ticker}`, (message) => {
@@ -36,14 +41,16 @@ export const connect = (onMessage, tenantId, symbols = []) => {
                     })
                 );
             });
+
             retryCounts = 0;
         }, (error) => {
             logger.log("Websocket error:", error);
             retryCounts++;
-            const delay = Math.min(retryCounts*5000, 30000);
-            setTimeout(connectWithRetry,delay);
+            const delay = Math.min(retryCounts * 5000, 30000);
+            setTimeout(connectWithRetry, delay);
         });
-    }
+    };
+
     connectWithRetry();
 };
 

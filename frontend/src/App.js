@@ -43,6 +43,7 @@ export default function App() {
     const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
     const userRoles = useSelector(state => state.auth.roles);
     const tenantId = useSelector(state => state.auth.tenantId);
+    const accessToken = useSelector(state => state.auth.accessToken);
     const refreshToken = useSelector(state => state.auth.refreshToken);
     const expiryTime = useSelector(state => state.auth.expiryTime);
     const alert = useSelector(state => state.app.alert);
@@ -78,8 +79,10 @@ export default function App() {
                     dispatch(setTrades([message, ...currentTrades]));
                 } else if (topic === 'prices') {
                     dispatch(setPrice({ ticker: message.ticker, price: message.price }));
+                } else if (topic === 'notifications') {
+                    // real-time push — NotificationBell polls independently, this triggers a refetch
                 }
-            }, tenantId, symbols.map(s => s.ticker));
+            }, tenantId, symbols.map(s => s.ticker), accessToken);
         }
 
     }, [dispatch, isAuthenticated]);

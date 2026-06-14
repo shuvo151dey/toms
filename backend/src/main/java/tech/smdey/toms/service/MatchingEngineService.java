@@ -12,14 +12,9 @@ import org.springframework.stereotype.Service;
 
 import tech.smdey.toms.entity.OrderAction;
 import tech.smdey.toms.entity.OrderMethod;
-import tech.smdey.toms.entity.OrderStatus;
-import tech.smdey.toms.entity.Trade;
 import tech.smdey.toms.entity.TradeOrder;
-import tech.smdey.toms.entity.Position;
 import tech.smdey.toms.repository.OrderRepository;
 import tech.smdey.toms.repository.SymbolRepository;
-import tech.smdey.toms.repository.TradeRepository;
-import tech.smdey.toms.repository.PositionRepository;
 
 @Service
 public class MatchingEngineService {
@@ -28,16 +23,13 @@ public class MatchingEngineService {
     private OrderRepository orderRepository;
 
     @Autowired
-    private TradeRepository tradeRepository;
-
-    @Autowired
     private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private SymbolRepository symbolRepository;
 
     @Autowired
-    private PositionRepository positionRepository;
+    private TradeExecutorService tradeExecutorService;
 
     public void matchOrders(String tenantId) {
         symbolRepository.findAll().forEach(s -> matchOrdersForSymbol(s.getTicker(), tenantId));
@@ -118,77 +110,15 @@ public class MatchingEngineService {
         }
     }
 
-    private void updatePositions(TradeOrder buy, TradeOrder sell, int quantity, double tradePrice) {
-        updatePosition(buy.getUsername(), buy.getSymbol(), buy.getTenantId(), quantity, tradePrice, true);
-        updatePosition(sell.getUsername(), sell.getSymbol(), sell.getTenantId(), quantity, tradePrice, false);
-    }
-
-    private void updatePosition(String username, String symbol, String tenantId,
-                                int quantity, double tradePrice, boolean isBuy) {
-        Position position = positionRepository
-            .findByUsernameAndSymbolAndTenantId(username, symbol, tenantId)
-            .orElse(new Position(username, symbol, tenantId));
-
-        if (isBuy) {
-            // Weighted average cost: (oldQty * oldAvg + newQty * newPrice) / totalQty
-            double newAvg = (position.getNetQuantity() == 0)
-                ? tradePrice
-                : (position.getNetQuantity() * position.getAvgCost() + quantity * tradePrice)
-                / (position.getNetQuantity() + quantity);
-            position.setAvgCost(newAvg);
-            position.setNetQuantity(position.getNetQuantity() + quantity);
-        } else {
-            // Selling — avgCost doesn't change, just reduce quantity
-            position.setNetQuantity(position.getNetQuantity() - quantity);
-        }
-
-        positionRepository.save(position);
-    }
+    
 
 
     // Execute trade between two orders
     private void executeTrade(TradeOrder buy, TradeOrder sell, int quantity) {
-        if(!buy.getTenantId().equals(sell.getTenantId())) {
-            return;
-        }
-        // Update order quantities
-        buy.setQuantity(buy.getQuantity() - quantity);
-        sell.setQuantity(sell.getQuantity() - quantity);
-
-        // Update order statuses
-        updateOrderStatus(buy);
-        updateOrderStatus(sell);
-
-        // Record the trade
-        Trade trade = new Trade();
-        trade.setBuyOrder(buy);
-        trade.setSellOrder(sell);
-        trade.setQuantity(quantity);
-        trade.setSymbol(buy.getSymbol());
-        trade.setPrice(sell.getPrice());
-        trade.setTenantId(buy.getTenantId());
-        tradeRepository.save(trade);
-
-        updatePositions(buy, sell, quantity, sell.getPrice());
-
-        // Notify via Kafka
-        kafkaProducerService.sendTradeMessage(trade);
-        kafkaProducerService.sendNotification(buy.getUsername(), buy.getTenantId(), "Order filled: " + quantity + " shares of " + sell.getSymbol() + " at $" + sell.getPrice(), "ORDER_FILLED");
-        kafkaProducerService.sendNotification(sell.getUsername(), sell.getTenantId(), "Order filled: " + quantity + " shares of " + sell.getSymbol() + " at $" + sell.getPrice(), "ORDER_FILLED");
+        tradeExecutorService.executeTrade(buy, sell, quantity);
     }
 
-    // Update order status
-    private void updateOrderStatus(TradeOrder order) {
-        if (order.getQuantity() == 0) {
-            order.setStatus(OrderStatus.COMPLETED);
-        } else {
-            order.setStatus(OrderStatus.PARTIALLY_COMPLETED);
-        }
-        orderRepository.save(order);
-
-        // Notify via Kafka
-        kafkaProducerService.sendOrderMessage(order);
-    }
+    
 
     // Trigger stop orders based on market price
     public void triggerStopOrders(String symbol, double marketPrice, String tenantId) {
