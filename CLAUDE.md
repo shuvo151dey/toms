@@ -234,7 +234,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 | # | Item | What to do |
 |---|------|------------|
 | R1 | ~~**Wrap trade execution in `@Transactional`**~~ | ~~`MatchingEngineService.executeTrade()` currently has no transaction boundary — a crash mid-execution can leave order state inconsistent. Annotate with `@Transactional(isolation = REPEATABLE_READ)`.~~ |
-| R2 | **Optimistic locking on orders** | Add `@Version` to `TradeOrder` to prevent lost-update race conditions when two matching cycles run concurrently on the same order. |
+| R2 | ~~**Optimistic locking on orders**~~ | ~~Add `@Version` to `TradeOrder` to prevent lost-update race conditions when two matching cycles run concurrently on the same order.~~ |
 | R3 | **Redis cache coherence** | Use Redisson distributed lock (or Lua CAS) around the read-modify-write cycle in `OrderCacheService` to close the window between DB write and cache invalidation. |
 | R4 | **Global exception handler** | Add `@ControllerAdvice GlobalExceptionHandler` with typed exceptions (`OrderNotFoundException`, `InsufficientFundsException`, `SymbolNotAllowedException`) returning structured JSON error bodies, replacing the current ad-hoc `RuntimeException` throws. |
 | R5 | **Idempotent Kafka consumer** | `KafkaConsumerService` can process a message more than once on rebalance or retry. Store processed Kafka offsets (or a dedup key) in the DB to make trade creation idempotent. |

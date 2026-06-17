@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -53,6 +54,9 @@ public class TradeOrder {
 
     @CreationTimestamp
     private LocalDateTime timestamp;
+
+    @Version
+    private Long version;
 
     // Getters and setters
     public Long getId() {
@@ -145,6 +149,10 @@ public class TradeOrder {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
 }
