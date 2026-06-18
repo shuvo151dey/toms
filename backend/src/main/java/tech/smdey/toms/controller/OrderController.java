@@ -139,15 +139,9 @@ public class OrderController {
             @RequestHeader("Authorization") String authheader) {
 
         String token = authheader.replace("Bearer ", "").trim();
-        Optional<TradeOrder> cachedOrder = orderCacheService.getFromCache(id);
         String tenantId = jwtTokenUtil.extractTenantId(token);
 
-        if (cachedOrder.isPresent() && cachedOrder.get().getTenantId().equals(tenantId)) {
-            return ResponseEntity.ok(cachedOrder.get());
-        }
-
-        Optional<TradeOrder> order = orderRepository.findByIdAndTenantId(id, tenantId);
-        order.ifPresent(o -> orderCacheService.saveToCache(id, o));
+        Optional<TradeOrder> order = orderCacheService.getOrLoad(id, () -> orderRepository.findByIdAndTenantId(id, tenantId));
 
         return order.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -172,7 +166,7 @@ public class OrderController {
                 order.setLimitPrice(updatedOrder.getLimitPrice());
                 order.setStopPrice(updatedOrder.getStopPrice());
                 TradeOrder savedOrder = orderRepository.save(order);
-
+                orderCacheService.invalidate(id);
                 // Notify via WebSocket
                 kafkaProducerService.sendOrderMessage(savedOrder);
 
@@ -198,7 +192,7 @@ public class OrderController {
             if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PARTIALLY_COMPLETED) {
                 order.setStatus(OrderStatus.CANCELED);
                 orderRepository.save(order);
-
+                orderCacheService.invalidate(id);
                 // Notify via WebSocket
                 kafkaProducerService.sendOrderMessage(order);
 
