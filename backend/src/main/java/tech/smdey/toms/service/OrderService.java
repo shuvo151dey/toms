@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tech.smdey.toms.entity.Symbol;
 import tech.smdey.toms.entity.TradeOrder;
+import tech.smdey.toms.exception.OrderConstraintException;
+import tech.smdey.toms.exception.SymbolNotAllowedException;
 import tech.smdey.toms.repository.SymbolRepository;
 
 @Service
@@ -28,11 +30,11 @@ public class OrderService {
                 .collect(Collectors.toList());
 
         if (!allowed.contains(order.getSymbol())) {
-            throw new IllegalArgumentException("Symbol " + order.getSymbol() + " is not allowed");
+            throw new SymbolNotAllowedException("Symbol " + order.getSymbol() + " is not allowed");
         }
 
         if (order.getQuantity() > maxOrderQuantity) {
-            throw new IllegalArgumentException("Quantity " + order.getQuantity() + " exceeds the limit");
+            throw new OrderConstraintException("Quantity " + order.getQuantity() + " exceeds the limit");
         }
 
         return true;

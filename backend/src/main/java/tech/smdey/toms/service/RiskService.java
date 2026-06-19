@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import tech.smdey.toms.entity.OrderAction;
 import tech.smdey.toms.entity.Position;
 import tech.smdey.toms.entity.TradeOrder;
+import tech.smdey.toms.exception.RiskLimitException;
 import tech.smdey.toms.repository.PositionRepository;
 
 @Service
@@ -30,7 +31,7 @@ public class RiskService {
     private void checkNotional(TradeOrder order) {
         double notional = order.getPrice() * order.getQuantity();
         if (notional > maxNotional) {
-            throw new IllegalArgumentException("Order notional $" + notional + " exceeds limit of $" + maxNotional);
+            throw new RiskLimitException("Order notional $" + notional + " exceeds limit of $" + maxNotional);
         }
     }
 
@@ -41,7 +42,7 @@ public class RiskService {
             .map(Position::getNetQuantity)
             .orElse(0);
         if (current + order.getQuantity() > maxPosition) {
-            throw new IllegalArgumentException("Position limit of " + maxPosition + " shares exceeded for " + order.getSymbol());
+            throw new RiskLimitException("Position limit of " + maxPosition + " shares exceeded for " + order.getSymbol());
         }
     }
 
@@ -52,7 +53,7 @@ public class RiskService {
             .filter(pnl -> pnl < 0)
             .sum();
         if (Math.abs(unrealisedLoss) > dailyLossLimit) {
-            throw new IllegalArgumentException("Daily loss limit of $" + dailyLossLimit + " exceeded");
+            throw new RiskLimitException("Daily loss limit of $" + dailyLossLimit + " exceeded");
         }
     }
 }

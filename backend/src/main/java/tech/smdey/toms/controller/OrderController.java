@@ -2,7 +2,6 @@ package tech.smdey.toms.controller;
 
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +15,8 @@ import tech.smdey.toms.entity.OrderMethod;
 import tech.smdey.toms.entity.OrderStatus;
 import tech.smdey.toms.entity.TradeOrder;
 import tech.smdey.toms.entity.User;
+import tech.smdey.toms.exception.OrderNotFoundException;
+import tech.smdey.toms.exception.OrderNotModifiableException;
 import tech.smdey.toms.repository.OrderRepository;
 import tech.smdey.toms.service.KafkaProducerService;
 import tech.smdey.toms.service.OrderCacheService;
@@ -96,7 +97,7 @@ public class OrderController {
         try {
             riskService.checkRisk(newOrder);
 
-        } catch (RuntimeException e) {
+        } catch (OrderNotFoundException e) {
             kafkaProducerService.sendNotification(user.getUsername(), user.getTenantId(), "Order rejected: " + e.getMessage(), "ORDER_REJECTED");
             throw e;
         }
@@ -144,7 +145,7 @@ public class OrderController {
         Optional<TradeOrder> order = orderCacheService.getOrLoad(id, () -> orderRepository.findByIdAndTenantId(id, tenantId));
 
         return order.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
     }
 
     @PutMapping("/{id}")
@@ -167,16 +168,15 @@ public class OrderController {
                 order.setStopPrice(updatedOrder.getStopPrice());
                 TradeOrder savedOrder = orderRepository.save(order);
                 orderCacheService.invalidate(id);
-                // Notify via WebSocket
                 kafkaProducerService.sendOrderMessage(savedOrder);
 
                 return ResponseEntity.ok(savedOrder);
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+                throw new OrderNotModifiableException("Order " + id + " cannot be updated in status " + order.getStatus());
             }
         }
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        throw new OrderNotFoundException("Order " + id + " not found");
     }
 
     @DeleteMapping("/{id}")
@@ -193,16 +193,15 @@ public class OrderController {
                 order.setStatus(OrderStatus.CANCELED);
                 orderRepository.save(order);
                 orderCacheService.invalidate(id);
-                // Notify via WebSocket
                 kafkaProducerService.sendOrderMessage(order);
 
                 return ResponseEntity.noContent().build();
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                throw new OrderNotModifiableException("Order " + id + " cannot be cancelled in status " + order.getStatus());
             }
         }
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        throw new OrderNotFoundException("Order " + id + " not found");
     }
 
 }
