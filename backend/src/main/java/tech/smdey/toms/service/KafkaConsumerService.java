@@ -7,8 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
+
+import tech.smdey.toms.entity.ProcessedKafkaMessage;
 import tech.smdey.toms.entity.Trade;
 import tech.smdey.toms.entity.TradeOrder;
+import tech.smdey.toms.repository.ProcessedKafkaMessageRepository;
 import tech.smdey.toms.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -20,15 +23,17 @@ public class KafkaConsumerService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final ProcessedKafkaMessageRepository processedKafkaMessageRepository;
 
     @Autowired
-    public KafkaConsumerService(SimpMessagingTemplate messagingTemplate, NotificationService notificationService, UserRepository userRepository, EmailService emailService) {
+    public KafkaConsumerService(SimpMessagingTemplate messagingTemplate, NotificationService notificationService, UserRepository userRepository, EmailService emailService, ProcessedKafkaMessageRepository processedKafkaMessageRepository) {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.messagingTemplate = messagingTemplate;
         this.notificationService = notificationService;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.processedKafkaMessageRepository = processedKafkaMessageRepository;
     }
 
     @KafkaListener(topics = "market-data", groupId = "toms-group", concurrency = "3")
@@ -41,27 +46,32 @@ public class KafkaConsumerService {
 
     @KafkaListener(topics = "trades", groupId = "toms-group", concurrency = "3")
     public void consumeTrade(ConsumerRecord<String, String> record) {
+        if (isDuplicate(record)) return;
         String tenantId = extractTenantId(record);
         System.out.println("Received trade for tenant: " + tenantId);
 
         Trade trade = convertFromJson(record.value(), Trade.class);
-        // messagingTemplate.convertAndSend("/topic/trades/" + tenantId, trade);
         messagingTemplate.convertAndSendToUser(trade.getBuyOrder().getUsername(), "/queue/trades", trade);
         messagingTemplate.convertAndSendToUser(trade.getSellOrder().getUsername(), "/queue/trades", trade);
+        markProcessed(record);
     }
 
     @KafkaListener(topics = "orders", groupId = "toms-group", concurrency = "3")
     public void consumeOrder(ConsumerRecord<String, String> record) {
         String tenantId = extractTenantId(record);
         System.out.println("Received order for tenant: " + tenantId);
-
+        if (isDuplicate(record)) {
+            return;
+        }
         TradeOrder order = convertFromJson(record.value(), TradeOrder.class);
         // messagingTemplate.convertAndSend("/topic/orders/" + tenantId, order);
         messagingTemplate.convertAndSendToUser(order.getUsername(), "/queue/orders", order);
+        markProcessed(record);
     }
 
     @KafkaListener(topics = "notifications", groupId = "toms-group", concurrency = "3")
     public void consumeNotification(ConsumerRecord<String, String> record) {
+        if (isDuplicate(record)) return;
         String username = new String(record.headers().lastHeader("username").value());
         String tenantId = new String(record.headers().lastHeader("tenantId").value());
         String type = new String(record.headers().lastHeader("type").value());
@@ -82,6 +92,21 @@ public class KafkaConsumerService {
                 }
             }
         });
+        markProcessed(record);
+    }
+    
+    private boolean isDuplicate(ConsumerRecord<?, ?> record) {
+        return processedKafkaMessageRepository.existsByTopicAndPartitionAndOffset(
+            record.topic(),
+            record.partition(),
+            record.offset()
+        );
+    }
+
+    private void markProcessed(ConsumerRecord<?, ?> record) {
+        processedKafkaMessageRepository.save(
+            new ProcessedKafkaMessage(record.topic(), record.partition(), record.offset())
+        );
     }
 
     private <T> T convertFromJson(String json, Class<T> clazz) {
