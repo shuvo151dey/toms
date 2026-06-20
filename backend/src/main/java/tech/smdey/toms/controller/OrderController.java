@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import tech.smdey.toms.dto.OrderRequest;
 import tech.smdey.toms.entity.OrderAction;
 import tech.smdey.toms.entity.OrderMethod;
@@ -17,6 +18,7 @@ import tech.smdey.toms.entity.TradeOrder;
 import tech.smdey.toms.entity.User;
 import tech.smdey.toms.exception.OrderNotFoundException;
 import tech.smdey.toms.exception.OrderNotModifiableException;
+import tech.smdey.toms.exception.RiskLimitException;
 import tech.smdey.toms.repository.OrderRepository;
 import tech.smdey.toms.service.KafkaProducerService;
 import tech.smdey.toms.service.OrderCacheService;
@@ -97,7 +99,7 @@ public class OrderController {
         try {
             riskService.checkRisk(newOrder);
 
-        } catch (OrderNotFoundException e) {
+        } catch (RiskLimitException e) {
             kafkaProducerService.sendNotification(user.getUsername(), user.getTenantId(), "Order rejected: " + e.getMessage(), "ORDER_REJECTED");
             throw e;
         }
@@ -117,7 +119,7 @@ public class OrderController {
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "10") @Max(100) int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
         

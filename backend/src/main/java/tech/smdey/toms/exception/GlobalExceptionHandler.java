@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.validation.ConstraintViolationException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -20,6 +22,10 @@ public class GlobalExceptionHandler {
         body.put("timestamp", LocalDateTime.now().toString());
         return new ResponseEntity<>(body, status);
     }
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "Constraint violation");
+    }
 
     @ExceptionHandler(SymbolNotAllowedException.class)
     public ResponseEntity<Map<String, Object>> handleSymbolNotAllowed(SymbolNotAllowedException ex) {
@@ -28,7 +34,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OrderNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleOrderNotFound(OrderNotFoundException ex) {
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "Order not found");
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "Order not found");
     }
 
     @ExceptionHandler(RiskLimitException.class)
