@@ -1,8 +1,12 @@
-import React, { use, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { AppBar, Toolbar, Typography, Button, Drawer, MenuList, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Drawer, MenuList, MenuItem, ThemeProvider, CssBaseline, IconButton } from '@mui/material';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { lightTheme, darkTheme } from './theme';
+import { toggleTheme } from './redux/AppSlice';
 
 import store from './redux/store';
 import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery, useLogoutMutation, useGetSymbolsQuery } from './redux/ApiSlice';
@@ -48,16 +52,19 @@ export default function App() {
     const expiryTime = useSelector(state => state.auth.expiryTime);
     const alert = useSelector(state => state.app.alert);
     const alertType = useSelector(state => state.app.alertType);
-    const {data: symbols = []} = useGetSymbolsQuery(undefined, {skip: !isAuthenticated});
+    const { data: symbols = [] } = useGetSymbolsQuery(undefined, { skip: !isAuthenticated });
+    const theme = useSelector(state => state.app.theme);
+
     useEffect(() => {
-        if(isAuthenticated){
-        triggerGetOrders({
-            page: 0,
-            size: 100,
-            sortBy: 'symbol',
-            direction: 'asc',
-        });
-        triggerGetTrades();}
+        if (isAuthenticated) {
+            triggerGetOrders({
+                page: 0,
+                size: 100,
+                sortBy: 'symbol',
+                direction: 'asc',
+            });
+            triggerGetTrades();
+        }
     }, [triggerGetOrders, triggerGetTrades, isAuthenticated]);
 
     useEffect(() => {
@@ -87,26 +94,26 @@ export default function App() {
 
     }, [dispatch, isAuthenticated]);
 
-    useEffect(() =>{
-        if(expiryTime){
+    useEffect(() => {
+        if (expiryTime) {
             const now = Date.now();
             const timeout = expiryTime - now;
 
-            if (timeout > 60000){
+            if (timeout > 60000) {
                 const timer = setTimeout(() => {
                     dispatch(setAlert({ alert: "Session will expire in 60s", type: "warning" }))
                 }, timeout - 60000)
 
                 return () => clearTimeout(timer);
-            }else if(timeout > 0){
-                
+            } else if (timeout > 0) {
+
                 const timer = setTimeout(() => {
                     dispatch(logout());
                     dispatch(setAlert({ alert: "Session expired", type: "error" }))
                 }, timeout)
 
                 return () => clearTimeout(timer);
-            } else{
+            } else {
                 dispatch(logout());
             }
         }
@@ -115,55 +122,61 @@ export default function App() {
     const handleMatchOrders = async (symbol) => {
         try {
             await matchOrders(symbol).unwrap();
-        } catch(error) {
+        } catch (error) {
             logger.error(error);
         }
     };
     const logoutHandler = async () => {
-        try{
+        try {
             await logout(refreshToken).unwrap();
-        } catch(error){
+        } catch (error) {
             logger.log(error)
         }
     }
     const AppLayout = () => {
         return (
-            <div>
-                <AppBar position="static" mb={4}>
-                    <Toolbar>
-                        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                            TOMS Dashboard
-                        </Typography>
-                        {isAuthenticated && (<Button variant="contained" color="secondary" onClick={handleOpen}>
-                            Place Order
-                        </Button>)}
-                        {userRoles.includes('ADMIN') && <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} onClick={() => handleMatchOrders("AAPL")}>
-                            Match Orders
-                        </Button>}
-                        {isAuthenticated && <NotificationBell />}
-                        {isAuthenticated && (<Button color='white' onClick={() => toggleDrawer(true)}>
-                            <MenuIcon color='white' />
-                        </Button>)}
-                    </Toolbar>
-                </AppBar>
-                <CustomAlert message={alert} type={alertType} onClose={() => dispatch(clearAlert())} />
-                <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
-                <Drawer anchor="left" open={drawer} onClose={() => toggleDrawer(false)}>
-                    <MenuList>
-                        <MenuItem >
+            <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
+                <CssBaseline />
+                <div>
+                    <AppBar position="static" mb={4}>
+                        <Toolbar>
+                            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                                TOMS Dashboard
+                            </Typography>
+                            {isAuthenticated && (<Button variant="contained" color="secondary" onClick={handleOpen}>
+                                Place Order
+                            </Button>)}
+                            {userRoles.includes('ADMIN') && <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} onClick={() => handleMatchOrders("AAPL")}>
+                                Match Orders
+                            </Button>}
+                            {isAuthenticated && <NotificationBell />}
+                            <IconButton color="inherit" onClick={() => dispatch(toggleTheme())} sx={{ ml: 1 }}>
+                                {theme === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                            </IconButton>
+                            {isAuthenticated && (<Button color='white' onClick={() => toggleDrawer(true)}>
+                                <MenuIcon color='white' />
+                            </Button>)}
+                        </Toolbar>
+                    </AppBar>
+                    <CustomAlert message={alert} type={alertType} onClose={() => dispatch(clearAlert())} />
+                    <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
+                    <Drawer anchor="left" open={drawer} onClose={() => toggleDrawer(false)}>
+                        <MenuList>
+                            <MenuItem >
 
-                            <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/"><HomeIcon /> Home</Link>
-                        </MenuItem>
-                        <MenuItem >
-                            <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
-                        </MenuItem>
-                        <MenuItem>
-                            <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" onClick={logoutHandler}><ExitToAppIcon /> Logout</Link>
-                        </MenuItem>
-                    </MenuList>
-                </Drawer>
-                {<Outlet />}
-            </div>
+                                <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/"><HomeIcon /> Home</Link>
+                            </MenuItem>
+                            <MenuItem >
+                                <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
+                            </MenuItem>
+                            <MenuItem>
+                                <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" onClick={logoutHandler}><ExitToAppIcon /> Logout</Link>
+                            </MenuItem>
+                        </MenuList>
+                    </Drawer>
+                    {<Outlet />}
+                </div>
+            </ThemeProvider>
         );
     };
     return (

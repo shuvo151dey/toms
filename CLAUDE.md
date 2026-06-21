@@ -144,6 +144,15 @@ All limits are configurable in `application.properties` with Spring env-var over
 - `WebSocketAuthInterceptor` (`ChannelInterceptor`) reads the JWT from the STOMP CONNECT frame, validates it via `JwtTokenUtil`, and sets the user principal — enabling Spring to route per-user messages correctly. Registered in `WebSocketConfig.configureClientInboundChannel()`.
 - Frontend sends `Authorization: Bearer <token>` in the STOMP CONNECT headers.
 
+### Reliability & Correctness
+
+- **Transactional trade execution**: `TradeExecutorService.executeTrade()` is annotated `@Transactional(isolation = REPEATABLE_READ)` — all five DB writes (two order updates, one trade record, two position updates) are atomic. Extracted from `MatchingEngineService` into its own `@Service` bean so Spring AOP proxying applies correctly.
+- **Optimistic locking**: `TradeOrder` carries a `@Version Long version` field. Hibernate appends `WHERE version = ?` to every UPDATE, causing a `OptimisticLockException` on concurrent modifications rather than silently overwriting.
+- **Redis cache coherence**: `OrderCacheService.getOrLoad()` uses a `SETNX` distributed lock (`opsForValue().setIfAbsent()`) with a 10s TTL around the DB-read → cache-write cycle. `invalidate()` acquires the same lock before deleting. Prevents the read-modify-write race between concurrent requests.
+- **Global exception handler**: `GlobalExceptionHandler` (`@RestControllerAdvice`) maps typed exceptions to structured JSON responses — `SymbolNotAllowedException` → 400, `RiskLimitException` → 400, `OrderNotFoundException` → 404, `OrderNotModifiableException` → 400, `OrderConstraintException` → 400, `ConstraintViolationException` → 400.
+- **Idempotent Kafka consumer**: `KafkaConsumerService` deduplicates messages using a `ProcessedKafkaMessage` table keyed on `(topic, partition, kafka_offset)` with a DB-level unique constraint. All three listeners (`consumeOrder`, `consumeTrade`, `consumeNotification`) check before processing.
+- **Pagination limits**: `OrderController.getOrders()` enforces `@Max(100)` on the `size` parameter via `@Validated` on the controller class.
+
 ### Caching
 
 - `OrderCacheService` wraps a Redis hash. The get-by-ID path in `OrderController` checks Redis before hitting PostgreSQL. Cache is invalidated on update and delete.
@@ -185,8 +194,11 @@ All limits are configurable in `application.properties` with Spring env-var over
 | `backend/src/.../service/AnalyticsService.java` | P&L, trade/order analytics, volatility metrics; trade/order responses cached via `@Cacheable` |
 | `backend/src/.../service/NotificationService.java` | Saves `Notification` entities; `markRead` and `markAllRead` operations |
 | `backend/src/.../service/EmailService.java` | `sendVerificationEmail`, `sendEmail` (plain text), `sendHtmlEmail` (Thymeleaf + MimeMessage) |
-| `backend/src/.../service/OrderCacheService.java` | Redis cache for orders + idempotency key storage |
-| `backend/src/.../service/KafkaConsumerService.java` | Routes Kafka messages: orders/trades to per-user WebSocket queues, prices to broadcast topics, notifications to DB + email + WebSocket push |
+| `backend/src/.../service/TradeExecutorService.java` | Atomic trade execution: updates order quantities/statuses, records `Trade`, updates positions — all in one `@Transactional(REPEATABLE_READ)` boundary |
+| `backend/src/.../service/OrderCacheService.java` | Redis cache for orders + idempotency key storage; `getOrLoad()` and `invalidate()` use SETNX distributed lock for cache coherence |
+| `backend/src/.../service/KafkaConsumerService.java` | Routes Kafka messages: orders/trades to per-user WebSocket queues, prices to broadcast topics, notifications to DB + email + WebSocket push; deduplicates via `ProcessedKafkaMessage` |
+| `backend/src/.../exception/GlobalExceptionHandler.java` | `@RestControllerAdvice` — maps typed exceptions to structured JSON error responses |
+| `backend/src/.../entity/ProcessedKafkaMessage.java` | Dedup table for Kafka consumer idempotency; unique constraint on `(topic, partition, kafka_offset)` |
 | `backend/src/.../controller/AnalyticsController.java` | `/analytics/pnl`, `/analytics/snapshots`, `/analytics/volatility`, `/analytics/trades`, `/analytics/orders` |
 | `backend/src/.../controller/NotificationController.java` | `GET /notifications`, `GET /notifications/unread-count`, `PUT /notifications/{id}/read`, `PUT /notifications/read-all` |
 | `backend/src/.../controller/OrderBookController.java` | `GET /api/v1/orderbook/{symbol}` — aggregated bid/ask depth levels |
@@ -229,24 +241,11 @@ Items are grouped by theme and roughly ordered by impact within each group.
 
 ---
 
-### 🏗️ Reliability & Correctness
-
-| # | Item | What to do |
-|---|------|------------|
-| R1 | ~~**Wrap trade execution in `@Transactional`**~~ | ~~`MatchingEngineService.executeTrade()` currently has no transaction boundary — a crash mid-execution can leave order state inconsistent. Annotate with `@Transactional(isolation = REPEATABLE_READ)`.~~ |
-| R2 | ~~**Optimistic locking on orders**~~ | ~~Add `@Version` to `TradeOrder` to prevent lost-update race conditions when two matching cycles run concurrently on the same order.~~ |
-| R3 | ~~**Redis cache coherence**~~ | ~~Use Redisson distributed lock (or Lua CAS) around the read-modify-write cycle in `OrderCacheService` to close the window between DB write and cache invalidation.~~ |
-| R4 | ~~**Global exception handler**~~ | ~~Add `@ControllerAdvice GlobalExceptionHandler` with typed exceptions (`OrderNotFoundException`, `InsufficientFundsException`, `SymbolNotAllowedException`) returning structured JSON error bodies, replacing the current ad-hoc `RuntimeException` throws.~~ |
-| R5 | ~~**Idempotent Kafka consumer**~~ | ~~`KafkaConsumerService` can process a message more than once on rebalance or retry. Store processed Kafka offsets (or a dedup key) in the DB to make trade creation idempotent.~~ |
-| R6 | ~~**Enforce pagination limits**~~ | ~~`OrderController.getOrders()` accepts arbitrary page sizes. Add `@Max(100)` to the size parameter and validate with `@Validated` on the controller.~~ |
-
----
-
 ### 🖥️ Frontend Improvements
 
 | # | Item | What to do |
 |---|------|------------|
-| F1 | **Wire up dark/light theme** | `AppSlice` already tracks `theme`. Create a MUI `theme` object for each mode and wrap `App.js` in `<ThemeProvider theme={...}>` that reads from Redux state. |
+| F1 | ~~**Wire up dark/light theme**~~ | ~~`AppSlice` already tracks `theme`. Create a MUI `theme` object for each mode and wrap `App.js` in `<ThemeProvider theme={...}>` that reads from Redux state.~~ |
 | F2 | **Client-side order form validation** | Add field-level validation to `OrderModal` (symbol required, quantity 1–100, price > 0 for LIMIT orders, stop price required for STOP orders) before hitting the API. Show inline error messages. |
 | F3 | **Structured error messages** | Parse backend error codes/messages in `ApiSlice` and surface them as actionable alerts (`"Symbol TSLA is not supported"`) instead of the current generic `"Order creation failed"`. |
 | F4 | **User profile & settings page** | Add a `/profile` route showing username, role, tenant, and options to change password. Extend `AuthController` with `PUT /api/v1/auth/password`. |
