@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,7 @@ import tech.smdey.toms.entity.UserRole;
 import tech.smdey.toms.repository.UserRepository;
 import tech.smdey.toms.dto.AuthRequest;
 import tech.smdey.toms.dto.AuthResponse;
+import tech.smdey.toms.dto.ChangePasswordRequest;
 import tech.smdey.toms.dto.SignupRequest;
 import tech.smdey.toms.util.JwtTokenUtil;
 import tech.smdey.toms.service.EmailService;
@@ -25,6 +27,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import javax.management.RuntimeErrorException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -185,5 +189,19 @@ public class AuthController {
         user.setAccountLockedUntil(null);
         userRepository.save(user);
         return ResponseEntity.ok("User successfully unlocked");
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(
+        @AuthenticationPrincipal User user,
+        @RequestBody ChangePasswordRequest request
+    ) {
+        // Validate and change the password
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        return ResponseEntity.ok().build();
     }
 }

@@ -146,10 +146,8 @@ export const apiSlice = createApi({
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
                     await queryFulfilled;
-                    dispatch(setAlert({alert: "Order placed!!", type: "success"}));
                 } catch (error) {
                     logger.error("Failed to place order", error);
-                    dispatch(setAlert({alert: "Failed to place order", type: "error"}));
                 }
 
             },
@@ -176,7 +174,7 @@ export const apiSlice = createApi({
                     dispatch(setAlert({alert: "Order cancelled", type: "info"}))
                 } catch (error) {
                     logger.error("Failed to cancel order", error);
-                    dispatch(setAlert({alert: "Failed to cancel order", type: "error"}))
+                    dispatch(setAlert({alert: extractErrorMessage(error, "Failed to cancel order"), type: "error"}))
                 }
             },
         }),
@@ -185,10 +183,8 @@ export const apiSlice = createApi({
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
                     await queryFulfilled;
-                    dispatch(setAlert({alert: "Order updated", type: "success"}))
                 } catch (error) {
                     logger.error("Failed to update order", error);
-                    dispatch(setAlert({alert: "Failed to update order", type: "error"}))
                 }
             },
         }),
@@ -249,8 +245,21 @@ export const apiSlice = createApi({
         markAllRead: builder.mutation({
             query: () => ({ url: `/notifications/read-all`, method: 'PUT' }),
         }),
+        changePassword: builder.mutation({
+            query: (body) => ({ url: `auth/password`, method: 'PUT', body }),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(setAlert({ alert: "Password changed successfully", type: "success" }));
+                } catch (error) {
+                    dispatch(setAlert({ alert: extractErrorMessage(error, "Failed to change password"), type: "error" }));
+                }
+            },
+        }),
     }),
 });
+
+export const extractErrorMessage = (error, fallback) => error?.error?.data?.message || error?.data?.message || fallback;
 
 export const {
     useGetOrdersQuery,
@@ -273,7 +282,10 @@ export const {
     useGetVolatilityQuery,
     useGetNotificationsQuery,
     useMarkNotificationReadMutation,
-    useMarkAllReadMutation
+    useMarkAllReadMutation,
+    useChangePasswordMutation,
 } = apiSlice;
+
+
 
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Box, Typography, Button, TextField, MenuItem } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { useCreateOrderMutation, useUpdateOrderMutation, useGetSymbolsQuery } from '../redux/ApiSlice';
+import { useCreateOrderMutation, useUpdateOrderMutation, useGetSymbolsQuery, extractErrorMessage } from '../redux/ApiSlice';
 import { useDispatch } from 'react-redux';
 import { setAlert } from '../redux/AppSlice';
 import logger from '../utils/logger';
@@ -15,6 +15,7 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
     const [price, setPrice] = useState(0);
     const [limitPrice, setLimitPrice] = useState(null);
     const [stopPrice, setStopPrice] = useState(null);
+    const [errors, setErrors] = useState({});
     const order = useSelector((state) => state.order.order);
     const [createOrder] = useCreateOrderMutation();
     const [updateOrder] = useUpdateOrderMutation();
@@ -33,8 +34,22 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
         }
     }, [order]);
 
+    const validate = () => {
+        const newErrors = {};
+        if (!symbol) newErrors.symbol = 'Symbol is required';
+        if (!quantity || quantity < 1) newErrors.quantity = 'Quantity is required';
+        if (quantity > 100) newErrors.quantity = 'Quantity must be 100 or less';
+        if (!price || price <= 0) newErrors.price = 'Price is required';
+        if (orderMethod === "LIMIT" && (!limitPrice || limitPrice <= 0)) newErrors.limitPrice = 'Limit price is required';
+        if (orderMethod === "STOP" && (!stopPrice || stopPrice <= 0)) newErrors.stopPrice = 'Stop price is required';
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
     const handleSubmit = async () => {
+        if (!validate()) return;
         try {
+
             if (order) {
                 await updateOrder({
                     id: order.id,
@@ -46,7 +61,7 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                     limitPrice,
                     stopPrice
                 }).unwrap();
-                dispatch(setAlert({ message: 'Order updated successfully', type: 'success' }));
+                dispatch(setAlert({ alert: 'Order updated successfully', type: 'success' }));
             } else {
                 await createOrder({
                     symbol,
@@ -57,13 +72,13 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                     limitPrice,
                     stopPrice
                 }).unwrap();
-                dispatch(setAlert({ message: 'Order created successfully', type: 'success' }));
+                dispatch(setAlert({ alert: 'Order created successfully', type: 'success' }));
             }
+            handleClose();
         } catch (error) {
-            dispatch(setAlert({ message: 'Order creation failed', type: 'error' }));
+            dispatch(setAlert({ alert: extractErrorMessage(error, 'Order creation failed'), type: 'error' }));
             logger.error(error);
         }
-        handleClose();
     };
 
     return (
@@ -99,6 +114,8 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                         fullWidth
                         margin="normal"
                         disabled={isEdit}
+                        error={!!errors.symbol}
+                        helperText={errors.symbol}
                     >
                         {symbols && symbols.map((s) => (
                             <MenuItem key={s.ticker} value={s.ticker}>{s.ticker}</MenuItem>
@@ -136,6 +153,8 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                         onChange={(e) => setPrice(e.target.value)}
                         fullWidth
                         margin="normal"
+                        error={!!errors.price}
+                        helperText={errors.price}
                     />
                     <TextField
                         label="Quantity"
@@ -145,6 +164,8 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                         fullWidth
                         margin="normal"
                         inputProps={{ min: 1 }}
+                        error={!!errors.quantity}
+                        helperText={errors.quantity}
                     />
                     {orderMethod === "LIMIT" && (
                         <TextField
@@ -153,6 +174,8 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                             onChange={(e) => setLimitPrice(e.target.value)}
                             fullWidth
                             margin="normal"
+                            error={!!errors.limitPrice}
+                            helperText={errors.limitPrice}
                         />
                     )}
 
@@ -161,6 +184,10 @@ const OrderModal = ({ open, handleOpen, handleClose }) => {
                             label="Stop Price"
                             value={stopPrice}
                             onChange={(e) => setStopPrice(e.target.value)}
+                            fullWidth
+                            margin="normal"
+                            error={!!errors.stopPrice}
+                            helperText={errors.stopPrice}
                         />
                     )}
                     <Button variant="contained" color="secondary" onClick={handleClose} sx={{ mt: 2 }}>
