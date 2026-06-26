@@ -1,6 +1,7 @@
 package tech.smdey.toms.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.management.RuntimeErrorException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -45,6 +45,9 @@ public class AuthController {
 
     @Autowired
     private EmailService emailService;
+
+    @Value("${app.mail.enabled:false}")
+    private boolean mailEnabled;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request, HttpServletResponse response) {
@@ -107,11 +110,25 @@ public class AuthController {
         user.setTenantId(tenantId);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(Collections.singleton(UserRole.TRADER));
-        user.setEnabled(false);
-        user.setVerificationToken(UUID.randomUUID().toString());
+        if (mailEnabled) {
+            user.setEnabled(false);
+            user.setVerificationToken(UUID.randomUUID().toString());
+        } else {
+            user.setEnabled(true);
+        }
         userRepository.save(user);
-        emailService.sendVerificationEmail(user.getEmail(), user.getVerificationToken());
-        
+
+        if (mailEnabled) {
+            try {
+                emailService.sendVerificationEmail(user.getEmail(), user.getVerificationToken());
+            } catch (Exception e) {
+                // Email failed after account was saved — enable the account so the user isn't stuck
+                user.setEnabled(true);
+                user.setVerificationToken(null);
+                userRepository.save(user);
+            }
+        }
+
         return ResponseEntity.ok("User registered successfully");
     }
 

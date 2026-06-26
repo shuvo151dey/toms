@@ -1,5 +1,6 @@
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
+import logger from "../utils/logger";
 
 const SOCKET_URL = process.env.REACT_APP_WEBSOCKET_URL || "http://localhost:8080/ws";
 

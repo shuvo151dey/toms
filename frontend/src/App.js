@@ -35,6 +35,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import CustomAlert from './components/CustomAlert';
 import { connect, disconnect } from './services/WebSocketService';
 
+import logger from './utils/logger';
 
 export default function App() {
     const [open, setOpen] = React.useState(false);

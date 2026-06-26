@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -19,19 +20,25 @@ import java.util.Map;
 @EnableKafka
 public class KafkaConfig {
 
-    private static final String KAFKA_BOOTSTRAP_SERVERS = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS",
-            "localhost:9092");
+    @Value("${kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
-    private static final String SECURITY_PROTOCOL = System.getenv().getOrDefault("KAFKA_SECURITY_PROTOCOL",
-            "PLAINTEXT");
-    private static final String SASL_MECHANISM = System.getenv().getOrDefault("KAFKA_SASL_MECHANISM", "PLAIN");
-    private static final String SASL_USERNAME = System.getenv().getOrDefault("KAFKA_SASL_USERNAME", "");
-    private static final String SASL_PASSWORD = System.getenv().getOrDefault("KAFKA_SASL_PASSWORD", "");
+    @Value("${kafka.security.protocol}")
+    private String securityProtocol;
+
+    @Value("${kafka.sasl.mechanism}")
+    private String saslMechanism;
+
+    @Value("${kafka.sasl.username}")
+    private String saslUsername;
+
+    @Value("${kafka.sasl.password}")
+    private String saslPassword;
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BOOTSTRAP_SERVERS);
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.putAll(securityProps());
@@ -46,7 +53,7 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BOOTSTRAP_SERVERS);
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "toms-group");
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -63,13 +70,13 @@ public class KafkaConfig {
 
     private Map<String, Object> securityProps() {
         Map<String, Object> props = new HashMap<>();
-        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SECURITY_PROTOCOL);
-        if (!SECURITY_PROTOCOL.equals("PLAINTEXT")) {
-            props.put(SaslConfigs.SASL_MECHANISM, SASL_MECHANISM);
+        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+        if (!securityProtocol.equals("PLAINTEXT")) {
+            props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
             props.put(SaslConfigs.SASL_JAAS_CONFIG,
                     "org.apache.kafka.common.security.plain.PlainLoginModule required " +
-                    "username=\"" + SASL_USERNAME + "\" " +
-                    "password=\"" + SASL_PASSWORD + "\";");
+                    "username=\"" + saslUsername + "\" " +
+                    "password=\"" + saslPassword + "\";");
         }
         return props;
     }

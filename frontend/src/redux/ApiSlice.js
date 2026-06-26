@@ -4,7 +4,7 @@ import { setTrades } from "./TradeSlice";
 import { setAuth, logout } from "./AuthSlice";
 import { jwtDecode } from 'jwt-decode';
 import { setAlert } from "./AppSlice";
-
+import logger from "../utils/logger";
 
 const baseQuery = fetchBaseQuery({
     
