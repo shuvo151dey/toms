@@ -249,7 +249,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 | F2 | ~~**Client-side order form validation**~~ | ~~Add field-level validation to `OrderModal` (symbol required, quantity 1–100, price > 0 for LIMIT orders, stop price required for STOP orders) before hitting the API. Show inline error messages.~~ |
 | F3 | ~~**Structured error messages**~~ | ~~Parse backend error codes/messages in `ApiSlice` and surface them as actionable alerts (`"Symbol TSLA is not supported"`) instead of the current generic `"Order creation failed"`.~~ |
 | F4 | ~~**User profile & settings page**~~ | ~~Add a `/profile` route showing username, role, tenant, and options to change password. Extend `AuthController` with `PUT /api/v1/auth/password`.~~ |
-| F5 | **Dashboard / home page** | Replace the combined order+trade list on Home with a proper dashboard: key metrics cards (open orders, today's trades, P&L), mini chart, recent activity feed. |
+| F5 | ~~**Dashboard / home page**~~ | ~~Replace the combined order+trade list on Home with a proper dashboard: key metrics cards (open orders, today's trades, P&L), mini chart, recent activity feed.~~ |
 | F6 | **Order cancellation UI** | The backend likely supports order updates, but there is no cancel button in the UI. Add a cancel action in `OrderBook` that calls `DELETE /api/v1/orders/{id}`. |
 | F7 | **Trade history pagination** | `TradeFeed` loads all trades. Add server-driven pagination with infinite scroll or page controls. |
 | F8 | **Session expiry handling** | On tab close / reopen, check token expiry before letting the user in. Prompt re-login instead of letting an expired token accumulate in `localStorage`. |
