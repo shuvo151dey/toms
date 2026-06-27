@@ -9,7 +9,6 @@ import {
     TableHead,
     TableRow,
     Button,
-    Skeleton,
 } from "@mui/material";
 import OrderModal from "./OrderModal";
 import { useSelector, useDispatch } from "react-redux";
@@ -32,13 +31,16 @@ const OrderBook = () => {
 
     }
     const handleCancel = async (order) => {
+        if (!window.confirm(`Cancel order#${order.id} (${order.orderAction} ${order.quantity} ${order.symbol})`)) return;
         try {
             await cancelOrder(order.id).unwrap();
-            logger.log('Order Cancelled');
         } catch (error) {
             logger.error('Error in cancelling order', error);
         }
     }
+
+    const isCancellable = (status) => status === 'PENDING' || status === 'PARTIALLY_COMPLETED';
+
     return (<>
     <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose}/>
         <Card>
@@ -76,7 +78,7 @@ const OrderBook = () => {
                                 <TableCell>{order.status}</TableCell>
                                 <TableCell>
                                     <Button size="small" variant="contained" color="primary" sx={{ marginRight: '4px' }} onClick={() => handleOpen(order)}>Edit</Button>
-                                    <Button size="small" variant="contained" color="error" onClick={() => handleCancel(order)}>Cancel</Button>
+                                    <Button size="small" variant="contained" color="error" disabled={!isCancellable(order.status)} onClick={() => handleCancel(order)}>Cancel</Button>
                                 </TableCell>
                             </TableRow>
                         ))}
