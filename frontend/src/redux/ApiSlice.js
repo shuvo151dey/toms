@@ -166,6 +166,12 @@ export const apiSlice = createApi({
             },
 
         }),
+        getTradesPaginated: builder.query({
+            query: ({ page = 0, size = 20 } = {}) => ({
+                url: 'trades',
+                params: { page, size },
+            }),
+        }),
         cancelOrder: builder.mutation({
             query: (id) => ({ url: `orders/${id}`, method: "DELETE" }),
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
@@ -264,6 +270,7 @@ export const extractErrorMessage = (error, fallback) => error?.error?.data?.mess
 export const {
     useGetOrdersQuery,
     useGetTradesQuery,
+    useGetTradesPaginatedQuery,
     useFetchOrderAnalyticsQuery,
     useFetchTradeAnalyticsQuery,
     useMatchOrdersMutation,
