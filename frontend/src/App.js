@@ -98,28 +98,29 @@ export default function App() {
     }, [dispatch, isAuthenticated]);
 
     useEffect(() => {
-        if (expiryTime) {
-            const now = Date.now();
-            const timeout = expiryTime - now;
+        if (!expiryTime) return;
+        const now = Date.now();
+        const timeout = expiryTime - now;
 
-            if (timeout > 60000) {
-                const timer = setTimeout(() => {
-                    dispatch(setAlert({ alert: "Session will expire in 60s", type: "warning" }))
-                }, timeout - 60000)
-
-                return () => clearTimeout(timer);
-            } else if (timeout > 0) {
-
-                const timer = setTimeout(() => {
-                    dispatch(logout());
-                    dispatch(setAlert({ alert: "Session expired", type: "error" }))
-                }, timeout)
-
-                return () => clearTimeout(timer);
-            } else {
-                dispatch(logout());
-            }
+        if (timeout <= 0) {
+            dispatch(logout());
+            dispatch(setAlert({ alert: "Session expired", type: "error"}));
+            return;
         }
+
+        const logoutTimer = setTimeout(() => {
+            dispatch(logout());
+            dispatch(setAlert({ alert: "Session expired", type: "error"}));
+        }, timeout)
+
+        if (timeout > 600000) {
+            const warnTimer = setTimeout(() => {
+                dispatch(setAlert({ alert: "Session will expire in 10 minutes", type: "warning" }));
+            }, timeout - 600000)
+
+            return () => {clearTimeout(warnTimer); clearTimeout(logoutTimer)};
+        }
+        return () => clearTimeout(logoutTimer);
     }, [dispatch, expiryTime]);
 
     const handleMatchOrders = async (symbol) => {

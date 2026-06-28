@@ -164,7 +164,8 @@ All limits are configurable in `application.properties` with Spring env-var over
 - Redux store has five slices: `auth`, `order`, `trade`, `app`, `price`.
 - All API calls go through RTK Query (`ApiSlice`) — mutations invalidate relevant cache tags automatically.
 - WebSocket connection is managed by `WebSocketService` (SockJS + STOMP), with exponential backoff reconnect. Subscribes to per-user order/trade/notification channels and per-ticker price broadcast channels. Dispatches directly to Redux on message receipt.
-- `AppSlice` has `theme: "light"/"dark"` with a `toggleTheme` action, but a MUI `ThemeProvider` is not yet wired up in the app root.
+- `AppSlice` has `theme: "light"/"dark"` with a `toggleTheme` action. A MUI `ThemeProvider` in `App.js` reads from Redux state and applies `lightTheme`/`darkTheme` defined in `theme.js`.
+- **Session persistence**: `redux-persist` persists only the `auth` slice to `localStorage`. On tab reopen, `PrivateRoute` checks both `isAuthenticated` and `expiryTime > Date.now()` before granting access — expired tokens are rejected immediately without a round-trip. `App.js` sets two timers on mount: a warning alert 10 minutes before expiry and a logout dispatch at expiry; both are cleared on unmount to prevent leaks.
 
 ### Role-Based Access
 
@@ -251,8 +252,8 @@ Items are grouped by theme and roughly ordered by impact within each group.
 | F4 | ~~**User profile & settings page**~~ | ~~Add a `/profile` route showing username, role, tenant, and options to change password. Extend `AuthController` with `PUT /api/v1/auth/password`.~~ |
 | F5 | ~~**Dashboard / home page**~~ | ~~Replace the combined order+trade list on Home with a proper dashboard: key metrics cards (open orders, today's trades, P&L), mini chart, recent activity feed.~~ |
 | F6 | ~~**Order cancellation UI**~~ | ~~The backend likely supports order updates, but there is no cancel button in the UI. Add a cancel action in `OrderBook` that calls `DELETE /api/v1/orders/{id}`.~~ |
-| F7 | **Trade history pagination** | `TradeFeed` loads all trades. Add server-driven pagination with infinite scroll or page controls. |
-| F8 | **Session expiry handling** | On tab close / reopen, check token expiry before letting the user in. Prompt re-login instead of letting an expired token accumulate in `localStorage`. |
+| F7 | ~~**Trade history pagination**~~ | ~~`TradeFeed` loads all trades. Add server-driven pagination with infinite scroll or page controls.~~ |
+| F8 | ~~**Session expiry handling**~~ | ~~On tab close / reopen, check token expiry before letting the user in. Prompt re-login instead of letting an expired token accumulate in `localStorage`.~~ |
 
 ---
 
