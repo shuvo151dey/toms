@@ -261,7 +261,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 
 | # | Item | What to do |
 |---|------|------------|
-| X1 | **Unit tests for matching engine** | `MatchingEngineService` has complex priority logic and partial-fill edge cases — add JUnit 5 + Mockito tests covering: full fill, partial fill, MARKET vs LIMIT priority, stop order conversion. |
+| X1 | ~~**Unit tests for matching engine**~~ | ~~`MatchingEngineService` has complex priority logic and partial-fill edge cases — add JUnit 5 + Mockito tests covering: full fill, partial fill, MARKET vs LIMIT priority, stop order conversion.~~ |
 | X2 | **Integration tests with Testcontainers** | Use `@SpringBootTest` + Testcontainers (PostgreSQL, Kafka) to test the full order → match → trade → Kafka path without mocks. |
 | X3 | **Frontend component tests** | Add Jest + React Testing Library tests for `OrderModal`, `OrderBook`, `TradeFeed`, and the Redux slices. |
 | X4 | **E2E tests** | Add Playwright or Cypress tests for the core trader flow: login → create order → trigger match → see trade in feed. |
