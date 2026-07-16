@@ -60,11 +60,12 @@ public class MatchingEngineService {
     // Process MARKET orders
     private void processMarketOrders(List<TradeOrder> buyOrders, List<TradeOrder> sellOrders) {
         PriorityQueue<TradeOrder> sellQueue = new PriorityQueue<>(Comparator.comparing(TradeOrder::getTimestamp));
-        sellQueue.addAll(sellOrders);
+        sellOrders.stream().filter(o -> o.getQuantity() > 0).forEach(sellQueue::add);
         for (TradeOrder buy : buyOrders) {
             if (buy.getOrderMethod() == OrderMethod.MARKET) {
                 while(!sellQueue.isEmpty() && buy.getQuantity() > 0) {
                     TradeOrder sell = sellQueue.poll();
+                    if (sell.getQuantity() <= 0) continue;
                     int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
                     executeTrade(buy, sell, tradeQuantity);
                     if (sell.getQuantity() > 0) {
@@ -74,12 +75,13 @@ public class MatchingEngineService {
             }
         }
         PriorityQueue<TradeOrder> buyQueue = new PriorityQueue<>(Comparator.comparing(TradeOrder::getTimestamp));
-        buyQueue.addAll(buyOrders);
+        buyOrders.stream().filter(o -> o.getQuantity() > 0).forEach(buyQueue::add);
 
         for (TradeOrder sell : sellOrders) {
             if (sell.getOrderMethod() == OrderMethod.MARKET) {
                 while(!buyQueue.isEmpty() && sell.getQuantity() > 0) {
                     TradeOrder buy = buyQueue.poll();
+                    if (buy.getQuantity() <= 0) continue;
                     int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
                     executeTrade(buy, sell, tradeQuantity);
                     if (buy.getQuantity() > 0) {
@@ -92,14 +94,16 @@ public class MatchingEngineService {
 
     // Process LIMIT orders
     private void processLimitOrders(List<TradeOrder> buyOrders, List<TradeOrder> sellOrders) {
-        PriorityQueue<TradeOrder> sellQueue = new PriorityQueue<>(Comparator.comparing(TradeOrder::getPrice).reversed()
+        // Best ask first: lowest price, then earliest timestamp (price-time priority)
+        PriorityQueue<TradeOrder> sellQueue = new PriorityQueue<>(Comparator.comparing(TradeOrder::getPrice)
                 .thenComparing(TradeOrder::getTimestamp));
-        sellQueue.addAll(sellOrders);
+        sellOrders.stream().filter(o -> o.getQuantity() > 0).forEach(sellQueue::add);
 
         for (TradeOrder buy : buyOrders) {
             if (buy.getOrderMethod() == OrderMethod.LIMIT) {
                 while(!sellQueue.isEmpty() && buy.getPrice() >= sellQueue.peek().getPrice() && buy.getQuantity() > 0) {
                     TradeOrder sell = sellQueue.poll();
+                    if (sell.getQuantity() <= 0) continue;
                     int tradeQuantity = Math.min(buy.getQuantity(), sell.getQuantity());
                     executeTrade(buy, sell, tradeQuantity);
                     if (sell.getQuantity() > 0) {

@@ -37,12 +37,32 @@ The backend starts on **port 8080**. All env vars have local defaults in `applic
 ```bash
 cd frontend
 npm install
-npm start   # dev server on port 3001
+npm start   # dev server on port 3000
 npm run build
 npm test
 ```
 
 Environment for local dev is pre-configured in `frontend/.env.development` (points to `localhost:8080`).
+
+### Running Tests
+
+```bash
+# Backend unit tests (fast, no Docker needed)
+cd backend && ./mvnw test -Dtest=MatchingEngineServiceTest
+
+# Backend integration tests (requires Docker running — spins up PostgreSQL + Kafka containers)
+cd backend && ./mvnw test -Dtest=MatchingEngineIntegrationTest -DargLine="-Xmx1024m"
+
+# Frontend component tests (Jest + React Testing Library)
+cd frontend && npm test
+
+# E2E tests (requires docker compose, backend, and frontend all running)
+cd e2e && npx playwright test --project=chromium --workers=1
+```
+
+Run the two backend test classes **separately** — sharing one forked JVM makes the Kafka listeners from the integration context destabilize the fork after the test broker stops.
+
+For the full E2E suite, start the backend with a raised auth rate limit (`RATE_LIMIT_AUTH=50 ./mvnw spring-boot:run`) — the suite performs more logins per minute than the default limit (5/min per IP) allows.
 
 ---
 
@@ -147,11 +167,22 @@ All limits are configurable in `application.properties` with Spring env-var over
 ### Reliability & Correctness
 
 - **Transactional trade execution**: `TradeExecutorService.executeTrade()` is annotated `@Transactional(isolation = REPEATABLE_READ)` — all five DB writes (two order updates, one trade record, two position updates) are atomic. Extracted from `MatchingEngineService` into its own `@Service` bean so Spring AOP proxying applies correctly.
-- **Optimistic locking**: `TradeOrder` carries a `@Version Long version` field. Hibernate appends `WHERE version = ?` to every UPDATE, causing a `OptimisticLockException` on concurrent modifications rather than silently overwriting.
+- **Optimistic locking**: `TradeOrder` carries a `@Version Long version` field. Hibernate appends `WHERE version = ?` to every UPDATE, causing a `OptimisticLockException` on concurrent modifications rather than silently overwriting. `TradeExecutorService.updateOrderStatus()` uses `saveAndFlush` and copies the incremented version back onto the in-memory object, since the matching engine reuses the same instance across multiple partial fills.
 - **Redis cache coherence**: `OrderCacheService.getOrLoad()` uses a `SETNX` distributed lock (`opsForValue().setIfAbsent()`) with a 10s TTL around the DB-read → cache-write cycle. `invalidate()` acquires the same lock before deleting. Prevents the read-modify-write race between concurrent requests.
 - **Global exception handler**: `GlobalExceptionHandler` (`@RestControllerAdvice`) maps typed exceptions to structured JSON responses — `SymbolNotAllowedException` → 400, `RiskLimitException` → 400, `OrderNotFoundException` → 404, `OrderNotModifiableException` → 400, `OrderConstraintException` → 400, `ConstraintViolationException` → 400.
 - **Idempotent Kafka consumer**: `KafkaConsumerService` deduplicates messages using a `ProcessedKafkaMessage` table keyed on `(topic, partition, kafka_offset)` with a DB-level unique constraint. All three listeners (`consumeOrder`, `consumeTrade`, `consumeNotification`) check before processing.
 - **Pagination limits**: `OrderController.getOrders()` enforces `@Max(100)` on the `size` parameter via `@Validated` on the controller class.
+
+### Testing
+
+Four layers, from fastest to most realistic (run commands are under Development Commands → Running Tests):
+
+- **Unit tests** (`backend/src/test/.../service/MatchingEngineServiceTest.java`): JUnit 5 + Mockito, 9 tests covering full fill, partial fills, MARKET-before-LIMIT priority, LIMIT price criteria, and stop-order triggering. The mocked `TradeExecutorService` is stubbed with a `doAnswer` that decrements order quantities — without this the matching loop never terminates, because the engine relies on `executeTrade`'s side effect for progress. Orders get explicit distinct timestamps since `@CreationTimestamp` only fires on DB save.
+- **Integration tests** (`backend/src/test/.../integrations/MatchingEngineIntegrationTest.java`): `@SpringBootTest` + Testcontainers (PostgreSQL 17, Kafka). `@DynamicPropertySource` points Spring at the containers (`kafka.security.protocol=PLAINTEXT` — the test broker has no SASL), so tests never touch the dev database. `@BeforeEach` wipes trades then orders. Covers the full order → match → trade → position flow, partial-fill statuses, stop-order conversion, engine re-run idempotency, and multi-order matching.
+- **Frontend component tests** (`frontend/src/components/*.test.js`): Jest + React Testing Library with `redux-mock-store` and mocked `fetch`. Cover OrderBook cancel-button gating/confirmation and TradeFeed pagination. API slices themselves are deliberately untested — that's RTK Query's own machinery; the components' use of them is what's asserted.
+- **E2E tests** (`e2e/tests/*.spec.js`): Playwright against the running stack (`baseURL` http://localhost:3000). Six specs: signup, login, order creation, form validation, cancellation (handles the native `window.confirm` via a dialog handler), and a two-browser-context buyer/seller flow that asserts a matched trade arrives over WebSocket. Signups use unique usernames per run; the cancel spec places a LIMIT order priced away from the market so it stays cancellable. MUI selects are driven by click-then-option (they are not native `<select>` elements), and form fields are scoped to the modal because the Home page has its own Symbol selector.
+
+macOS note: Testcontainers needs `~/.testcontainers.properties` pointing `docker.host` at the Docker Desktop socket, and `~/.docker-java.properties` with `api.version=1.44` (Docker 29+ rejects the client's default API version).
 
 ### Caching
 
@@ -213,6 +244,9 @@ All limits are configurable in `application.properties` with Spring env-var over
 | `backend/src/.../repository/PositionRepository.java` | Queries by username + symbol + tenantId |
 | `backend/src/.../util/JwtTokenUtil.java` | JWT generation and validation (key loaded from env) |
 | `backend/src/main/resources/templates/email/` | Thymeleaf HTML templates: `order-filled.html`, `order-rejected.html`, `stop-triggered.html` |
+| `backend/src/test/.../service/MatchingEngineServiceTest.java` | Unit tests: matching priority, partial fills, stop triggers (Mockito, stubbed executeTrade) |
+| `backend/src/test/.../integrations/MatchingEngineIntegrationTest.java` | Integration tests: full order→trade flow on Testcontainers PostgreSQL + Kafka |
+| `e2e/tests/` | Playwright E2E specs: auth, order create/validate/cancel, two-user trade match |
 | `frontend/src/redux/ApiSlice.js` | All RTK Query endpoints + token refresh interceptor; sends `Idempotency-Key` |
 | `frontend/src/redux/PriceSlice.js` | Redux slice for live price map `{ ticker → price }` |
 | `frontend/src/services/WebSocketService.js` | STOMP connection; sends JWT in CONNECT headers; per-user order/trade/notification queues + broadcast price topics |
@@ -264,7 +298,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 | X1 | ~~**Unit tests for matching engine**~~ | ~~`MatchingEngineService` has complex priority logic and partial-fill edge cases — add JUnit 5 + Mockito tests covering: full fill, partial fill, MARKET vs LIMIT priority, stop order conversion.~~ |
 | X2 | ~~**Integration tests with Testcontainers**~~ | ~~Use `@SpringBootTest` + Testcontainers (PostgreSQL, Kafka) to test the full order → match → trade → Kafka path without mocks.~~ |
 | X3 | ~~**Frontend component tests**~~ | ~~Add Jest + React Testing Library tests for `OrderModal`, `OrderBook`, `TradeFeed`, and the Redux slices.~~ |
-| X4 | **E2E tests** | Add Playwright or Cypress tests for the core trader flow: login → create order → trigger match → see trade in feed. |
+| X4 | ~~**E2E tests**~~ | ~~Add Playwright or Cypress tests for the core trader flow: login → create order → trigger match → see trade in feed.~~ |
 
 ---
 

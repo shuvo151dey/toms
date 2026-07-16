@@ -13,14 +13,14 @@ const CustomAlert = ({message = "", onClose = () => {}, type = "info"}) => {
 
             return () => clearTimeout(timer);
         }
-    },[dispatch])
+    },[dispatch, message])
     return (
     <Snackbar
         open={!!message}
         autoHideDuration={5000}
         onClose={onClose}
     >
-        <Alert onClose={onClose} severity={type}>
+        <Alert onClose={onClose} severity={type || "info"}>
             {message}
         </Alert>
     </Snackbar>)

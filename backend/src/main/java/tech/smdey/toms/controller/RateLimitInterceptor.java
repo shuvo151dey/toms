@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -16,15 +17,21 @@ import jakarta.servlet.http.HttpServletResponse;
 public class RateLimitInterceptor implements HandlerInterceptor{
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
+    @Value("${rate.limit.auth-per-minute:5}")
+    private int authLimitPerMinute;
+
+    @Value("${rate.limit.orders-per-minute:20}")
+    private int orderLimitPerMinute;
+
     private Bucket newAuthBucket() {
         return Bucket.builder()
-                .addLimit(Bandwidth.simple(5, Duration.ofMinutes(1)))
+                .addLimit(Bandwidth.simple(authLimitPerMinute, Duration.ofMinutes(1)))
                 .build();
     }
 
     private Bucket newOrderBucket() {
         return Bucket.builder()
-                .addLimit(Bandwidth.simple(20, Duration.ofMinutes(1)))
+                .addLimit(Bandwidth.simple(orderLimitPerMinute, Duration.ofMinutes(1)))
                 .build();
     }
 

@@ -137,8 +137,10 @@ export default function App() {
             logger.log(error)
         }
     }
-    const AppLayout = () => {
-        return (
+    // Plain JSX element, NOT a nested component: defining a component inside App
+    // gives it a new identity every render, which makes React unmount and remount
+    // the entire tree (wiping all form/modal state) on any App re-render.
+    const appLayout = (
             <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
                 <CssBaseline />
                 <div>
@@ -184,12 +186,11 @@ export default function App() {
                     {<Outlet />}
                 </div>
             </ThemeProvider>
-        );
-    };
+    );
     return (
         <Router>
             <Routes>
-                <Route element={<AppLayout />}>
+                <Route element={appLayout}>
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route element={<PrivateRoute />}>

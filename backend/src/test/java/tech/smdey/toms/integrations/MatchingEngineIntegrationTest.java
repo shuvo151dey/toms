@@ -2,11 +2,14 @@ package tech.smdey.toms.integrations;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,15 +37,34 @@ class MatchingEngineIntegrationTest {
     
     @Container
     static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.5.0"));
-    
+
+    // Point Spring at the containers instead of the docker-compose services,
+    // so tests never touch the local dev database
+    @DynamicPropertySource
+    static void overrideProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("kafka.bootstrap-servers", kafka::getBootstrapServers);
+        registry.add("kafka.security.protocol", () -> "PLAINTEXT");
+        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+    }
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private TradeRepository tradeRepository;
-    
+
     @Autowired
     private MatchingEngineService matchingEngineService;
+
+    // Each test starts from an empty book — trades reference orders, so delete them first
+    @BeforeEach
+    void cleanDatabase() {
+        tradeRepository.deleteAll();
+        orderRepository.deleteAll();
+    }
     
     // Tests here...
     @Test
@@ -92,9 +114,9 @@ class MatchingEngineIntegrationTest {
         TradeOrder updatedSell = orderRepository.findById(sellOrder.getId()).orElse(null);
         
         assertEquals(0, updatedBuy.getQuantity(), "Buy order quantity should be 0");
-        assertEquals("COMPLETED", updatedBuy.getStatus(), "Buy order should be COMPLETED");
+        assertEquals(OrderStatus.COMPLETED, updatedBuy.getStatus(), "Buy order should be COMPLETED");
         assertEquals(0, updatedSell.getQuantity(), "Sell order quantity should be 0");
-        assertEquals("COMPLETED", updatedSell.getStatus(), "Sell order should be COMPLETED");
+        assertEquals(OrderStatus.COMPLETED, updatedSell.getStatus(), "Sell order should be COMPLETED");
     }
 
     @Test
@@ -157,6 +179,7 @@ class MatchingEngineIntegrationTest {
         stopOrder.setOrderAction(OrderAction.SELL);
         stopOrder.setOrderMethod(OrderMethod.STOP);
         stopOrder.setSymbol("AAPL");
+        stopOrder.setPrice(95.0);
         stopOrder.setStopPrice(95.0);
         stopOrder.setQuantity(10);
         stopOrder.setUsername("seller");
@@ -192,7 +215,7 @@ class MatchingEngineIntegrationTest {
         // ASSERT: Trade executes between stop and buy
         Trade trade = trades.get(0);
         assertEquals(10, trade.getQuantity(), "Trade should be for 10 shares");
-        assertEquals(100.0, trade.getPrice(), "Trade price should match buy order price");
+        assertEquals(95.0, trade.getPrice(), "Trade executes at the sell (stop) order's price");
         assertEquals(buyOrder.getId(), trade.getBuyOrder().getId());
         assertEquals(stopOrder.getId(), trade.getSellOrder().getId());
 
@@ -205,9 +228,9 @@ class MatchingEngineIntegrationTest {
     }
 
     @Test
-    @DisplayName("Kafka idempotency (no duplicate processing)")
+    @DisplayName("Re-running the matching engine does not duplicate trades")
     void testKafkaIdempotency() {
-        // ARRANGE: Create a BUY LIMIT order
+        // ARRANGE: Create a matched BUY/SELL pair
         TradeOrder buyOrder = new TradeOrder();
         buyOrder.setOrderAction(OrderAction.BUY);
         buyOrder.setOrderMethod(OrderMethod.LIMIT);
@@ -218,8 +241,18 @@ class MatchingEngineIntegrationTest {
         buyOrder.setTenantId("NSE");
         buyOrder.setStatus(OrderStatus.PENDING);
 
-        // Save order to real database
+        TradeOrder sellOrder = new TradeOrder();
+        sellOrder.setOrderAction(OrderAction.SELL);
+        sellOrder.setOrderMethod(OrderMethod.LIMIT);
+        sellOrder.setSymbol("AAPL");
+        sellOrder.setPrice(100.0);
+        sellOrder.setQuantity(10);
+        sellOrder.setUsername("seller");
+        sellOrder.setTenantId("NSE");
+        sellOrder.setStatus(OrderStatus.PENDING);
+
         buyOrder = orderRepository.save(buyOrder);
+        sellOrder = orderRepository.save(sellOrder);
 
         // ACT: Trigger matching engine
         matchingEngineService.matchOrdersForSymbol("AAPL", "NSE");
@@ -228,7 +261,7 @@ class MatchingEngineIntegrationTest {
         List<Trade> trades = tradeRepository.findByTenantId("NSE");
         assertEquals(1, trades.size(), "One trade should be created");
 
-        // Simulate reprocessing the same order
+        // ACT: Re-run the matching engine — both orders are now COMPLETED
         matchingEngineService.matchOrdersForSymbol("AAPL", "NSE");
 
         // ASSERT: Verify no new trades were created

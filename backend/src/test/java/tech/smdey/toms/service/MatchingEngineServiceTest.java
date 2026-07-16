@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +40,24 @@ public class MatchingEngineServiceTest {
     @InjectMocks
     private MatchingEngineService matchingEngineService;
 
+    // The matching loop relies on executeTrade decrementing quantities to make
+    // progress. The real TradeExecutorService does this; a bare mock would leave
+    // quantities unchanged and the engine would loop forever (the OOM we saw).
+    @BeforeEach
+    void stubExecuteTrade() {
+        lenient().doAnswer(invocation -> {
+            TradeOrder buy = invocation.getArgument(0);
+            TradeOrder sell = invocation.getArgument(1);
+            int quantity = invocation.getArgument(2);
+            buy.setQuantity(buy.getQuantity() - quantity);
+            sell.setQuantity(sell.getQuantity() - quantity);
+            return null;
+        }).when(tradeExecutorService).executeTrade(any(TradeOrder.class), any(TradeOrder.class), anyInt());
+    }
+
+    // Monotonic counter so every order gets a distinct timestamp (id order = time order)
+    private final AtomicLong tick = new AtomicLong(0);
+
     private TradeOrder createTradeOrder(Long id, OrderAction action, OrderMethod method,
                                    String symbol, Double price, int quantity, Double stopPrice) {
         TradeOrder order = new TradeOrder();
@@ -49,6 +70,8 @@ public class MatchingEngineServiceTest {
         if (stopPrice != null) order.setStopPrice(stopPrice);
         order.setTenantId("NSE");
         order.setUsername("testuser");
+        // @CreationTimestamp only fires on DB save — set explicitly for unit tests
+        order.setTimestamp(LocalDateTime.of(2026, 1, 1, 0, 0).plusSeconds(tick.incrementAndGet()));
         return order;
     }
 
@@ -118,9 +141,9 @@ public class MatchingEngineServiceTest {
         TradeOrder buyOrder2 = createTradeOrder(2L, OrderAction.BUY, OrderMethod.LIMIT, "AAPL", 100.0, 99, null);
 
         // 2. MOCK — tell the mock repository what to return
-        when(orderRepository.findUnmatchedBuyOrders("AAPL", "NSE", any(Pageable.class)))
+        when(orderRepository.findUnmatchedBuyOrders(eq("AAPL"), eq("NSE"), any(Pageable.class)))
             .thenReturn(Arrays.asList(buyOrder, buyOrder2));
-        when(orderRepository.findUnmatchedSellOrders("AAPL", "NSE", any(Pageable.class)))
+        when(orderRepository.findUnmatchedSellOrders(eq("AAPL"), eq("NSE"), any(Pageable.class)))
             .thenReturn(Arrays.asList(sellOrder));
 
         // 3. ACT — call the method you're testing

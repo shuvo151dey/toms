@@ -22,6 +22,9 @@ public class TradeExecutorService {
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void executeTrade(TradeOrder buy, TradeOrder sell, int quantity) {
+        if (quantity <= 0) {
+            return;
+        }
         if(!buy.getTenantId().equals(sell.getTenantId())) {
             return;
         }
@@ -58,7 +61,11 @@ public class TradeExecutorService {
         } else {
             order.setStatus(OrderStatus.PARTIALLY_COMPLETED);
         }
-        orderRepository.save(order);
+        // saveAndFlush + version copy-back: the matching engine reuses this same
+        // object for subsequent fills, so it must carry the incremented @Version
+        // or the next save fails with ObjectOptimisticLockingFailureException
+        TradeOrder saved = orderRepository.saveAndFlush(order);
+        order.setVersion(saved.getVersion());
 
         // Notify via Kafka
         kafkaProducerService.sendOrderMessage(order);

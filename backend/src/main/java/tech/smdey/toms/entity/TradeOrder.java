@@ -135,6 +135,10 @@ public class TradeOrder {
         return timestamp;
     }
 
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public String getTenantId() {
         return tenantId;
     }
@@ -153,6 +157,10 @@ public class TradeOrder {
 
     public Long getVersion() {
         return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
 }
