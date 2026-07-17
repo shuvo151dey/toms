@@ -1,6 +1,5 @@
 package tech.smdey.toms.config;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.cache.annotation.EnableCaching;
@@ -20,7 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import tech.smdey.toms.component.JwtAuthenticationFilter;
 import tech.smdey.toms.service.CustomUserDetailsService;
@@ -52,6 +50,8 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
                 .requestMatchers("/api/v1/auth/**").permitAll() // Allow authentication endpoints
                 .requestMatchers(HttpMethod.GET, "/api/v1/symbols").permitAll() // Public symbol list
+                .requestMatchers("/actuator/health/**").permitAll()
+                .requestMatchers("/actuator/**").hasAnyRole("ADMIN")
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight CORS requests
                 .anyRequest().authenticated()) // Protect all other endpoints
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
