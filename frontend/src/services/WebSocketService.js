@@ -5,15 +5,34 @@ import logger from "../utils/logger";
 const SOCKET_URL = process.env.REACT_APP_WEBSOCKET_URL || "http://localhost:8080/ws";
 
 let stompClient = null;
-let subscriptions = [];
+let baseSubscriptions = [];
+let priceSubscriptions = {}; // ticker -> STOMP subscription
 let retryCounts = 0;
+let connecting = false;
+let latest = null; // most recent connect() args — used when the connection completes
+
+const subscribePrices = (onMessage, tenantId, symbols) => {
+    symbols.forEach((ticker) => {
+        if (priceSubscriptions[ticker]) return; // already subscribed
+        priceSubscriptions[ticker] = stompClient.subscribe(`/topic/prices/${tenantId}/${ticker}`, (message) => {
+            onMessage(JSON.parse(message.body), "prices", ticker);
+        });
+    });
+};
 
 export const connect = (onMessage, tenantId, symbols = [], token = null) => {
+    latest = { onMessage, tenantId, symbols };
+
+    // Already connected — just add subscriptions for any tickers we don't have yet.
+    // (Symbols usually arrive after the initial connect, so this path matters.)
     if (stompClient && stompClient.connected) {
-        logger.log("WebSocket is already connected.");
+        subscribePrices(onMessage, tenantId, symbols);
         return;
     }
 
+    if (connecting) return; // attempt in flight; it will use `latest` when it completes
+
+    connecting = true;
     const socket = new SockJS(SOCKET_URL);
     stompClient = Stomp.over(socket);
 
@@ -22,28 +41,22 @@ export const connect = (onMessage, tenantId, symbols = [], token = null) => {
     const connectWithRetry = () => {
         stompClient.connect(headers, () => {
             logger.log("Connected to WebSocket");
+            connecting = false;
+            retryCounts = 0;
 
-            subscriptions = [
+            baseSubscriptions = [
                 stompClient.subscribe(`/user/queue/orders`, (message) => {
-                    onMessage(JSON.parse(message.body), "orders");
+                    latest.onMessage(JSON.parse(message.body), "orders");
                 }),
                 stompClient.subscribe(`/user/queue/trades`, (message) => {
-                    onMessage(JSON.parse(message.body), "trades");
+                    latest.onMessage(JSON.parse(message.body), "trades");
                 }),
                 stompClient.subscribe(`/user/queue/notifications`, (message) => {
-                    onMessage(JSON.parse(message.body), "notifications");
+                    latest.onMessage(JSON.parse(message.body), "notifications");
                 }),
             ];
 
-            symbols.forEach(ticker => {
-                subscriptions.push(
-                    stompClient.subscribe(`/topic/prices/${tenantId}/${ticker}`, (message) => {
-                        onMessage(JSON.parse(message.body), "prices", ticker);
-                    })
-                );
-            });
-
-            retryCounts = 0;
+            subscribePrices(latest.onMessage, latest.tenantId, latest.symbols);
         }, (error) => {
             logger.log("Websocket error:", error);
             retryCounts++;
@@ -57,7 +70,11 @@ export const connect = (onMessage, tenantId, symbols = [], token = null) => {
 
 export const disconnect = () => {
     if (stompClient) {
-        subscriptions.forEach((sub) => sub.unsubscribe());
+        baseSubscriptions.forEach((sub) => sub.unsubscribe());
+        Object.values(priceSubscriptions).forEach((sub) => sub.unsubscribe());
+        baseSubscriptions = [];
+        priceSubscriptions = {};
+        connecting = false;
         stompClient.disconnect();
         logger.log("Disconnected from WebSocket");
     }

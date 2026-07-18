@@ -14,6 +14,7 @@ import { setOrders } from './redux/OrderSlice';
 import { setTrades } from './redux/TradeSlice';
 import { clearAlert, setAlert } from './redux/AppSlice';
 import { setPrice } from './redux/PriceSlice';
+import { logout as logoutAction } from './redux/AuthSlice';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
@@ -95,7 +96,9 @@ export default function App() {
             }, tenantId, symbols.map(s => s.ticker), accessToken);
         }
 
-    }, [dispatch, isAuthenticated]);
+    // symbols in deps: the symbol list loads after the initial connect, and
+    // connect() adds the missing price subscriptions on the follow-up call
+    }, [dispatch, isAuthenticated, symbols, tenantId, accessToken]);
 
     useEffect(() => {
         if (!expiryTime) return;
@@ -103,13 +106,13 @@ export default function App() {
         const timeout = expiryTime - now;
 
         if (timeout <= 0) {
-            dispatch(logout());
+            dispatch(logoutAction());
             dispatch(setAlert({ alert: "Session expired", type: "error"}));
             return;
         }
 
         const logoutTimer = setTimeout(() => {
-            dispatch(logout());
+            dispatch(logoutAction());
             dispatch(setAlert({ alert: "Session expired", type: "error"}));
         }, timeout)
 
