@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import tech.smdey.toms.entity.OrderAction;
 import tech.smdey.toms.entity.OrderMethod;
 import tech.smdey.toms.entity.TradeOrder;
@@ -31,6 +33,9 @@ public class MatchingEngineService {
     @Autowired
     private TradeExecutorService tradeExecutorService;
 
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     public void matchOrders(String tenantId) {
         symbolRepository.findAll().forEach(s -> matchOrdersForSymbol(s.getTicker(), tenantId));
     }
@@ -42,19 +47,28 @@ public class MatchingEngineService {
 
     // Match orders for a specific symbol
     public void matchOrdersForSymbol(String symbol, String tenantId) {
-        Pageable topOrders = PageRequest.of(0, 100);
-        List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol, tenantId, topOrders);
-        List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol, tenantId, topOrders);
-
-        // Sort orders
-        buyOrders.sort(Comparator.comparing(TradeOrder::getPrice).reversed()
-                .thenComparing(TradeOrder::getTimestamp));
-        sellOrders.sort(Comparator.comparing(TradeOrder::getPrice)
-                .thenComparing(TradeOrder::getTimestamp));
-
-        // Process orders based on type
-        processMarketOrders(buyOrders, sellOrders);
-        processLimitOrders(buyOrders, sellOrders);
+        Timer.Sample sample = Timer.start(meterRegistry);
+        try {
+            Pageable topOrders = PageRequest.of(0, 100);
+            List<TradeOrder> buyOrders = orderRepository.findUnmatchedBuyOrders(symbol, tenantId, topOrders);
+            List<TradeOrder> sellOrders = orderRepository.findUnmatchedSellOrders(symbol, tenantId, topOrders);
+    
+            // Sort orders
+            buyOrders.sort(Comparator.comparing(TradeOrder::getPrice).reversed()
+                    .thenComparing(TradeOrder::getTimestamp));
+            sellOrders.sort(Comparator.comparing(TradeOrder::getPrice)
+                    .thenComparing(TradeOrder::getTimestamp));
+    
+            // Process orders based on type
+            processMarketOrders(buyOrders, sellOrders);
+            processLimitOrders(buyOrders, sellOrders);
+        } finally {
+            // finally, not catch: record the duration on success AND failure
+            sample.stop(Timer.builder("matching.engine.duration")
+                    .tag("symbol", symbol)
+                    .tag("tenantId", tenantId)
+                    .register(meterRegistry));
+        }
     }
 
     // Process MARKET orders

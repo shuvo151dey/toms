@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import tech.smdey.toms.entity.OrderStatus;
 import tech.smdey.toms.entity.Position;
 import tech.smdey.toms.entity.Trade;
@@ -19,6 +20,7 @@ public class TradeExecutorService {
     @Autowired private TradeRepository tradeRepository;
     @Autowired private PositionRepository positionRepository;
     @Autowired private KafkaProducerService kafkaProducerService;
+    @Autowired private MeterRegistry meterRegistry;
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void executeTrade(TradeOrder buy, TradeOrder sell, int quantity) {
@@ -52,6 +54,7 @@ public class TradeExecutorService {
         kafkaProducerService.sendTradeMessage(trade);
         kafkaProducerService.sendNotification(buy.getUsername(), buy.getTenantId(), "Order filled: " + quantity + " shares of " + sell.getSymbol() + " at $" + sell.getPrice(), "ORDER_FILLED");
         kafkaProducerService.sendNotification(sell.getUsername(), sell.getTenantId(), "Order filled: " + quantity + " shares of " + sell.getSymbol() + " at $" + sell.getPrice(), "ORDER_FILLED");
+        meterRegistry.counter("toms.trades.executed", "symbol", trade.getSymbol()).increment();
     }
 
     // Update order status

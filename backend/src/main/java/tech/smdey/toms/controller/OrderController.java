@@ -7,7 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
-
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import tech.smdey.toms.dto.OrderRequest;
@@ -60,8 +60,10 @@ public class OrderController {
 
     private final RiskService riskService;
 
+    private final MeterRegistry meterRegistry;
+
     public OrderController(OrderRepository orderRepository, OrderService orderService,
-            OrderCacheService orderCacheService, KafkaProducerService kafkaProducerService, JwtTokenUtil jwtTokenUtil, MatchingEngineService matchingEngineService, RiskService riskService) {
+            OrderCacheService orderCacheService, KafkaProducerService kafkaProducerService, JwtTokenUtil jwtTokenUtil, MatchingEngineService matchingEngineService, RiskService riskService, MeterRegistry meterRegistry) {
         this.orderRepository = orderRepository;
         this.orderService = orderService;
         this.orderCacheService = orderCacheService;
@@ -69,6 +71,7 @@ public class OrderController {
         this.jwtTokenUtil = jwtTokenUtil;
         this.matchingEngineService = matchingEngineService;
         this.riskService = riskService;
+        this.meterRegistry = meterRegistry;
     }
 
     @PostMapping
@@ -111,6 +114,9 @@ public class OrderController {
         if (idempotencyKey != null) {
             orderCacheService.saveIdempotentResponse(idempotencyKey, newOrder);
         }
+        // NOTE: don't name counters "*.created" — OpenMetrics reserves the _created
+        // suffix for counter timestamps and mangles the metric name on export
+        meterRegistry.counter("toms.orders.placed", "symbol", newOrder.getSymbol()).increment();
         return ResponseEntity.ok(newOrder);
     }
 

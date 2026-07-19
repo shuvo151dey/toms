@@ -307,10 +307,10 @@ Items are grouped by theme and roughly ordered by impact within each group.
 | # | Item | What to do |
 |---|------|------------|
 | O1 | ~~**Spring Boot Actuator**~~ | ~~Enable `/actuator/health`, `/actuator/metrics`, `/actuator/info` and configure readiness/liveness probes for Docker/Kubernetes deployments.~~ |
-| O2 | **Structured logging** | Replace plain `System.out`/bare SLF4J with structured JSON logging (Logstash encoder) so logs are queryable in ELK or Loki. Add correlation IDs per request. |
+| O2 | ~~**Structured logging**~~ | ~~Replace plain `System.out`/bare SLF4J with structured JSON logging (Logstash encoder) so logs are queryable in ELK or Loki. Add correlation IDs per request.~~ |
 | O3 | **Prometheus + Grafana** | Expose Micrometer metrics via `/actuator/prometheus`; add a Grafana dashboard tracking order throughput, match latency, Kafka consumer lag, cache hit rate. |
 | O4 | **Distributed tracing** | Add OpenTelemetry instrumentation (or Zipkin via `spring-cloud-sleuth`) to trace a request from REST → Kafka → WebSocket across services. |
-| O5 | **Log rotation & retention** | `logs/toms.log` grows unbounded. Configure `logback-spring.xml` with rolling file appender (size + time based) and a max-history policy. |
+| O5 | ~~**Log rotation & retention**~~ | ~~`logs/toms.log` grows unbounded. Configure `logback-spring.xml` with rolling file appender (size + time based) and a max-history policy.~~ |
 
 ---
 
