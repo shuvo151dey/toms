@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,12 +14,21 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 
+import io.micrometer.observation.ObservationRegistry;
+
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
 @EnableKafka
 public class KafkaConfig {
+
+    // Producer/consumer factories below are hand-built (not Boot's KafkaAutoConfiguration),
+    // so spring.kafka.template.observation-enabled / listener.observation-enabled have no
+    // effect here — Boot only wires those into beans IT creates. Enable + wire tracing
+    // manually on the KafkaTemplate and listener container factory instead.
+    @Autowired
+    private ObservationRegistry observationRegistry;
 
     @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -47,7 +57,10 @@ public class KafkaConfig {
 
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+        KafkaTemplate<String, String> template = new KafkaTemplate<>(producerFactory());
+        template.setObservationEnabled(true);
+        template.setObservationRegistry(observationRegistry);
+        return template;
     }
 
     @Bean
@@ -65,6 +78,8 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        factory.getContainerProperties().setObservationEnabled(true);
+        factory.getContainerProperties().setObservationRegistry(observationRegistry);
         return factory;
     }
 

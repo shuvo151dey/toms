@@ -12,12 +12,21 @@ TOMS (Trading Order Management System) — a multi-tenant trading platform with 
 
 ### Prerequisites
 
-Start infrastructure (PostgreSQL, Kafka, Zookeeper, Redis) before running either app:
+Start infrastructure before running either app — PostgreSQL, Kafka, Zookeeper, Redis, plus the observability stack (Prometheus, Grafana, Tempo, Loki, Promtail):
 
 ```bash
 # From project root — requires a .env file (copy from .env.example)
 docker compose up -d
 ```
+
+| Service | URL |
+|---|---|
+| Grafana | http://localhost:3002 (admin/admin) — dashboards for all three signals below |
+| Prometheus | http://localhost:9090 |
+| Tempo (traces) | http://localhost:3200 |
+| Loki (logs) | http://localhost:3100 |
+
+If Kafka fails to start with `InconsistentClusterIdException`, its data volume and ZooKeeper's have drifted out of sync (usually from recreating one container without the other). Fix: `docker compose stop kafka zookeeper && docker compose rm -f kafka zookeeper && docker volume rm toms_kafka_data toms_zookeeper_data && docker compose up -d kafka zookeeper`.
 
 ### Backend
 
@@ -184,6 +193,17 @@ Four layers, from fastest to most realistic (run commands are under Development 
 
 macOS note: Testcontainers needs `~/.testcontainers.properties` pointing `docker.host` at the Docker Desktop socket, and `~/.docker-java.properties` with `api.version=1.44` (Docker 29+ rejects the client's default API version).
 
+### Observability
+
+Three signals, all correlated through the same request and viewable in one Grafana instance (see Development Commands → Prerequisites for URLs):
+
+- **Health & metrics**: Spring Boot Actuator exposes `/actuator/health` (public — `/actuator/health/**` is `permitAll` in `SecurityConfig`, with `liveness`/`readiness` probe groups enabled for future Kubernetes use), `/actuator/metrics`, and `/actuator/prometheus` (ADMIN-only). `management.health.mail.enabled` and `management.health.kafka.enabled` are both tied off locally (`MAIL_ENABLED`-gated / disabled outright) — see the Kafka gotcha below for why.
+- **Custom business metrics**: `MatchingEngineService.matchOrdersForSymbol()` wraps its body in a programmatic `Timer.Sample` (not `@Timed`) tagged by `symbol`/`tenantId` — `@Timed` doesn't fire here because the method is called via internal (`this.`) invocation from `asyncMatchOrdersForSymbol()`/`triggerStopOrders()`, which bypasses the AOP proxy `@Timed` relies on. `OrderController` and `TradeExecutorService` increment `toms.orders.placed`/`toms.trades.executed` counters directly via an injected `MeterRegistry`. Counter names must avoid a trailing `.created` — OpenMetrics reserves that suffix for creation timestamps and silently mangles the exported name.
+- **Dashboards**: Prometheus scrapes `/actuator/prometheus` every 15s (`prometheus.yml`, target `host.docker.internal:8080` since the backend runs on the host, not in Docker). Grafana's Prometheus data source (`http://prometheus:9090`) powers throughput/latency panels.
+- **Structured logs**: `logback-spring.xml` replaces the default Spring Boot logging config — console stays human-readable, the file appender (`logs/toms.log`) is JSON via `LogstashEncoder`, rotated daily and at 50MB with a 7-day/500MB retention cap. `CorrelationIdFilter` (`@Order(HIGHEST_PRECEDENCE)`) puts a per-request ID into SLF4J's MDC and echoes it back as `X-Correlation-Id`; the encoder dumps the whole MDC into every JSON line automatically. Promtail tails `backend/logs/*.log` and ships to Loki with a single low-cardinality label (`job=toms-backend`) — the JSON body, including `traceId`, is parsed at query time with LogQL's `| json` rather than indexed as labels, to keep Loki's index small.
+- **Distributed tracing**: Micrometer Tracing (Brave bridge) reports spans to Tempo via its Zipkin-compatible receiver (`management.zipkin.tracing.endpoint` → Tempo's `:9411`). `management.tracing.sampling.probability=1.0` traces everything locally. Trace IDs land in the MDC automatically (no code needed) and therefore in every JSON log line, linking logs ↔ traces. HTTP request spans work out of the box via Spring MVC's observation filter.
+- **Kafka + tracing/observability gotcha**: `KafkaConfig.java` hand-builds `KafkaTemplate`/`ConcurrentKafkaListenerContainerFactory` as custom beans rather than relying on Spring Boot's `KafkaAutoConfiguration`, because the broker connection is driven by the project's own `kafka.*` properties (SASL creds, etc.) instead of the standard `spring.kafka.*` namespace. This has two consequences to remember: (1) `spring.kafka.template.observation-enabled`/`listener.observation-enabled` have no effect on hand-built beans — tracing had to be wired manually via `KafkaTemplate.setObservationRegistry()`/`ContainerProperties.setObservationRegistry()`, injecting the autoconfigured `ObservationRegistry` bean; (2) Spring Boot *still* autoconfigures its own `KafkaAdmin` bean (used for health checks, topic metrics, etc.) from the standard `spring.kafka.*` properties regardless — if those are left unset, it silently defaults to plaintext `localhost:9092` and hammers the SASL-only broker with rejected handshakes badly enough to degrade real producer traffic (observed: order-creation requests hanging 100+ seconds). Fix was to mirror the SASL credentials into `spring.kafka.*` too, so every Boot-managed Kafka client — not just the hand-built ones — authenticates correctly.
+
 ### Caching
 
 - `OrderCacheService` wraps a Redis hash. The get-by-ID path in `OrderController` checks Redis before hitting PostgreSQL. Cache is invalidated on update and delete.
@@ -212,7 +232,7 @@ macOS note: Testcontainers needs `~/.testcontainers.properties` pointing `docker
 |---|---|
 | `backend/src/.../config/SecurityConfig.java` | Spring Security filter chain, CORS, BCrypt; `@EnableMethodSecurity`, `@EnableAsync`, `@EnableScheduling`, `@EnableCaching` |
 | `backend/src/.../config/WebSocketConfig.java` | STOMP endpoint registration; enables `/queue` broker, `/user` destination prefix; registers `WebSocketAuthInterceptor` |
-| `backend/src/.../config/KafkaConfig.java` | Kafka producer/consumer factories with SASL security props |
+| `backend/src/.../config/KafkaConfig.java` | Hand-built Kafka producer/consumer factories with SASL security props; manually wires `ObservationRegistry` into `KafkaTemplate`/listener container factory for tracing (Boot's autoconfig backs off for custom beans) |
 | `backend/src/.../config/WebMvcConfig.java` | Registers `RateLimitInterceptor` on auth and order endpoints |
 | `backend/src/.../component/RateLimitInterceptor.java` | Bucket4j token-bucket rate limiting (IP for auth, username for orders) |
 | `backend/src/.../component/StopOrderScheduler.java` | `@Scheduled` job — evaluates stop orders and publishes price ticks every 30s |
@@ -243,7 +263,13 @@ macOS note: Testcontainers needs `~/.testcontainers.properties` pointing `docker
 | `backend/src/.../repository/NotificationRepository.java` | `findByUsernameAndTenantIdOrderByCreatedAtDesc`, `countByUsernameAndTenantIdAndReadFalse` |
 | `backend/src/.../repository/PositionRepository.java` | Queries by username + symbol + tenantId |
 | `backend/src/.../util/JwtTokenUtil.java` | JWT generation and validation (key loaded from env) |
+| `backend/src/.../component/CorrelationIdFilter.java` | `@Order(HIGHEST_PRECEDENCE)` filter — puts a per-request ID into SLF4J MDC, echoes as `X-Correlation-Id` response header |
+| `backend/src/main/resources/logback-spring.xml` | JSON file logging (Logstash encoder) + size/time rolling policy; console stays plain-text |
 | `backend/src/main/resources/templates/email/` | Thymeleaf HTML templates: `order-filled.html`, `order-rejected.html`, `stop-triggered.html` |
+| `prometheus.yml` | Prometheus scrape config — targets `host.docker.internal:8080` since the backend runs on the host |
+| `tempo.yaml` | Tempo config — local storage backend, Zipkin receiver enabled on `:9411` |
+| `loki-config.yaml` | Loki config — single-binary, local filesystem storage, `tsdb` schema |
+| `promtail-config.yaml` | Tails `backend/logs/*.log`, ships to Loki with a single `job` label |
 | `backend/src/test/.../service/MatchingEngineServiceTest.java` | Unit tests: matching priority, partial fills, stop triggers (Mockito, stubbed executeTrade) |
 | `backend/src/test/.../integrations/MatchingEngineIntegrationTest.java` | Integration tests: full order→trade flow on Testcontainers PostgreSQL + Kafka |
 | `e2e/tests/` | Playwright E2E specs: auth, order create/validate/cancel, two-user trade match |
@@ -308,8 +334,8 @@ Items are grouped by theme and roughly ordered by impact within each group.
 |---|------|------------|
 | O1 | ~~**Spring Boot Actuator**~~ | ~~Enable `/actuator/health`, `/actuator/metrics`, `/actuator/info` and configure readiness/liveness probes for Docker/Kubernetes deployments.~~ |
 | O2 | ~~**Structured logging**~~ | ~~Replace plain `System.out`/bare SLF4J with structured JSON logging (Logstash encoder) so logs are queryable in ELK or Loki. Add correlation IDs per request.~~ |
-| O3 | **Prometheus + Grafana** | Expose Micrometer metrics via `/actuator/prometheus`; add a Grafana dashboard tracking order throughput, match latency, Kafka consumer lag, cache hit rate. |
-| O4 | **Distributed tracing** | Add OpenTelemetry instrumentation (or Zipkin via `spring-cloud-sleuth`) to trace a request from REST → Kafka → WebSocket across services. |
+| O3 | ~~**Prometheus + Grafana**~~ | ~~Expose Micrometer metrics via `/actuator/prometheus`; add a Grafana dashboard tracking order throughput, match latency, Kafka consumer lag, cache hit rate.~~ |
+| O4 | ~~**Distributed tracing**~~ | ~~Add OpenTelemetry instrumentation (or Zipkin via `spring-cloud-sleuth`) to trace a request from REST → Kafka → WebSocket across services.~~ |
 | O5 | ~~**Log rotation & retention**~~ | ~~`logs/toms.log` grows unbounded. Configure `logback-spring.xml` with rolling file appender (size + time based) and a max-history policy.~~ |
 
 ---

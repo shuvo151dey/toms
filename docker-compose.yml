@@ -89,6 +89,25 @@ services:
       - grafana_data:/var/lib/grafana
     restart: unless-stopped
 
+  tempo:
+    image: grafana/tempo:2.5.0
+    ports: ["3200:3200", "9411:9411"]
+    volumes: ["./tempo.yaml:/etc/tempo.yaml:ro"]
+    command: ["-config.file=/etc/tempo.yaml"]
+
+  loki:
+    image: grafana/loki:3.0.0
+    ports: ["3100:3100"]
+    volumes: ["./loki-config.yaml:/etc/loki/local-config.yaml:ro"]
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    volumes:
+      - ./backend/logs:/var/log/toms:ro
+      - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
+    command: ["-config.file=/etc/promtail/config.yaml"]
+
+
 volumes:
   postgres_data:
   zookeeper_data:
