@@ -344,7 +344,7 @@ Items are grouped by theme and roughly ordered by impact within each group.
 
 | # | Item | What to do |
 |---|------|------------|
-| M1 | **Dynamic tenant selection at login** | Replace hardcoded `tenantId = "NSE"` in `AuthController` with a `tenantId` field in the signup/login request body. Store the chosen tenant in the JWT claim (already read correctly downstream). |
+| M1 | ~~**Dynamic tenant selection at login**~~ | ~~Replace hardcoded `tenantId = "NSE"` in `AuthController` with a `tenantId` field in the signup/login request body. Store the chosen tenant in the JWT claim (already read correctly downstream).~~ |
 | M2 | **Tenant administration panel** | Add an ADMIN-only page to create and manage tenants (name, allowed symbols, risk limits). Back it with a `Tenant` entity and `TenantRepository`. |
 | M3 | **Per-tenant risk configuration** | Allow each tenant to have its own symbol list, position limits, and order size caps, rather than sharing global hardcoded values. |
 

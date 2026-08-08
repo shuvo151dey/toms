@@ -51,7 +51,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request, HttpServletResponse response) {
-        String tenantId = "NSE"; 
+        String tenantId = request.getTenantId();
+
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new AuthResponse("Tenant ID is required"));
+        }
 
         User user = userRepository.findByUsernameAndTenantId(request.getUsername(), tenantId)
                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
@@ -95,8 +99,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody SignupRequest request) {
-        String tenantId = "NSE"; // Static for now
+        String tenantId = request.getTenantId(); // Static for now
 
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.badRequest().body("Tenant ID is required");
+        }
         if (userRepository.findByUsernameAndTenantId(request.getUsername(), tenantId).isPresent()) {
             return ResponseEntity.badRequest().body("Username already exists");
         }
@@ -199,8 +206,8 @@ public class AuthController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/unlock/{username}")
-    public ResponseEntity<String> unlock(@PathVariable String username){
-        User user = userRepository.findByUsernameAndTenantId(username, "NSE")
+    public ResponseEntity<String> unlock(@PathVariable String username, @AuthenticationPrincipal User admin){
+        User user = userRepository.findByUsernameAndTenantId(username, admin.getTenantId())
                 .orElseThrow(() -> new RuntimeException("Invalid username"));
         user.setFailedLoginAttempts(0);
         user.setAccountLockedUntil(null);

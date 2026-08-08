@@ -13,7 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-    const [formData, setFormData] = useState({ username: '', password: '' });
+    const [formData, setFormData] = useState({ username: '', password: '', tenantId: '' });
     const [login, { isLoading }] = useLoginMutation();
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -61,6 +61,15 @@ const Login = () => {
                         name="password"
                         type="password"
                         value={formData.password}
+                        onChange={handleChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                    />
+                    <TextField
+                        label="Tenant ID"
+                        name="tenantId"
+                        value={formData.tenantId}
                         onChange={handleChange}
                         fullWidth
                         margin="normal"

@@ -11,6 +11,7 @@ const Signup = () => {
         email: '',
         password: '',
         confirmPassword: '',
+        tenantId: ''
     });
     const [signup, { isLoading }] = useSignupMutation();
     const navigate = useNavigate();
@@ -87,6 +88,15 @@ const Signup = () => {
                         name="confirmPassword"
                         type="password"
                         value={formData.confirmPassword}
+                        onChange={handleChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                    />
+                    <TextField
+                        label="Tenant ID"
+                        name="tenantId"
+                        value={formData.tenantId}
                         onChange={handleChange}
                         fullWidth
                         margin="normal"
