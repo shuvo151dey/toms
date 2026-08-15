@@ -47,6 +47,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disable CSRF
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
                 .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/public").permitAll()
+                .requestMatchers("/api/v1/tenants/**").hasRole("ADMIN")
                 .requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
                 .requestMatchers("/api/v1/auth/**").permitAll() // Allow authentication endpoints
                 .requestMatchers(HttpMethod.GET, "/api/v1/symbols").permitAll() // Public symbol list

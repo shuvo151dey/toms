@@ -262,6 +262,45 @@ export const apiSlice = createApi({
                 }
             },
         }),
+        getPublicTenants: builder.query({
+            query: () => ({ url: `tenants/public` }),
+        }),
+        getTenants: builder.query({
+            query: () => ({ url: `tenants` }),
+        }),
+        createTenant: builder.mutation({
+            query: (tenant) => ({ url: `tenants`, method: 'POST', body: tenant }),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(setAlert({ alert: "Tenant created", type: "success" }));
+                } catch (error) {
+                    dispatch(setAlert({ alert: extractErrorMessage(error, "Failed to create tenant"), type: "error" }));
+                }
+            },
+        }),
+        updateTenant: builder.mutation({
+            query: ({ id, ...patch }) => ({ url: `tenants/${id}`, method: 'PUT', body: patch }),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(setAlert({ alert: "Tenant updated", type: "success" }));
+                } catch (error) {
+                    dispatch(setAlert({ alert: extractErrorMessage(error, "Failed to update tenant"), type: "error" }));
+                }
+            },
+        }),
+        deleteTenant: builder.mutation({
+            query: (id) => ({ url: `tenants/${id}`, method: 'DELETE' }),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(setAlert({ alert: "Tenant deleted", type: "info" }));
+                } catch (error) {
+                    dispatch(setAlert({ alert: extractErrorMessage(error, "Failed to delete tenant"), type: "error" }));
+                }
+            },
+        }),
     }),
 });
 
@@ -291,6 +330,11 @@ export const {
     useMarkNotificationReadMutation,
     useMarkAllReadMutation,
     useChangePasswordMutation,
+    useGetPublicTenantsQuery,
+    useGetTenantsQuery,
+    useCreateTenantMutation,
+    useUpdateTenantMutation,
+    useDeleteTenantMutation,
 } = apiSlice;
 
 

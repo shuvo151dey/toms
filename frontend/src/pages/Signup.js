@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useSignupMutation } from '../redux/ApiSlice';
-import { Box, TextField, Button, Typography, Paper, CircularProgress, Link } from '@mui/material';
+import { useSignupMutation, useGetPublicTenantsQuery } from '../redux/ApiSlice';
+import { Box, TextField, Button, Typography, Paper, CircularProgress, Link, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { setAlert } from '../redux/AppSlice';
 import { useDispatch } from 'react-redux';
@@ -14,6 +14,7 @@ const Signup = () => {
         tenantId: ''
     });
     const [signup, { isLoading }] = useSignupMutation();
+    const { data: tenants = [] } = useGetPublicTenantsQuery();
     const navigate = useNavigate();
     const [error, setError] = useState('');
     const dispatch = useDispatch();
@@ -94,14 +95,19 @@ const Signup = () => {
                         required
                     />
                     <TextField
-                        label="Tenant ID"
+                        select
+                        label="Tenant"
                         name="tenantId"
                         value={formData.tenantId}
                         onChange={handleChange}
                         fullWidth
                         margin="normal"
                         required
-                    />
+                    >
+                        {tenants.map((tenant) => (
+                            <MenuItem key={tenant.id} value={tenant.id}>{tenant.name}</MenuItem>
+                        ))}
+                    </TextField>
                     {error && (
                         <Typography color="error" variant="body2" mt={1}>
                             {error}

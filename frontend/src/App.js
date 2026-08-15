@@ -21,6 +21,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 
 import Home from './pages/Home';
 import Analytics from './pages/Analytics';
@@ -28,6 +29,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Unauthorized from './pages/Unauthorized';
 import Profile from './pages/Profile';
+import TenantAdmin from './pages/TenantAdmin';
 
 import OrderModal from './components/OrderModal';
 import NotificationBell from './components/NotificationBell';
@@ -178,6 +180,11 @@ export default function App() {
                             <MenuItem >
                                 <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
                             </MenuItem>
+                            {userRoles.includes('ADMIN') && (
+                                <MenuItem>
+                                    <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/tenants"><ApartmentIcon /> Tenants</Link>
+                                </MenuItem>
+                            )}
                             <MenuItem>
                                 <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/profile"><AccountCircleIcon /> Profile</Link>
                             </MenuItem>
@@ -198,6 +205,7 @@ export default function App() {
                     <Route path="/signup" element={<Signup />} />
                     <Route element={<PrivateRoute />}>
                         <Route path="/analytics" element={<ProtectedRoute roles={['ADMIN']}><Analytics /></ProtectedRoute>} />
+                        <Route path="/tenants" element={<ProtectedRoute roles={['ADMIN']}><TenantAdmin /></ProtectedRoute>} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/" element={<Home />} />
                     </Route>

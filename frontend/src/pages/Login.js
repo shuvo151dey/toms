@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLoginMutation } from '../redux/ApiSlice';
+import { useLoginMutation, useGetPublicTenantsQuery } from '../redux/ApiSlice';
 import { useDispatch } from 'react-redux';
 import {
     Box,
@@ -9,12 +9,14 @@ import {
     Paper,
     CircularProgress,
     Link,
+    MenuItem,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
     const [formData, setFormData] = useState({ username: '', password: '', tenantId: '' });
     const [login, { isLoading }] = useLoginMutation();
+    const { data: tenants = [] } = useGetPublicTenantsQuery();
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [error, setError] = useState('');
@@ -67,14 +69,19 @@ const Login = () => {
                         required
                     />
                     <TextField
-                        label="Tenant ID"
+                        select
+                        label="Tenant"
                         name="tenantId"
                         value={formData.tenantId}
                         onChange={handleChange}
                         fullWidth
                         margin="normal"
                         required
-                    />
+                    >
+                        {tenants.map((tenant) => (
+                            <MenuItem key={tenant.id} value={tenant.id}>{tenant.name}</MenuItem>
+                        ))}
+                    </TextField>
                     {error && (
                         <Typography color="error" variant="body2" mt={1}>
                             {error}
