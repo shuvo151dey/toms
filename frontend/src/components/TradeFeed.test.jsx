@@ -2,218 +2,127 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
+import { vi } from 'vitest';
 import TradeFeed from './TradeFeed';
+import { useGetTradesPaginatedQuery } from '../redux/ApiSlice';
+
+// TradeFeed calls useGetTradesPaginatedQuery directly. redux-mock-store
+// provides no reducers/middleware, so that hook would throw "Middleware for
+// RTK-Query API... has not been added to the store." Mocking the hook itself
+// keeps this a focused component test without needing a live API layer.
+vi.mock('../redux/ApiSlice', () => ({
+  useGetTradesPaginatedQuery: vi.fn(),
+}));
 
 const mockStore = configureMockStore();
+const store = mockStore({ auth: { isAuthenticated: true } });
+
+const renderTradeFeed = () =>
+  render(
+    <Provider store={store}>
+      <TradeFeed />
+    </Provider>
+  );
+
+// The pagination IconButtons wrap an aria-hidden MUI icon and have no
+// aria-label of their own, so they have no accessible name to query by —
+// find them via their icon's data-testid instead.
+const getPrevButton = () => screen.getByTestId('ChevronLeftIcon').closest('button');
+const getNextButton = () => screen.getByTestId('ChevronRightIcon').closest('button');
 
 describe('TradeFeed - Pagination Tests', () => {
-  let store;
-
-  beforeEach(() => {
-    store = mockStore({
-      auth: { isAuthenticated: true }
+  test('should render trades in table', () => {
+    useGetTradesPaginatedQuery.mockReturnValue({
+      data: {
+        content: [
+          { id: 1, symbol: 'AAPL', price: 150.0, quantity: 10, buyOrder: { id: 101 }, sellOrder: { id: 201 } },
+          { id: 2, symbol: 'GOOGL', price: 2800.0, quantity: 5, buyOrder: { id: 102 }, sellOrder: { id: 202 } },
+        ],
+        totalPages: 1,
+        totalElements: 2,
+      },
+      isLoading: false,
     });
+
+    renderTradeFeed();
+
+    expect(screen.getByText('AAPL')).toBeInTheDocument();
+    expect(screen.getByText('GOOGL')).toBeInTheDocument();
+    expect(screen.getByText('150')).toBeInTheDocument();
+    expect(screen.getByText('2800')).toBeInTheDocument();
   });
 
-  // Test 3.1: Renders trades from API response
-  test('should render trades in table', async () => {
-    const mockTrades = {
-      content: [
-        { id: 1, symbol: 'AAPL', price: 150.0, quantity: 10, buyOrder: { id: 101 }, sellOrder: { id: 201 } },
-        { id: 2, symbol: 'GOOGL', price: 2800.0, quantity: 5, buyOrder: { id: 102 }, sellOrder: { id: 202 } }
-      ],
-      totalPages: 1,
-      totalElements: 2
-    };
-
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockTrades)
-      })
-    );
-
-    render(
-      <Provider store={store}>
-        <TradeFeed />
-      </Provider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('AAPL')).toBeInTheDocument();
-      expect(screen.getByText('GOOGL')).toBeInTheDocument();
-      expect(screen.getByText('150')).toBeInTheDocument();
-      expect(screen.getByText('2800')).toBeInTheDocument();
+  test('should show pagination buttons when totalPages > 1', () => {
+    useGetTradesPaginatedQuery.mockReturnValue({
+      data: { content: [], totalPages: 5, totalElements: 50 },
+      isLoading: false,
     });
+
+    renderTradeFeed();
+
+    expect(getNextButton()).toBeInTheDocument();
+    expect(getPrevButton()).toBeInTheDocument();
   });
 
-  // Test 3.2: Shows pagination controls when multiple pages
-  test('should show pagination buttons when totalPages > 1', async () => {
-    const mockTrades = {
-      content: Array(10).fill({
-        id: 1,
-        symbol: 'AAPL',
-        price: 150.0,
-        quantity: 10,
-        buyOrder: { id: 101 },
-        sellOrder: { id: 201 }
-      }),
-      totalPages: 5,
-      totalElements: 50
-    };
-
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockTrades)
-      })
-    );
-
-    render(
-      <Provider store={store}>
-        <TradeFeed />
-      </Provider>
-    );
-
-    await waitFor(() => {
-      const nextButton = screen.getByRole('button', { name: /chevronright/i });
-      const prevButton = screen.getByRole('button', { name: /chevronleft/i });
-      expect(nextButton).toBeInTheDocument();
-      expect(prevButton).toBeInTheDocument();
+  test('should display current page and total pages', () => {
+    useGetTradesPaginatedQuery.mockReturnValue({
+      data: { content: [], totalPages: 5, totalElements: 50 },
+      isLoading: false,
     });
+
+    renderTradeFeed();
+
+    expect(screen.getByText(/1 \/ 5/)).toBeInTheDocument();
   });
 
-  // Test 3.3: Shows page indicator
-  test('should display current page and total pages', async () => {
-    const mockTrades = {
-      content: [{ id: 1, symbol: 'AAPL', price: 150.0, quantity: 10, buyOrder: { id: 101 }, sellOrder: { id: 201 } }],
-      totalPages: 5,
-      totalElements: 50
-    };
-
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockTrades)
-      })
-    );
-
-    render(
-      <Provider store={store}>
-        <TradeFeed />
-      </Provider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/1 \/ 5/)).toBeInTheDocument();
+  test('should disable prev button on first page', () => {
+    useGetTradesPaginatedQuery.mockReturnValue({
+      data: { content: [], totalPages: 3, totalElements: 30 },
+      isLoading: false,
     });
+
+    renderTradeFeed();
+
+    expect(getPrevButton()).toBeDisabled();
   });
 
-  // Test 3.4: Disables prev button on first page
-  test('should disable prev button on first page', async () => {
-    const mockTrades = {
-      content: [{ id: 1, symbol: 'AAPL', price: 150.0, quantity: 10, buyOrder: { id: 101 }, sellOrder: { id: 201 } }],
-      totalPages: 3,
-      totalElements: 30
-    };
-
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockTrades)
-      })
-    );
-
-    render(
-      <Provider store={store}>
-        <TradeFeed />
-      </Provider>
-    );
-
-    await waitFor(() => {
-      const prevButton = screen.getByRole('button', { name: /chevronleft/i });
-      expect(prevButton).toBeDisabled();
+  test('should disable next button when on the last page', () => {
+    useGetTradesPaginatedQuery.mockReturnValue({
+      data: { content: [], totalPages: 3, totalElements: 30 },
+      isLoading: false,
     });
+
+    renderTradeFeed();
+
+    // Advance to the last page (index 2 of 3) via the next button.
+    const nextButton = getNextButton();
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+
+    expect(nextButton).toBeDisabled();
   });
 
-  // Test 3.5: Disables next button on last page
-  test('should disable next button on last page', async () => {
-    const mockTrades = {
-      content: [{ id: 1, symbol: 'AAPL', price: 150.0, quantity: 10, buyOrder: { id: 101 }, sellOrder: { id: 201 } }],
-      totalPages: 3,
-      totalElements: 30,
-      number: 2 // Page 2 (0-indexed, so this is the 3rd page)
-    };
-
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockTrades)
-      })
-    );
-
-    render(
-      <Provider store={store}>
-        <TradeFeed />
-      </Provider>
-    );
-
-    // Simulate navigating to last page
-    await waitFor(() => {
-      const nextButton = screen.getByRole('button', { name: /chevronright/i });
-      expect(nextButton).toBeDisabled();
-    });
-  });
-
-  // Test 3.6: Shows skeleton loaders while loading
   test('should show skeleton loaders while fetching', () => {
-    global.fetch = jest.fn(() =>
-      new Promise(() => {}) // Never resolves, so stays in loading state
-    );
+    useGetTradesPaginatedQuery.mockReturnValue({ data: undefined, isLoading: true });
 
-    const { container } = render(
-      <Provider store={store}>
-        <TradeFeed />
-      </Provider>
-    );
+    const { container } = renderTradeFeed();
 
-    // Check for Skeleton components (they render as empty divs while loading)
-    const skeletons = container.querySelectorAll('tr');
-    expect(skeletons.length).toBeGreaterThan(0);
+    const skeletonRows = container.querySelectorAll('tbody tr');
+    expect(skeletonRows.length).toBeGreaterThan(0);
   });
 
-  // Test 3.7: Fetches correct page on pagination
-  test('should fetch page 1 when next button clicked', async () => {
-    const mockTrades = {
-      content: [{ id: 1, symbol: 'AAPL', price: 150.0, quantity: 10, buyOrder: { id: 101 }, sellOrder: { id: 201 } }],
-      totalPages: 3,
-      totalElements: 30
-    };
-
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockTrades)
-      })
-    );
-
-    render(
-      <Provider store={store}>
-        <TradeFeed />
-      </Provider>
-    );
-
-    await waitFor(() => {
-      const nextButton = screen.getByRole('button', { name: /chevronright/i });
-      fireEvent.click(nextButton);
+  test('should request page 1 when next button clicked', async () => {
+    useGetTradesPaginatedQuery.mockReturnValue({
+      data: { content: [], totalPages: 3, totalElements: 30 },
+      isLoading: false,
     });
 
-    // Verify fetch was called with page=1
+    renderTradeFeed();
+
+    fireEvent.click(getNextButton());
+
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=1'),
-        expect.any(Object)
-      );
+      expect(useGetTradesPaginatedQuery).toHaveBeenCalledWith({ page: 1, size: 10 });
     });
   });
 });

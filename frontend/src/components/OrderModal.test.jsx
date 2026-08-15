@@ -1,76 +1,95 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/jest-dom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { configureStore } from 'redux-mock-store';
+import configureMockStore from 'redux-mock-store';
+import { vi } from 'vitest';
 import OrderModal from './OrderModal';
+import { useCreateOrderMutation, useUpdateOrderMutation, useGetSymbolsQuery } from '../redux/ApiSlice';
+
+// OrderModal calls RTK Query hooks directly (useCreateOrderMutation,
+// useUpdateOrderMutation, useGetSymbolsQuery). redux-mock-store provides no
+// reducers/middleware, so those hooks would throw "Middleware for RTK-Query
+// API... has not been added to the store." Mocking the hooks themselves
+// keeps this a focused component test without needing a live API layer.
+vi.mock('../redux/ApiSlice', () => ({
+  useCreateOrderMutation: vi.fn(),
+  useUpdateOrderMutation: vi.fn(),
+  useGetSymbolsQuery: vi.fn(),
+  extractErrorMessage: (error, fallback) => fallback,
+}));
+
+const mockStore = configureMockStore();
+
+const selectMuiOption = async (user, label, optionName) => {
+  await user.click(screen.getByLabelText(label));
+  await user.click(await screen.findByRole('option', { name: optionName }));
+};
 
 describe('OrderModal', () => {
-  let store;
+  let createOrderTrigger;
+  let updateOrderTrigger;
+  let handleClose;
 
   beforeEach(() => {
-    store = configureStore();
+    createOrderTrigger = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
+    updateOrderTrigger = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
+    handleClose = vi.fn();
+    useCreateOrderMutation.mockReturnValue([createOrderTrigger]);
+    useUpdateOrderMutation.mockReturnValue([updateOrderTrigger]);
+    useGetSymbolsQuery.mockReturnValue({ data: [{ ticker: 'AAPL' }, { ticker: 'TATAMOTORS' }] });
   });
 
-  test('should show error when quantity is 0', () => {
-    const store = mockStore({
-      auth: {
-        isAuthenticated: true
-      }
-    });
+  const renderModal = () => {
+    const store = mockStore({ order: { order: null } });
     render(
       <Provider store={store}>
-        <OrderModal open={true} handleClose={() => {}} />
+        <OrderModal open={true} handleClose={handleClose} />
       </Provider>
     );
+  };
 
-    const quantityInput = screen.getByLabelText(/quantity/i);
-    fireEvent.change(quantityInput, { target: { value: 0 } });
-    fireEvent.blur(quantityInput);
+  test('should show error when quantity is 0', () => {
+    renderModal();
 
-    const errorMessage = screen.getByText(/quantity must be greater than 0/i);
-    expect(errorMessage).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Price'), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '0' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    expect(screen.getByText('Quantity is required')).toBeInTheDocument();
+    expect(createOrderTrigger).not.toHaveBeenCalled();
   });
 
   test('should submit order when all fields valid', async () => {
-    const mockSubmit = jest.fn();
-    const store = mockStore({
-      auth: {
-        isAuthenticated: true
-      }
-    });
+    const user = userEvent.setup();
+    renderModal();
 
-    render(
-      <Provider store={store}>
-        <OrderModal open={true} handleClose={() => {}} onSubmit={mockSubmit} />
-      </Provider>
-    );
-
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'AAPL' } });
-    fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '10' } });
+    await selectMuiOption(user, 'Symbol', 'AAPL');
+    await selectMuiOption(user, 'Action', 'BUY');
+    await selectMuiOption(user, 'Method', 'MARKET');
     fireEvent.change(screen.getByLabelText('Price'), { target: { value: '100' } });
-    fireEvent.click(screen.getByText('Place Order'));
+    fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
     await waitFor(() => {
-      expect(mockSubmit).toHaveBeenCalledWith();
+      expect(createOrderTrigger).toHaveBeenCalledWith(
+        expect.objectContaining({ symbol: 'AAPL', orderAction: 'BUY', orderMethod: 'MARKET', price: '100', quantity: '10' })
+      );
     });
+    await waitFor(() => expect(handleClose).toHaveBeenCalled());
   });
 
-  test('should show error when symbol is invalid', async () => {
-    const mockSubmit = jest.fn();
-    const store = mockStore({
-      auth: {
-        isAuthenticated: true
-      }
-    });
+  test('should show limit price error when method is LIMIT and limit price is empty', async () => {
+    const user = userEvent.setup();
+    renderModal();
 
-    render(
-      <Provider store={store}>
-        <OrderModal open={true} handleClose={() => {}} onSubmit={mockSubmit} />
-      </Provider>
-    );
+    await selectMuiOption(user, 'Method', 'LIMIT');
+    fireEvent.change(screen.getByLabelText('Price'), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '10' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
 
-    fireEvent.change(screen.getByLabelText('Symbol'), { target: { value: 'INVALID' } });
-    fireEvent.blur(screen.getByLabelText('Symbol'));
-
-    const errorMessage = screen.getByText(/invalid symbol/i);
-    expect(errorMessage).toBeInTheDocument();
+    expect(screen.getByText('Limit price is required')).toBeInTheDocument();
+    expect(createOrderTrigger).not.toHaveBeenCalled();
   });
 });

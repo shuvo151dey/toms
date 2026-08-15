@@ -2,220 +2,111 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
+import { vi } from 'vitest';
 import OrderBook from './OrderBook';
+import { useCancelOrderMutation, useCreateOrderMutation, useUpdateOrderMutation, useGetSymbolsQuery } from '../redux/ApiSlice';
+
+// OrderBook (and the OrderModal it always renders, just closed) calls RTK
+// Query hooks directly. redux-mock-store provides no reducers/middleware, so
+// those hooks would throw "Middleware for RTK-Query API... has not been
+// added to the store." Mocking the hooks themselves keeps these as focused
+// component tests without needing a live API layer.
+vi.mock('../redux/ApiSlice', () => ({
+  useCancelOrderMutation: vi.fn(),
+  useCreateOrderMutation: vi.fn(),
+  useUpdateOrderMutation: vi.fn(),
+  useGetSymbolsQuery: vi.fn(),
+  extractErrorMessage: (error, fallback) => fallback,
+}));
 
 const mockStore = configureMockStore();
 
+const baseOrder = {
+  id: 1,
+  symbol: 'AAPL',
+  quantity: 10,
+  price: 100.0,
+  orderAction: 'BUY',
+  orderMethod: 'MARKET',
+  limitPrice: null,
+  stopPrice: null,
+};
+
+const renderOrderBook = (orders) => {
+  const store = mockStore({
+    order: { orders, order: null },
+  });
+  render(
+    <Provider store={store}>
+      <OrderBook />
+    </Provider>
+  );
+};
+
 describe('OrderBook - Cancel Button Tests', () => {
+  let cancelOrderTrigger;
 
-  // Test 2.1: Cancel button visible for PENDING orders
+  beforeEach(() => {
+    cancelOrderTrigger = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
+    useCancelOrderMutation.mockReturnValue([cancelOrderTrigger]);
+    useCreateOrderMutation.mockReturnValue([vi.fn(() => ({ unwrap: () => Promise.resolve({}) }))]);
+    useUpdateOrderMutation.mockReturnValue([vi.fn(() => ({ unwrap: () => Promise.resolve({}) }))]);
+    useGetSymbolsQuery.mockReturnValue({ data: [{ ticker: 'AAPL' }, { ticker: 'TATAMOTORS' }] });
+  });
+
   test('should show cancel button for PENDING orders', () => {
-    const mockOrders = [
-      {
-        id: 1,
-        symbol: 'AAPL',
-        quantity: 10,
-        price: 100.0,
-        status: 'PENDING',
-        orderAction: 'BUY',
-        orderMethod: 'MARKET',
-        limitPrice: null,
-        stopPrice: null
-      }
-    ];
-
-    const store = mockStore({
-      order: { orders: mockOrders },
-      auth: { isAuthenticated: true }
-    });
-
-    render(
-      <Provider store={store}>
-        <OrderBook />
-      </Provider>
-    );
+    renderOrderBook([{ ...baseOrder, status: 'PENDING' }]);
 
     const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
     expect(cancelButtons.length).toBeGreaterThan(0);
     expect(cancelButtons[0]).not.toBeDisabled();
   });
 
-  // Test 2.2: Cancel button disabled for COMPLETED orders
   test('should disable cancel button for COMPLETED orders', () => {
-    const mockOrders = [
-      {
-        id: 1,
-        symbol: 'AAPL',
-        quantity: 10,
-        price: 100.0,
-        status: 'COMPLETED',
-        orderAction: 'BUY',
-        orderMethod: 'MARKET',
-        limitPrice: null,
-        stopPrice: null
-      }
-    ];
-
-    const store = mockStore({
-      order: { orders: mockOrders },
-      auth: { isAuthenticated: true }
-    });
-
-    render(
-      <Provider store={store}>
-        <OrderBook />
-      </Provider>
-    );
+    renderOrderBook([{ ...baseOrder, status: 'COMPLETED' }]);
 
     const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
     expect(cancelButtons[0]).toBeDisabled();
   });
 
-  // Test 2.3: Cancel button disabled for CANCELED orders
   test('should disable cancel button for CANCELED orders', () => {
-    const mockOrders = [
-      {
-        id: 1,
-        symbol: 'AAPL',
-        quantity: 10,
-        price: 100.0,
-        status: 'CANCELED',
-        orderAction: 'BUY',
-        orderMethod: 'MARKET',
-        limitPrice: null,
-        stopPrice: null
-      }
-    ];
-
-    const store = mockStore({
-      order: { orders: mockOrders },
-      auth: { isAuthenticated: true }
-    });
-
-    render(
-      <Provider store={store}>
-        <OrderBook />
-      </Provider>
-    );
+    renderOrderBook([{ ...baseOrder, status: 'CANCELED' }]);
 
     const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
     expect(cancelButtons[0]).toBeDisabled();
   });
 
-  // Test 2.4: Confirmation dialog on cancel click
   test('should show confirmation dialog when cancel button clicked', () => {
-    const mockOrders = [
-      {
-        id: 1,
-        symbol: 'AAPL',
-        quantity: 10,
-        price: 100.0,
-        status: 'PENDING',
-        orderAction: 'BUY',
-        orderMethod: 'MARKET',
-        limitPrice: null,
-        stopPrice: null
-      }
-    ];
-
-    const store = mockStore({
-      order: { orders: mockOrders },
-      auth: { isAuthenticated: true }
-    });
-
-    render(
-      <Provider store={store}>
-        <OrderBook />
-      </Provider>
-    );
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderOrderBook([{ ...baseOrder, status: 'PENDING' }]);
 
     const cancelButton = screen.getAllByRole('button', { name: /cancel/i })[0];
     fireEvent.click(cancelButton);
 
-    // Should show confirmation dialog with order details
-    expect(screen.getByText(/cancel order/i)).toBeInTheDocument();
-    expect(screen.getByText(/BUY/)).toBeInTheDocument();
-    expect(screen.getByText(/10/)).toBeInTheDocument();
-    expect(screen.getByText(/AAPL/)).toBeInTheDocument();
+    expect(confirmSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Cancel order#1 (BUY 10 AAPL)')
+    );
+    confirmSpy.mockRestore();
   });
 
-  // Test 2.5: Calls API on confirmation
   test('should call cancelOrder API when confirmation accepted', async () => {
-    const mockOrders = [
-      {
-        id: 1,
-        symbol: 'AAPL',
-        quantity: 10,
-        price: 100.0,
-        status: 'PENDING',
-        orderAction: 'BUY',
-        orderMethod: 'MARKET',
-        limitPrice: null,
-        stopPrice: null
-      }
-    ];
-
-    const store = mockStore({
-      order: { orders: mockOrders },
-      auth: { isAuthenticated: true }
-    });
-
-    // Mock the API call (you'd inject this via props or context)
-    global.fetch = jest.fn();
-
-    render(
-      <Provider store={store}>
-        <OrderBook />
-      </Provider>
-    );
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderOrderBook([{ ...baseOrder, status: 'PENDING' }]);
 
     const cancelButton = screen.getAllByRole('button', { name: /cancel/i })[0];
     fireEvent.click(cancelButton);
 
-    // Simulate clicking "OK" on confirmation dialog
-    const confirmButton = screen.getByRole('button', { name: /ok|confirm|yes/i });
-    fireEvent.click(confirmButton);
-
-    // Verify API was called
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/orders/1'),
-        expect.objectContaining({ method: 'DELETE' })
-      );
+      expect(cancelOrderTrigger).toHaveBeenCalledWith(1);
     });
   });
 
-  // Test 2.6: Edit button opens OrderModal
   test('should open OrderModal when edit button clicked', () => {
-    const mockOrders = [
-      {
-        id: 1,
-        symbol: 'AAPL',
-        quantity: 10,
-        price: 100.0,
-        status: 'PENDING',
-        orderAction: 'BUY',
-        orderMethod: 'MARKET',
-        limitPrice: null,
-        stopPrice: null
-      }
-    ];
-
-    const store = mockStore({
-      order: { orders: mockOrders },
-      auth: { isAuthenticated: true }
-    });
-
-    render(
-      <Provider store={store}>
-        <OrderBook />
-      </Provider>
-    );
+    renderOrderBook([{ ...baseOrder, status: 'PENDING' }]);
 
     const editButton = screen.getByRole('button', { name: /edit/i });
     fireEvent.click(editButton);
 
-    // Should render OrderModal (check for modal-specific elements)
-    expect(screen.getByText(/edit order|update order/i)).toBeInTheDocument();
+    expect(screen.getByText('Order Details')).toBeInTheDocument();
   });
 });
