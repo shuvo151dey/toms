@@ -4,6 +4,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import org.springframework.kafka.core.*;
 
 import io.micrometer.observation.ObservationRegistry;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +47,16 @@ public class KafkaConfig {
 
     @Value("${kafka.sasl.password}")
     private String saslPassword;
+
+    // Managed providers (Aiven, Confluent Cloud, etc.) commonly sign their broker
+    // certs with a private CA rather than a public one, so the JVM's default
+    // trust store won't validate the TLS handshake — this must be supplied
+    // explicitly. Left blank, no custom truststore is configured (matches prior
+    // behavior for brokers with publicly-trusted certs, e.g. local SASL_PLAINTEXT).
+    // Base64-encoded so a multi-line PEM survives being pasted into a single-line
+    // env var field without newline-mangling risk.
+    @Value("${kafka.ssl.ca-cert-base64:}")
+    private String sslCaCertBase64;
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
@@ -89,6 +102,11 @@ public class KafkaConfig {
         if (!securityProtocol.equals("PLAINTEXT")) {
             props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
             props.put(SaslConfigs.SASL_JAAS_CONFIG, buildJaasConfig());
+        }
+        if (!sslCaCertBase64.isBlank()) {
+            String pem = new String(Base64.getDecoder().decode(sslCaCertBase64), StandardCharsets.UTF_8);
+            props.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "PEM");
+            props.put(SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG, pem);
         }
         return props;
     }
