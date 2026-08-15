@@ -87,6 +87,20 @@ public class KafkaConfig {
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
 
+    // Boot autoconfigures its own KafkaAdmin from the spring.kafka.* namespace
+    // regardless of the beans above — defining our own here makes that back off
+    // (@ConditionalOnMissingBean, same as the other Kafka beans), so there's a
+    // single source of truth for security config instead of a second copy that
+    // can silently drift out of sync (e.g. a hardcoded PlainLoginModule string
+    // left behind after switching to SCRAM — exactly what happened here).
+    @Bean
+    public KafkaAdmin kafkaAdmin() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.putAll(securityProps());
+        return new KafkaAdmin(configProps);
+    }
+
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
