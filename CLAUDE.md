@@ -46,12 +46,12 @@ The backend starts on **port 8080**. All env vars have local defaults in `applic
 ```bash
 cd frontend
 npm install
-npm start   # dev server on port 3000
-npm run build
-npm test
+npm start   # Vite dev server on port 3000 (aliased to `npm run dev`)
+npm run build   # outputs to frontend/dist (not build/)
+npm test    # runs the Vitest suite once (vitest run)
 ```
 
-Environment for local dev is pre-configured in `frontend/.env.development` (points to `localhost:8080`).
+Built with **Vite** (not Create React App). Environment for local dev is pre-configured in `frontend/.env.development` (points to `localhost:8080`). Vite only exposes env vars prefixed `VITE_` to client code, read via `import.meta.env.VITE_*` (not `process.env.REACT_APP_*`). Source files still use `.jsx` for anything containing JSX and plain `.js` otherwise, matching Vite's default module resolution.
 
 ### Running Tests
 
@@ -62,7 +62,7 @@ cd backend && ./mvnw test -Dtest=MatchingEngineServiceTest
 # Backend integration tests (requires Docker running — spins up PostgreSQL + Kafka containers)
 cd backend && ./mvnw test -Dtest=MatchingEngineIntegrationTest -DargLine="-Xmx1024m"
 
-# Frontend component tests (Jest + React Testing Library)
+# Frontend component tests (Vitest + React Testing Library)
 cd frontend && npm test
 
 # E2E tests (requires docker compose, backend, and frontend all running)
@@ -95,7 +95,7 @@ Every entity (`TradeOrder`, `Trade`, `User`, `Symbol`) carries a `tenantId` stri
 
 - **Tenant selection**: `SignupRequest`/`AuthRequest` carry a `tenantId` field, chosen from a dropdown fed by `GET /api/v1/tenants/public` (returns `{tenantId, name}` pairs only — no risk limits exposed). `AuthController.login()`/`register()` no longer hardcode a tenant; `UserRepository.findByUsernameAndTenantId(...)` means the same username can exist independently under different tenants.
 - **Tenant entity**: `Tenant` (`entity/Tenant.java`) holds `name` plus nullable per-tenant overrides — `maxPosition`, `maxNotional`, `dailyLossLimit`, `maxOrderQuantity`. `null` on any of these means "fall back to the global `application.properties` default." `RiskService` and `OrderService` each resolve these per-order via `TradeOrder.getTenantId()`, looking up `Tenant` and falling through to the injected `@Value` default when the tenant record doesn't override that particular limit.
-- **Tenant admin**: `TenantController` — full CRUD is `@PreAuthorize("hasRole('ADMIN')")`; only `GET /tenants/public` is `permitAll`. Deleting a tenant is blocked (`UserRepository.existsByTenantId`) if any user still references it, since there's no FK to enforce that automatically. Frontend: `pages/TenantAdmin.js`, gated the same way as `/analytics`.
+- **Tenant admin**: `TenantController` — full CRUD is `@PreAuthorize("hasRole('ADMIN')")`; only `GET /tenants/public` is `permitAll`. Deleting a tenant is blocked (`UserRepository.existsByTenantId`) if any user still references it, since there's no FK to enforce that automatically. Frontend: `pages/TenantAdmin.jsx`, gated the same way as `/analytics`.
 - **Symbols are tenant-scoped**: `Symbol` has a `(ticker, tenantId)` unique constraint instead of a globally-unique ticker — two tenants can each independently list `"AAPL"` as separate rows. `GET /api/v1/symbols` now requires auth and returns only the caller's tenant's symbols (previously `permitAll` + global). Managed per-tenant via `POST`/`DELETE /api/v1/tenants/{tenantId}/symbols`, nested under the *string* `tenantId` (not the numeric `Tenant.id` the top-level CRUD endpoints use). `MatchingEngineService.matchOrders()` and `OrderService.validateOrder()`'s symbol allow-list both scope by tenant now instead of iterating every symbol globally.
 - **`StopOrderScheduler` tenant fan-out**: groups `Symbol` rows by ticker first, calls `MarketDataService.getPrice(ticker)` once per tick, then fans that single price out to every tenant holding that ticker — calling `getPrice()` once per `(tenant, ticker)` pair instead would double-perturb the random walk for any ticker shared across tenants, since `getPrice()` is stateful/non-idempotent.
 - **Role-check gotcha**: `User.getAuthorities()` must prefix roles with `"ROLE_"` (`new SimpleGrantedAuthority("ROLE_" + role.name())`) — `hasRole()`/`hasAnyRole()`/`@PreAuthorize("hasRole(...)")` all expect that prefix by default (no `GrantedAuthorityDefaults` bean overrides it here). Without the prefix every backend admin check silently 403s regardless of the caller's actual roles, while the *frontend's* admin gating (`ProtectedRoute`, button visibility) keeps working fine since it reads the JWT's `roles` claim directly in Redux — so the break is invisible through the UI and only shows up hitting the API directly.
@@ -195,7 +195,7 @@ Four layers, from fastest to most realistic (run commands are under Development 
 
 - **Unit tests** (`backend/src/test/.../service/MatchingEngineServiceTest.java`): JUnit 5 + Mockito, 9 tests covering full fill, partial fills, MARKET-before-LIMIT priority, LIMIT price criteria, and stop-order triggering. The mocked `TradeExecutorService` is stubbed with a `doAnswer` that decrements order quantities — without this the matching loop never terminates, because the engine relies on `executeTrade`'s side effect for progress. Orders get explicit distinct timestamps since `@CreationTimestamp` only fires on DB save.
 - **Integration tests** (`backend/src/test/.../integrations/MatchingEngineIntegrationTest.java`): `@SpringBootTest` + Testcontainers (PostgreSQL 17, Kafka). `@DynamicPropertySource` points Spring at the containers (`kafka.security.protocol=PLAINTEXT` — the test broker has no SASL), so tests never touch the dev database. `@BeforeEach` wipes trades then orders. Covers the full order → match → trade → position flow, partial-fill statuses, stop-order conversion, engine re-run idempotency, and multi-order matching.
-- **Frontend component tests** (`frontend/src/components/*.test.js`): Jest + React Testing Library with `redux-mock-store` and mocked `fetch`. Cover OrderBook cancel-button gating/confirmation and TradeFeed pagination. API slices themselves are deliberately untested — that's RTK Query's own machinery; the components' use of them is what's asserted.
+- **Frontend component tests** (`frontend/src/components/*.test.jsx`): Vitest + React Testing Library with `redux-mock-store` and mocked `fetch`. Cover OrderBook cancel-button gating/confirmation and TradeFeed pagination. API slices themselves are deliberately untested — that's RTK Query's own machinery; the components' use of them is what's asserted. **Currently broken** (predates the Vite migration, not caused by it): `OrderBook.jsx`/`OrderModal.jsx`/`TradeFeed.jsx` were refactored to call RTK Query hooks (`useGetSymbolsQuery`, `useGetTradesPaginatedQuery`, etc.) directly, but the tests still wrap them in a bare `redux-mock-store` with no RTK Query middleware, so every hook call throws "Middleware for RTK-Query API... has not been added to the store." `OrderModal.test.jsx` additionally references an undefined `mockStore`. Fixing these requires either adding the real `api` middleware/reducer to the test store or mocking the RTK Query hooks directly.
 - **E2E tests** (`e2e/tests/*.spec.js`): Playwright against the running stack (`baseURL` http://localhost:3000). Six specs: signup, login, order creation, form validation, cancellation (handles the native `window.confirm` via a dialog handler), and a two-browser-context buyer/seller flow that asserts a matched trade arrives over WebSocket. Signups use unique usernames per run; the cancel spec places a LIMIT order priced away from the market so it stays cancellable. MUI selects are driven by click-then-option (they are not native `<select>` elements), and form fields are scoped to the modal because the Home page has its own Symbol selector.
 
 macOS note: Testcontainers needs `~/.testcontainers.properties` pointing `docker.host` at the Docker Desktop socket, and `~/.docker-java.properties` with `api.version=1.44` (Docker 29+ rejects the client's default API version).
@@ -222,8 +222,8 @@ Three signals, all correlated through the same request and viewable in one Grafa
 - Redux store has five slices: `auth`, `order`, `trade`, `app`, `price`.
 - All API calls go through RTK Query (`ApiSlice`) — mutations invalidate relevant cache tags automatically.
 - WebSocket connection is managed by `WebSocketService` (SockJS + STOMP), with exponential backoff reconnect. Subscribes to per-user order/trade/notification channels and per-ticker price broadcast channels. Dispatches directly to Redux on message receipt.
-- `AppSlice` has `theme: "light"/"dark"` with a `toggleTheme` action. A MUI `ThemeProvider` in `App.js` reads from Redux state and applies `lightTheme`/`darkTheme` defined in `theme.js`.
-- **Session persistence**: `redux-persist` persists only the `auth` slice to `localStorage`. On tab reopen, `PrivateRoute` checks both `isAuthenticated` and `expiryTime > Date.now()` before granting access — expired tokens are rejected immediately without a round-trip. `App.js` sets two timers on mount: a warning alert 10 minutes before expiry and a logout dispatch at expiry; both are cleared on unmount to prevent leaks.
+- `AppSlice` has `theme: "light"/"dark"` with a `toggleTheme` action. A MUI `ThemeProvider` in `App.jsx` reads from Redux state and applies `lightTheme`/`darkTheme` defined in `theme.js`.
+- **Session persistence**: `redux-persist` persists only the `auth` slice to `localStorage`. On tab reopen, `PrivateRoute` checks both `isAuthenticated` and `expiryTime > Date.now()` before granting access — expired tokens are rejected immediately without a round-trip. `App.jsx` sets two timers on mount: a warning alert 10 minutes before expiry and a logout dispatch at expiry; both are cleared on unmount to prevent leaks.
 
 ### Role-Based Access
 
@@ -292,16 +292,16 @@ Three signals, all correlated through the same request and viewable in one Grafa
 | `frontend/src/redux/ApiSlice.js` | All RTK Query endpoints + token refresh interceptor; sends `Idempotency-Key` |
 | `frontend/src/redux/PriceSlice.js` | Redux slice for live price map `{ ticker → price }` |
 | `frontend/src/services/WebSocketService.js` | STOMP connection; sends JWT in CONNECT headers; per-user order/trade/notification queues + broadcast price topics |
-| `frontend/src/services/logger.js` | Dev-only console wrapper (gated by `NODE_ENV`) |
-| `frontend/src/components/PriceTicker.js` | Live price chips updated via WebSocket |
-| `frontend/src/components/OrderBookDepth.js` | Bid/ask depth table with symbol selector, polls every 10s |
-| `frontend/src/components/PnlReport.js` | Realised P&L summary — overall and per-symbol breakdown |
-| `frontend/src/components/AnalyticsChart.js` | Dual-axis recharts line chart of hourly VWAP and volume from snapshots |
-| `frontend/src/components/VolatilityMetrics.js` | Intraday OHLC stats + recharts bar chart; polls every 30s |
-| `frontend/src/components/NotificationBell.js` | AppBar bell icon with unread badge, popover dropdown, mark-read actions |
-| `frontend/src/pages/TenantAdmin.js` | ADMIN-only tenant CRUD table; "Symbols" button per row opens `SymbolManagerModal` |
-| `frontend/src/components/TenantModal.js` | Create/edit form for a `Tenant`; `tenantId` locked once created (backend never allows changing it) |
-| `frontend/src/components/SymbolManagerModal.js` | Per-tenant symbol chip list with add/remove, scoped to the tenant passed in |
+| `frontend/src/utils/logger.js` | Dev-only console wrapper (gated by `import.meta.env.DEV`) |
+| `frontend/src/components/PriceTicker.jsx` | Live price chips updated via WebSocket |
+| `frontend/src/components/OrderBookDepth.jsx` | Bid/ask depth table with symbol selector, polls every 10s |
+| `frontend/src/components/PnlReport.jsx` | Realised P&L summary — overall and per-symbol breakdown |
+| `frontend/src/components/AnalyticsChart.jsx` | Dual-axis recharts line chart of hourly VWAP and volume from snapshots |
+| `frontend/src/components/VolatilityMetrics.jsx` | Intraday OHLC stats + recharts bar chart; polls every 30s |
+| `frontend/src/components/NotificationBell.jsx` | AppBar bell icon with unread badge, popover dropdown, mark-read actions |
+| `frontend/src/pages/TenantAdmin.jsx` | ADMIN-only tenant CRUD table; "Symbols" button per row opens `SymbolManagerModal` |
+| `frontend/src/components/TenantModal.jsx` | Create/edit form for a `Tenant`; `tenantId` locked once created (backend never allows changing it) |
+| `frontend/src/components/SymbolManagerModal.jsx` | Per-tenant symbol chip list with add/remove, scoped to the tenant passed in |
 | `backend/src/main/resources/application.properties` | All Spring config with local-dev defaults |
 | `kafka_jaas.conf` | JAAS credentials mounted into the Kafka container |
 

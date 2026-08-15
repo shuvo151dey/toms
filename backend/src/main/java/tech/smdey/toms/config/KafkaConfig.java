@@ -88,11 +88,21 @@ public class KafkaConfig {
         props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
         if (!securityProtocol.equals("PLAINTEXT")) {
             props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
-            props.put(SaslConfigs.SASL_JAAS_CONFIG,
-                    "org.apache.kafka.common.security.plain.PlainLoginModule required " +
-                    "username=\"" + saslUsername + "\" " +
-                    "password=\"" + saslPassword + "\";");
+            props.put(SaslConfigs.SASL_JAAS_CONFIG, buildJaasConfig());
         }
         return props;
+    }
+
+    // The JAAS login module class must match the configured SASL mechanism —
+    // PLAIN uses PlainLoginModule, but managed Kafka providers (e.g. Aiven,
+    // Confluent Cloud) commonly issue SCRAM-SHA-256/512 credentials instead,
+    // which require ScramLoginModule. Using the wrong module fails auth at
+    // runtime even when the mechanism string itself is set correctly.
+    private String buildJaasConfig() {
+        String loginModule = switch (saslMechanism) {
+            case "SCRAM-SHA-256", "SCRAM-SHA-512" -> "org.apache.kafka.common.security.scram.ScramLoginModule";
+            default -> "org.apache.kafka.common.security.plain.PlainLoginModule";
+        };
+        return loginModule + " required username=\"" + saslUsername + "\" password=\"" + saslPassword + "\";";
     }
 }

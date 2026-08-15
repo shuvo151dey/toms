@@ -33,8 +33,8 @@ services:
         mode: host
     restart: unless-stopped
     environment:
-      - REACT_APP_WEBSOCKET_URL=http://backend/ws/
-      - REACT_APP_BACKEND_URL=http://backend/api/v1
+      - VITE_WEBSOCKET_URL=http://backend/ws/
+      - VITE_BACKEND_URL=http://backend/api/v1
 
   db:
     deploy:

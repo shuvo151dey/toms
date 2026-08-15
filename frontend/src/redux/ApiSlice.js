@@ -8,7 +8,7 @@ import logger from "../utils/logger";
 
 const baseQuery = fetchBaseQuery({
     
-    baseUrl: process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api/v1',
+    baseUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080/api/v1',
     credentials: "include",
     prepareHeaders: (headers, { getState }) => {
         const token = getState().auth.accessToken;
