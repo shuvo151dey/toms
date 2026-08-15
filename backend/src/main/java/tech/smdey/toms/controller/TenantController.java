@@ -1,6 +1,7 @@
 package tech.smdey.toms.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.common.errors.ResourceNotFoundException;
@@ -18,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import tech.smdey.toms.dto.TenantSummary;
+import tech.smdey.toms.entity.Symbol;
 import tech.smdey.toms.entity.Tenant;
+import tech.smdey.toms.repository.SymbolRepository;
 import tech.smdey.toms.repository.TenantRepository;
 import tech.smdey.toms.repository.UserRepository;
 
@@ -31,6 +34,9 @@ public class TenantController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private SymbolRepository symbolRepository;
 
     @GetMapping("/public")
     public ResponseEntity<List<TenantSummary>> getPublicTenants() {
@@ -81,6 +87,39 @@ public class TenantController {
             throw new IllegalStateException("Cannot delete tenant with existing users");
         }
         tenantRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Symbol lists are nested under the tenantId business key (not the numeric
+    // PK above) since that's what Symbol.tenantId / SymbolRepository are keyed on.
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{tenantId}/symbols")
+    public ResponseEntity<List<Symbol>> getTenantSymbols(@PathVariable String tenantId) {
+        return ResponseEntity.ok(symbolRepository.findByTenantId(tenantId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{tenantId}/symbols")
+    public ResponseEntity<Symbol> addSymbol(@PathVariable String tenantId, @RequestBody Map<String, String> body) {
+        String ticker = body.get("ticker");
+        if (ticker == null || ticker.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (symbolRepository.existsByTickerAndTenantId(ticker, tenantId)) {
+            return ResponseEntity.badRequest().build();
+        }
+        Symbol saved = symbolRepository.save(new Symbol(ticker, tenantId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{tenantId}/symbols/{ticker}")
+    public ResponseEntity<Void> removeSymbol(@PathVariable String tenantId, @PathVariable String ticker) {
+        Symbol symbol = symbolRepository.findByTenantId(tenantId).stream()
+            .filter(s -> s.getTicker().equalsIgnoreCase(ticker))
+            .findFirst()
+            .orElseThrow(() -> new ResourceNotFoundException("Symbol not found"));
+        symbolRepository.delete(symbol);
         return ResponseEntity.noContent().build();
     }
 }

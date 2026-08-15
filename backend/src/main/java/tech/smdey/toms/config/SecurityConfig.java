@@ -51,7 +51,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/tenants/**").hasRole("ADMIN")
                 .requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
                 .requestMatchers("/api/v1/auth/**").permitAll() // Allow authentication endpoints
-                .requestMatchers(HttpMethod.GET, "/api/v1/symbols").permitAll() // Public symbol list
                 .requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/actuator/prometheus/**").permitAll()
                 .requestMatchers("/actuator/**").hasAnyRole("ADMIN")

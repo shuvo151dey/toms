@@ -37,7 +37,7 @@ public class MatchingEngineService {
     private MeterRegistry meterRegistry;
 
     public void matchOrders(String tenantId) {
-        symbolRepository.findAll().forEach(s -> matchOrdersForSymbol(s.getTicker(), tenantId));
+        symbolRepository.findByTenantId(tenantId).forEach(s -> matchOrdersForSymbol(s.getTicker(), tenantId));
     }
 
     @Async

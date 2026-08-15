@@ -23,9 +23,9 @@ public class SymbolSeed implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         if (symbolRepository.count() == 0) {
             symbolRepository.saveAll(List.of(
-                    new Symbol("AAPL"),
-                    new Symbol("GOOGL"),
-                    new Symbol("MSFT")
+                    new Symbol("RIL", "NSE"),
+                    new Symbol("TATAMOTORS", "NSE"),
+                    new Symbol("ADANI", "NSE")
             ));
         }
     }

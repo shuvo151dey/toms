@@ -91,7 +91,14 @@ React (RTK Query) → POST /api/v1/orders
 
 ### Multi-tenancy
 
-Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All repository queries, matching, WebSocket topics, and Kafka message headers are scoped to this field. Currently hardcoded to `"NSE"` in `AuthController` — the infrastructure is multi-tenant ready but the tenant is not yet user-selectable.
+Every entity (`TradeOrder`, `Trade`, `User`, `Symbol`) carries a `tenantId` string. All repository queries, matching, WebSocket topics, and Kafka message headers are scoped to this field. `tenantId` is a plain string throughout — there is no FK from `User`/`Symbol` to `Tenant`, consistent with how the rest of the schema is denormalized; `Tenant.tenantId` is just the business key other tables match against.
+
+- **Tenant selection**: `SignupRequest`/`AuthRequest` carry a `tenantId` field, chosen from a dropdown fed by `GET /api/v1/tenants/public` (returns `{tenantId, name}` pairs only — no risk limits exposed). `AuthController.login()`/`register()` no longer hardcode a tenant; `UserRepository.findByUsernameAndTenantId(...)` means the same username can exist independently under different tenants.
+- **Tenant entity**: `Tenant` (`entity/Tenant.java`) holds `name` plus nullable per-tenant overrides — `maxPosition`, `maxNotional`, `dailyLossLimit`, `maxOrderQuantity`. `null` on any of these means "fall back to the global `application.properties` default." `RiskService` and `OrderService` each resolve these per-order via `TradeOrder.getTenantId()`, looking up `Tenant` and falling through to the injected `@Value` default when the tenant record doesn't override that particular limit.
+- **Tenant admin**: `TenantController` — full CRUD is `@PreAuthorize("hasRole('ADMIN')")`; only `GET /tenants/public` is `permitAll`. Deleting a tenant is blocked (`UserRepository.existsByTenantId`) if any user still references it, since there's no FK to enforce that automatically. Frontend: `pages/TenantAdmin.js`, gated the same way as `/analytics`.
+- **Symbols are tenant-scoped**: `Symbol` has a `(ticker, tenantId)` unique constraint instead of a globally-unique ticker — two tenants can each independently list `"AAPL"` as separate rows. `GET /api/v1/symbols` now requires auth and returns only the caller's tenant's symbols (previously `permitAll` + global). Managed per-tenant via `POST`/`DELETE /api/v1/tenants/{tenantId}/symbols`, nested under the *string* `tenantId` (not the numeric `Tenant.id` the top-level CRUD endpoints use). `MatchingEngineService.matchOrders()` and `OrderService.validateOrder()`'s symbol allow-list both scope by tenant now instead of iterating every symbol globally.
+- **`StopOrderScheduler` tenant fan-out**: groups `Symbol` rows by ticker first, calls `MarketDataService.getPrice(ticker)` once per tick, then fans that single price out to every tenant holding that ticker — calling `getPrice()` once per `(tenant, ticker)` pair instead would double-perturb the random walk for any ticker shared across tenants, since `getPrice()` is stateful/non-idempotent.
+- **Role-check gotcha**: `User.getAuthorities()` must prefix roles with `"ROLE_"` (`new SimpleGrantedAuthority("ROLE_" + role.name())`) — `hasRole()`/`hasAnyRole()`/`@PreAuthorize("hasRole(...)")` all expect that prefix by default (no `GrantedAuthorityDefaults` bean overrides it here). Without the prefix every backend admin check silently 403s regardless of the caller's actual roles, while the *frontend's* admin gating (`ProtectedRoute`, button visibility) keeps working fine since it reads the JWT's `roles` claim directly in Redux — so the break is invisible through the UI and only shows up hitting the API directly.
 
 ### JWT Auth
 
@@ -117,8 +124,8 @@ Every entity (`TradeOrder`, `Trade`, `User`) carries a `tenantId` string. All re
 - Uses `PriorityQueue`: MARKET orders → FIFO (timestamp); LIMIT orders → price-time priority (best price first).
 - Partial fills are supported: order status becomes `PARTIALLY_COMPLETED`, quantity decremented.
 - Stop orders are evaluated automatically every 30s by `StopOrderScheduler` against simulated market prices.
-- Allowed symbols are loaded from the `Symbol` entity/table (seeded with AAPL, GOOGL, MSFT). Managed via `GET /api/v1/symbols`.
-- Max quantity per order is configurable via `order.constraints.max-quantity` in `application.properties` (default: 100).
+- Allowed symbols are loaded from the `Symbol` entity/table, scoped per tenant (`(ticker, tenantId)` unique). NSE is seeded with RIL, TATAMOTORS, ADANI. Managed via `GET /api/v1/symbols` (authenticated, tenant-scoped) and `POST`/`DELETE /api/v1/tenants/{tenantId}/symbols` (ADMIN).
+- Max quantity per order falls back to `order.constraints.max-quantity` in `application.properties` (default: 100) unless the caller's `Tenant` overrides it — see Multi-tenancy above.
 
 ### Market Data
 
@@ -142,7 +149,7 @@ Called before every order save in `OrderController`, after `OrderService.validat
 - **Position limit**: BUY orders may not push a user's holdings past `risk.limits.max-position` (default 500 shares per symbol).
 - **Daily loss limit**: Unrealised loss across all open positions must not exceed `risk.limits.daily-loss-limit` (default $5,000).
 
-All limits are configurable in `application.properties` with Spring env-var override support.
+All three have global defaults in `application.properties` (env-var overridable), but each order's `Tenant` (looked up by `TradeOrder.getTenantId()`) can override any of them individually — `null` on a `Tenant` field means "use the global default." See Multi-tenancy above.
 
 ### Order Book Depth
 
@@ -221,8 +228,9 @@ Three signals, all correlated through the same request and viewable in one Grafa
 ### Role-Based Access
 
 - Two roles: `TRADER` (default on signup) and `ADMIN`.
-- Analytics (`/analytics` page) and matching endpoints are ADMIN-only, enforced via `@PreAuthorize` / `ProtectedRoute` in the frontend.
+- Analytics (`/analytics`), tenant admin (`/tenants`), and matching endpoints are ADMIN-only, enforced via `@PreAuthorize` / `ProtectedRoute` in the frontend.
 - `ProtectedRoute` wraps role-gated pages; `PrivateRoute` wraps auth-gated pages.
+- `User.getAuthorities()` must emit `"ROLE_" + role.name()` — see the role-check gotcha under Multi-tenancy. Any new `@PreAuthorize("hasRole(...))")` check silently 403s for everyone if that prefix is ever dropped.
 
 ---
 
@@ -236,13 +244,15 @@ Three signals, all correlated through the same request and viewable in one Grafa
 | `backend/src/.../config/WebMvcConfig.java` | Registers `RateLimitInterceptor` on auth and order endpoints |
 | `backend/src/.../component/RateLimitInterceptor.java` | Bucket4j token-bucket rate limiting (IP for auth, username for orders) |
 | `backend/src/.../component/StopOrderScheduler.java` | `@Scheduled` job — evaluates stop orders and publishes price ticks every 30s |
-| `backend/src/.../component/SymbolSeed.java` | `ApplicationRunner` — seeds AAPL, GOOGL, MSFT into Symbol table on first startup |
+| `backend/src/.../component/SymbolSeed.java` | `ApplicationRunner` — seeds RIL, TATAMOTORS, ADANI for tenant `NSE` on first startup |
+| `backend/src/.../component/TenantSeed.java` | `ApplicationRunner` — seeds the `NSE` tenant (with its risk-limit overrides) on first startup |
 | `backend/src/.../component/WebSocketAuthInterceptor.java` | `ChannelInterceptor` — reads JWT from STOMP CONNECT frame, sets user principal for per-user routing |
 | `backend/src/.../component/AnalyticsSnapshotScheduler.java` | Hourly job — computes VWAP/volume/count per symbol and saves `AnalyticsSnapshot` rows |
 | `backend/src/.../component/DailyReportScheduler.java` | Daily 6pm job — builds trade summary and emails all ADMIN users |
 | `backend/src/.../service/MatchingEngineService.java` | Core order matching algorithm; `@Async` wrapper for post-order-save auto-trigger |
 | `backend/src/.../service/MarketDataService.java` | Simulated price feed via random walk; `getPrice()` advances tick, `getLastPrice()` is read-only |
-| `backend/src/.../service/RiskService.java` | Pre-save risk checks: notional cap, position limit, daily loss limit (all configurable) |
+| `backend/src/.../service/RiskService.java` | Pre-save risk checks: notional cap, position limit, daily loss limit; resolves per-tenant `Tenant` overrides before falling back to global `@Value` defaults |
+| `backend/src/.../service/OrderService.java` | Validates symbol allow-list and max order quantity, both scoped by `order.getTenantId()` with the same per-tenant-override-falls-back-to-global pattern as `RiskService` |
 | `backend/src/.../service/AnalyticsService.java` | P&L, trade/order analytics, volatility metrics; trade/order responses cached via `@Cacheable` |
 | `backend/src/.../service/NotificationService.java` | Saves `Notification` entities; `markRead` and `markAllRead` operations |
 | `backend/src/.../service/EmailService.java` | `sendVerificationEmail`, `sendEmail` (plain text), `sendHtmlEmail` (Thymeleaf + MimeMessage) |
@@ -255,13 +265,19 @@ Three signals, all correlated through the same request and viewable in one Grafa
 | `backend/src/.../controller/NotificationController.java` | `GET /notifications`, `GET /notifications/unread-count`, `PUT /notifications/{id}/read`, `PUT /notifications/read-all` |
 | `backend/src/.../controller/OrderBookController.java` | `GET /api/v1/orderbook/{symbol}` — aggregated bid/ask depth levels |
 | `backend/src/.../controller/PortfolioController.java` | `GET /api/v1/portfolio` — open positions with unrealised P&L |
-| `backend/src/.../controller/SymbolController.java` | `GET /api/v1/symbols` — public symbol list (permit-all) |
+| `backend/src/.../controller/SymbolController.java` | `GET /api/v1/symbols` — authenticated, scoped to the caller's tenant (was public/global pre-M3) |
+| `backend/src/.../controller/TenantController.java` | `GET /tenants/public` (permitAll, name+id only); ADMIN CRUD on `/tenants`; nested `POST`/`DELETE /tenants/{tenantId}/symbols` for per-tenant symbol management |
+| `backend/src/.../entity/Tenant.java` | Per-tenant name + nullable risk-limit/order-quantity overrides; `null` field = use the global `application.properties` default |
+| `backend/src/.../entity/Symbol.java` | `(ticker, tenantId)` unique constraint — the same ticker can exist independently under multiple tenants |
+| `backend/src/.../repository/TenantRepository.java` | `findByTenantId`, `existsByTenantId` |
+| `backend/src/.../repository/SymbolRepository.java` | `findByTenantId`, `existsByTickerAndTenantId` |
 | `backend/src/.../entity/AnalyticsSnapshot.java` | Hourly VWAP/volume/trade count snapshot per symbol |
 | `backend/src/.../entity/Notification.java` | Per-user notification with `NotificationType`, `read` flag, `createdAt` |
 | `backend/src/.../entity/Position.java` | Tracks per-user per-symbol netQuantity and avgCost |
 | `backend/src/.../repository/SnapshotRepository.java` | `findBySymbolAndTenantIdOrderByTimestampAsc` for chart history |
 | `backend/src/.../repository/NotificationRepository.java` | `findByUsernameAndTenantIdOrderByCreatedAtDesc`, `countByUsernameAndTenantIdAndReadFalse` |
 | `backend/src/.../repository/PositionRepository.java` | Queries by username + symbol + tenantId |
+| `backend/src/.../entity/User.java` | `getAuthorities()` emits `"ROLE_" + role.name()` — required by `hasRole()`/`@PreAuthorize`; see Multi-tenancy's role-check gotcha |
 | `backend/src/.../util/JwtTokenUtil.java` | JWT generation and validation (key loaded from env) |
 | `backend/src/.../component/CorrelationIdFilter.java` | `@Order(HIGHEST_PRECEDENCE)` filter — puts a per-request ID into SLF4J MDC, echoes as `X-Correlation-Id` response header |
 | `backend/src/main/resources/logback-spring.xml` | JSON file logging (Logstash encoder) + size/time rolling policy; console stays plain-text |
@@ -283,6 +299,9 @@ Three signals, all correlated through the same request and viewable in one Grafa
 | `frontend/src/components/AnalyticsChart.js` | Dual-axis recharts line chart of hourly VWAP and volume from snapshots |
 | `frontend/src/components/VolatilityMetrics.js` | Intraday OHLC stats + recharts bar chart; polls every 30s |
 | `frontend/src/components/NotificationBell.js` | AppBar bell icon with unread badge, popover dropdown, mark-read actions |
+| `frontend/src/pages/TenantAdmin.js` | ADMIN-only tenant CRUD table; "Symbols" button per row opens `SymbolManagerModal` |
+| `frontend/src/components/TenantModal.js` | Create/edit form for a `Tenant`; `tenantId` locked once created (backend never allows changing it) |
+| `frontend/src/components/SymbolManagerModal.js` | Per-tenant symbol chip list with add/remove, scoped to the tenant passed in |
 | `backend/src/main/resources/application.properties` | All Spring config with local-dev defaults |
 | `kafka_jaas.conf` | JAAS credentials mounted into the Kafka container |
 
@@ -299,54 +318,6 @@ Three signals, all correlated through the same request and viewable in one Grafa
 ## Future Scope
 
 Items are grouped by theme and roughly ordered by impact within each group.
-
----
-
-### 🖥️ Frontend Improvements
-
-| # | Item | What to do |
-|---|------|------------|
-| F1 | ~~**Wire up dark/light theme**~~ | ~~`AppSlice` already tracks `theme`. Create a MUI `theme` object for each mode and wrap `App.js` in `<ThemeProvider theme={...}>` that reads from Redux state.~~ |
-| F2 | ~~**Client-side order form validation**~~ | ~~Add field-level validation to `OrderModal` (symbol required, quantity 1–100, price > 0 for LIMIT orders, stop price required for STOP orders) before hitting the API. Show inline error messages.~~ |
-| F3 | ~~**Structured error messages**~~ | ~~Parse backend error codes/messages in `ApiSlice` and surface them as actionable alerts (`"Symbol TSLA is not supported"`) instead of the current generic `"Order creation failed"`.~~ |
-| F4 | ~~**User profile & settings page**~~ | ~~Add a `/profile` route showing username, role, tenant, and options to change password. Extend `AuthController` with `PUT /api/v1/auth/password`.~~ |
-| F5 | ~~**Dashboard / home page**~~ | ~~Replace the combined order+trade list on Home with a proper dashboard: key metrics cards (open orders, today's trades, P&L), mini chart, recent activity feed.~~ |
-| F6 | ~~**Order cancellation UI**~~ | ~~The backend likely supports order updates, but there is no cancel button in the UI. Add a cancel action in `OrderBook` that calls `DELETE /api/v1/orders/{id}`.~~ |
-| F7 | ~~**Trade history pagination**~~ | ~~`TradeFeed` loads all trades. Add server-driven pagination with infinite scroll or page controls.~~ |
-| F8 | ~~**Session expiry handling**~~ | ~~On tab close / reopen, check token expiry before letting the user in. Prompt re-login instead of letting an expired token accumulate in `localStorage`.~~ |
-
----
-
-### 🧪 Testing
-
-| # | Item | What to do |
-|---|------|------------|
-| X1 | ~~**Unit tests for matching engine**~~ | ~~`MatchingEngineService` has complex priority logic and partial-fill edge cases — add JUnit 5 + Mockito tests covering: full fill, partial fill, MARKET vs LIMIT priority, stop order conversion.~~ |
-| X2 | ~~**Integration tests with Testcontainers**~~ | ~~Use `@SpringBootTest` + Testcontainers (PostgreSQL, Kafka) to test the full order → match → trade → Kafka path without mocks.~~ |
-| X3 | ~~**Frontend component tests**~~ | ~~Add Jest + React Testing Library tests for `OrderModal`, `OrderBook`, `TradeFeed`, and the Redux slices.~~ |
-| X4 | ~~**E2E tests**~~ | ~~Add Playwright or Cypress tests for the core trader flow: login → create order → trigger match → see trade in feed.~~ |
-
----
-
-### 🔭 Observability
-
-| # | Item | What to do |
-|---|------|------------|
-| O1 | ~~**Spring Boot Actuator**~~ | ~~Enable `/actuator/health`, `/actuator/metrics`, `/actuator/info` and configure readiness/liveness probes for Docker/Kubernetes deployments.~~ |
-| O2 | ~~**Structured logging**~~ | ~~Replace plain `System.out`/bare SLF4J with structured JSON logging (Logstash encoder) so logs are queryable in ELK or Loki. Add correlation IDs per request.~~ |
-| O3 | ~~**Prometheus + Grafana**~~ | ~~Expose Micrometer metrics via `/actuator/prometheus`; add a Grafana dashboard tracking order throughput, match latency, Kafka consumer lag, cache hit rate.~~ |
-| O4 | ~~**Distributed tracing**~~ | ~~Add OpenTelemetry instrumentation (or Zipkin via `spring-cloud-sleuth`) to trace a request from REST → Kafka → WebSocket across services.~~ |
-| O5 | ~~**Log rotation & retention**~~ | ~~`logs/toms.log` grows unbounded. Configure `logback-spring.xml` with rolling file appender (size + time based) and a max-history policy.~~ |
-
----
-
-### 🏢 Multi-tenancy Completion
-
-| # | Item | What to do |
-|---|------|------------|
-| M1 | ~~**Dynamic tenant selection at login**~~ | ~~Replace hardcoded `tenantId = "NSE"` in `AuthController` with a `tenantId` field in the signup/login request body. Store the chosen tenant in the JWT claim (already read correctly downstream).~~ |
-| M2 | **Tenant administration panel** | Add an ADMIN-only page to create and manage tenants (name, allowed symbols, risk limits). Back it with a `Tenant` entity and `TenantRepository`. |
-| M3 | **Per-tenant risk configuration** | Allow each tenant to have its own symbol list, position limits, and order size caps, rather than sharing global hardcoded values. |
 
 ---
 

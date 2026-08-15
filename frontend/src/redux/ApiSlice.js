@@ -301,6 +301,31 @@ export const apiSlice = createApi({
                 }
             },
         }),
+        getTenantSymbols: builder.query({
+            query: (tenantId) => ({ url: `tenants/${tenantId}/symbols` }),
+        }),
+        addTenantSymbol: builder.mutation({
+            query: ({ tenantId, ticker }) => ({ url: `tenants/${tenantId}/symbols`, method: 'POST', body: { ticker } }),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(setAlert({ alert: "Symbol added", type: "success" }));
+                } catch (error) {
+                    dispatch(setAlert({ alert: extractErrorMessage(error, "Failed to add symbol"), type: "error" }));
+                }
+            },
+        }),
+        removeTenantSymbol: builder.mutation({
+            query: ({ tenantId, ticker }) => ({ url: `tenants/${tenantId}/symbols/${ticker}`, method: 'DELETE' }),
+            async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(setAlert({ alert: "Symbol removed", type: "info" }));
+                } catch (error) {
+                    dispatch(setAlert({ alert: extractErrorMessage(error, "Failed to remove symbol"), type: "error" }));
+                }
+            },
+        }),
     }),
 });
 
@@ -335,6 +360,9 @@ export const {
     useCreateTenantMutation,
     useUpdateTenantMutation,
     useDeleteTenantMutation,
+    useGetTenantSymbolsQuery,
+    useAddTenantSymbolMutation,
+    useRemoveTenantSymbolMutation,
 } = apiSlice;
 
 

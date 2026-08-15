@@ -2,10 +2,12 @@ package tech.smdey.toms.controller;
 
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tech.smdey.toms.entity.Symbol;
+import tech.smdey.toms.entity.User;
 import tech.smdey.toms.repository.SymbolRepository;
 
 @RestController
@@ -19,7 +21,7 @@ public class SymbolController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Symbol>> getAllSymbols() {
-        return ResponseEntity.ok(symbolRepository.findAll());
+    public ResponseEntity<List<Symbol>> getAllSymbols(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(symbolRepository.findByTenantId(user.getTenantId()));
     }
 }

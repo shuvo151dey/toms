@@ -1,9 +1,14 @@
 package tech.smdey.toms.component;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import tech.smdey.toms.entity.Symbol;
 import tech.smdey.toms.repository.SymbolRepository;
 import tech.smdey.toms.service.MarketDataService;
 import tech.smdey.toms.service.MatchingEngineService;
@@ -18,10 +23,14 @@ public class StopOrderScheduler {
 
     @Scheduled(fixedDelay = 30000)
     public void evaluateStopOrders() {
-        symbolRepository.findAll().forEach(s -> {
-            double price = marketDataService.getPrice(s.getTicker());
-            matchingEngineService.triggerStopOrders(s.getTicker(), price, "NSE");
-            kafkaProducerService.sendPriceMessage(s.getTicker(), "NSE", price);
+        Map<String, List<String>> tenantsByTicker = symbolRepository.findAll().stream()
+                .collect(Collectors.groupingBy(Symbol::getTicker, Collectors.mapping(Symbol::getTenantId, Collectors.toList())));
+        tenantsByTicker.forEach((ticker, tenantIds) -> {
+            double price = marketDataService.getPrice(ticker);
+            tenantIds.forEach(tenantId -> {
+                matchingEngineService.triggerStopOrders(ticker, price, tenantId);
+                kafkaProducerService.sendPriceMessage(ticker, tenantId, price);
+            });
         });
     }
 }

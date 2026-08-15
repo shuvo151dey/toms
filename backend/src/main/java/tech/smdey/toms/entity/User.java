@@ -144,9 +144,12 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Convert UserRole enums to GrantedAuthority instances
+        // hasRole()/hasAnyRole()/@PreAuthorize("hasRole(...)") all check for a
+        // "ROLE_" prefixed authority by default (no GrantedAuthorityDefaults bean
+        // overrides that here) — without the prefix, every role check in the app
+        // silently 403s regardless of the user's actual roles.
         return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
                 .collect(Collectors.toSet());
     }
 
