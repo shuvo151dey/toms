@@ -104,7 +104,10 @@ public class KafkaConfig {
             props.put(SaslConfigs.SASL_JAAS_CONFIG, buildJaasConfig());
         }
         if (!sslCaCertBase64.isBlank()) {
-            String pem = new String(Base64.getDecoder().decode(sslCaCertBase64), StandardCharsets.UTF_8);
+            // MIME decoder, not the strict basic one — tolerates any stray
+            // whitespace/newlines introduced by copy-paste through a dashboard
+            // UI, which the basic decoder rejects outright.
+            String pem = new String(Base64.getMimeDecoder().decode(sslCaCertBase64), StandardCharsets.UTF_8);
             props.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "PEM");
             props.put(SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG, pem);
         }
