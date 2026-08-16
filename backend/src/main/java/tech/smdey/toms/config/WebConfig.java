@@ -11,22 +11,28 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 
+import java.util.Arrays;
+
 @Configuration
 public class WebConfig {
 
-    private static final String REACT_FRONTEND_URL = System.getenv().getOrDefault("REACT_FRONTEND_URL",
-            "http://localhost:3000");
-    
+    // Comma-separated list — see SecurityConfig for why (Vercel prod + preview URLs, local dev, etc.)
+    private static final String[] ALLOWED_ORIGINS = Arrays.stream(
+            System.getenv().getOrDefault("REACT_FRONTEND_URL", "http://localhost:3000").split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toArray(String[]::new);
+
     private static final Logger logger = LoggerFactory.getLogger(WebConfig.class);
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
-        logger.debug("CORS Configuration: Allowing requests from {}", REACT_FRONTEND_URL); // Debug log
+        logger.debug("CORS Configuration: Allowing requests from {}", Arrays.toString(ALLOWED_ORIGINS)); // Debug log
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Allow all endpoints
-                        .allowedOrigins(REACT_FRONTEND_URL) // Allow the frontend origin
+                        .allowedOrigins(ALLOWED_ORIGINS) // Allow the frontend origin(s)
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }

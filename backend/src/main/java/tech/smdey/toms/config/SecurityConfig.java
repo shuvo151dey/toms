@@ -1,5 +1,6 @@
 package tech.smdey.toms.config;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.cache.annotation.EnableCaching;
@@ -33,8 +34,13 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
 
-    private static final String REACT_FRONTEND_URL = System.getenv().getOrDefault("REACT_FRONTEND_URL",
-            "http://localhost:3000");
+    // Comma-separated list — supports the Vercel production URL plus per-branch/PR
+    // preview URLs, and/or keeping local dev working against a deployed backend.
+    private static final List<String> ALLOWED_ORIGINS = Arrays.stream(
+            System.getenv().getOrDefault("REACT_FRONTEND_URL", "http://localhost:3000").split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toList();
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CustomUserDetailsService customUserDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -65,7 +71,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of(REACT_FRONTEND_URL)); // Allow frontend origin (env-driven, matches WebConfig/WebSocketConfig)
+        config.setAllowedOrigins(ALLOWED_ORIGINS); // Allow frontend origin(s) (env-driven, matches WebConfig/WebSocketConfig)
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         

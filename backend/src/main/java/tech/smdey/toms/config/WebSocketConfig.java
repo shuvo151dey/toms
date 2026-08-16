@@ -10,6 +10,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 import tech.smdey.toms.component.WebSocketAuthInterceptor;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
@@ -17,14 +19,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private WebSocketAuthInterceptor webSocketAuthInterceptor;
 
-    private static final String REACT_FRONTEND_URL = System.getenv().getOrDefault("REACT_FRONTEND_URL",
-            "http://localhost:3000");
+    // Comma-separated list — see SecurityConfig for why (Vercel prod + preview URLs, local dev, etc.)
+    private static final String[] ALLOWED_ORIGINS = Arrays.stream(
+            System.getenv().getOrDefault("REACT_FRONTEND_URL", "http://localhost:3000").split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toArray(String[]::new);
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
             .addEndpoint("/ws")
-            .setAllowedOriginPatterns(REACT_FRONTEND_URL)
+            .setAllowedOriginPatterns(ALLOWED_ORIGINS)
             .withSockJS();
     }
 
