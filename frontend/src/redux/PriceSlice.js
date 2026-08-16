@@ -6,7 +6,11 @@ const priceSlice = createSlice({
     reducers: {
         setPrice: (state, action) => {
             const { ticker, price } = action.payload;
-            state.prices[ticker] = price;
+            const existing = state.prices[ticker];
+            state.prices[ticker] = {
+                price,
+                prevPrice: existing ? existing.price : price,
+            };
         },
     },
 });

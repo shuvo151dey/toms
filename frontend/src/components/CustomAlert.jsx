@@ -19,6 +19,7 @@ const CustomAlert = ({message = "", onClose = () => {}, type = "info"}) => {
         open={!!message}
         autoHideDuration={5000}
         onClose={onClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
     >
         <Alert onClose={onClose} severity={type || "info"}>
             {message}

@@ -14,6 +14,8 @@ test.describe.serial('auth flow', () => {
         // /^Password/ avoids also matching the "Confirm Password" field
         await page.getByLabel(/^Password/).fill(password);
         await page.getByLabel('Confirm Password').fill(password);
+        await page.getByLabel('Tenant').click();
+        await page.getByRole('option').first().click();
 
         await page.getByRole('button', { name: 'Sign Up' }).click();
 
@@ -26,11 +28,13 @@ test.describe.serial('auth flow', () => {
 
         await page.getByLabel('Username').fill(username);
         await page.getByLabel('Password').fill(password);
+        await page.getByLabel('Tenant').click();
+        await page.getByRole('option').first().click();
 
-        await page.getByRole('button', { name: 'Login' }).click();
+        await page.getByRole('button', { name: 'Sign In' }).click();
 
         // Login redirects to the home dashboard
         await expect(page).toHaveURL('/');
-        await expect(page.getByText('TOMS Dashboard')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
     });
 });

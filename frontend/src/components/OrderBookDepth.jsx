@@ -13,7 +13,9 @@ import {
     Box,
     Grid2 as Grid,
 } from '@mui/material';
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import { useGetOrderBookQuery, useGetSymbolsQuery } from '../redux/ApiSlice';
+import EmptyState from './EmptyState';
 
 const PriceLevel = ({ row, side }) => (
     <TableRow>
@@ -63,17 +65,20 @@ export default function OrderBookDepth() {
     });
 
     return (
-        <Card sx={{ mb: 2 }}>
+        <Card sx={{ height: '100%' }}>
             <CardContent>
                 <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                    <Typography variant="h6">Market Depth</Typography>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <LayersOutlinedIcon fontSize="small" color="primary" />
+                        <Typography variant="h6">Market Depth</Typography>
+                    </Box>
                     <TextField
                         select
                         size="small"
                         label="Symbol"
                         value={selectedSymbol}
                         onChange={(e) => setSelectedSymbol(e.target.value)}
-                        sx={{ minWidth: 120 }}
+                        sx={{ minWidth: 140 }}
                     >
                         {symbols.map(s => (
                             <MenuItem key={s.ticker} value={s.ticker}>{s.ticker}</MenuItem>
@@ -82,7 +87,11 @@ export default function OrderBookDepth() {
                 </Box>
 
                 {!selectedSymbol ? (
-                    <Typography color="text.secondary" variant="body2">Select a symbol to view market depth.</Typography>
+                    <EmptyState
+                        icon={<LayersOutlinedIcon />}
+                        title="Select a symbol"
+                        subtitle="Choose a symbol above to view its market depth."
+                    />
                 ) : isFetching ? (
                     <Typography color="text.secondary" variant="body2">Loading...</Typography>
                 ) : (

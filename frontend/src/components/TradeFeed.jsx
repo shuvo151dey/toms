@@ -13,8 +13,10 @@ import {
 } from "@mui/material";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { useState } from "react";
 import { useGetTradesPaginatedQuery } from "../redux/ApiSlice";
+import EmptyState from "./EmptyState";
 
 const PAGE_SIZE = 10;
 
@@ -26,42 +28,54 @@ const TradeFeed = () => {
     const totalPages = data?.totalPages ?? 0;
 
     return (
-        <Card>
+        <Card sx={{ height: '100%' }}>
             <CardContent>
-                <Typography variant="h5" gutterBottom>Trade Feed</Typography>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Id</TableCell>
-                            <TableCell>Symbol</TableCell>
-                            <TableCell>Price</TableCell>
-                            <TableCell>Quantity</TableCell>
-                            <TableCell>Buy Order</TableCell>
-                            <TableCell>Sell Order</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {isLoading
-                            ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
-                                <TableRow key={i}>
-                                    {Array.from({ length: 6 }).map((__, j) => (
-                                        <TableCell key={j}><Skeleton /></TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                            : trades.map((trade) => (
-                                <TableRow key={trade.id}>
-                                    <TableCell>{trade.id}</TableCell>
-                                    <TableCell>{trade.symbol}</TableCell>
-                                    <TableCell>{trade.price}</TableCell>
-                                    <TableCell>{trade.quantity}</TableCell>
-                                    <TableCell>{trade.buyOrder?.id}</TableCell>
-                                    <TableCell>{trade.sellOrder?.id}</TableCell>
-                                </TableRow>
-                            ))
-                        }
-                    </TableBody>
-                </Table>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                    <ShowChartIcon fontSize="small" color="primary" />
+                    <Typography variant="h6">Trade Feed</Typography>
+                </Box>
+
+                {!isLoading && trades.length === 0 ? (
+                    <EmptyState
+                        icon={<ShowChartIcon />}
+                        title="No trades yet"
+                        subtitle="Trade activity will appear here"
+                    />
+                ) : (
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Id</TableCell>
+                                <TableCell>Symbol</TableCell>
+                                <TableCell>Price</TableCell>
+                                <TableCell>Quantity</TableCell>
+                                <TableCell>Buy Order</TableCell>
+                                <TableCell>Sell Order</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {isLoading
+                                ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        {Array.from({ length: 6 }).map((__, j) => (
+                                            <TableCell key={j}><Skeleton /></TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                                : trades.map((trade) => (
+                                    <TableRow key={trade.id}>
+                                        <TableCell>{trade.id}</TableCell>
+                                        <TableCell>{trade.symbol}</TableCell>
+                                        <TableCell>{trade.price}</TableCell>
+                                        <TableCell>{trade.quantity}</TableCell>
+                                        <TableCell>{trade.buyOrder?.id}</TableCell>
+                                        <TableCell>{trade.sellOrder?.id}</TableCell>
+                                    </TableRow>
+                                ))
+                            }
+                        </TableBody>
+                    </Table>
+                )}
                 {totalPages > 1 && (
                     <Box display="flex" alignItems="center" justifyContent="flex-end" mt={1}>
                         <IconButton onClick={() => setPage((p) => p - 1)} disabled={page === 0}>

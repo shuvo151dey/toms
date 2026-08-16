@@ -1,8 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    selectedSymbol: "AAPL", 
-    theme: "light",         
+    selectedSymbol: "AAPL",
+    theme: "dark",
     alert: null,
     alertType: null            
 };

@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Outlet, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { AppBar, Toolbar, Typography, Button, Drawer, MenuList, MenuItem, ThemeProvider, CssBaseline, IconButton } from '@mui/material';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { Box, ThemeProvider, CssBaseline } from '@mui/material';
 import { lightTheme, darkTheme } from './theme';
-import { toggleTheme } from './redux/AppSlice';
 
 import store from './redux/store';
 import { useMatchOrdersMutation, useLazyGetOrdersQuery, useLazyGetTradesQuery, useLogoutMutation, useGetSymbolsQuery } from './redux/ApiSlice';
@@ -15,13 +12,6 @@ import { setTrades } from './redux/TradeSlice';
 import { clearAlert, setAlert } from './redux/AppSlice';
 import { setPrice } from './redux/PriceSlice';
 import { logout as logoutAction } from './redux/AuthSlice';
-
-import MenuIcon from '@mui/icons-material/Menu';
-import HomeIcon from '@mui/icons-material/Home';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import ApartmentIcon from '@mui/icons-material/Apartment';
 
 import Home from './pages/Home';
 import Analytics from './pages/Analytics';
@@ -32,17 +22,18 @@ import Profile from './pages/Profile';
 import TenantAdmin from './pages/TenantAdmin';
 
 import OrderModal from './components/OrderModal';
-import NotificationBell from './components/NotificationBell';
 import PrivateRoute from './components/PrivateRouter';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomAlert from './components/CustomAlert';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
 import { connect, disconnect } from './services/WebSocketService';
 
 import logger from './utils/logger';
 
 export default function App() {
     const [open, setOpen] = React.useState(false);
-    const [drawer, toggleDrawer] = React.useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
     const dispatch = useDispatch();
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
@@ -52,6 +43,7 @@ export default function App() {
     const [triggerGetTrades] = useLazyGetTradesQuery();
     const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
     const userRoles = useSelector(state => state.auth.roles);
+    const username = useSelector(state => state.auth.user);
     const tenantId = useSelector(state => state.auth.tenantId);
     const accessToken = useSelector(state => state.auth.accessToken);
     const refreshToken = useSelector(state => state.auth.refreshToken);
@@ -142,59 +134,47 @@ export default function App() {
             logger.log(error)
         }
     }
+    const roleLabel = userRoles.includes('ADMIN') ? 'Admin' : 'Trader';
+
     // Plain JSX element, NOT a nested component: defining a component inside App
     // gives it a new identity every render, which makes React unmount and remount
     // the entire tree (wiping all form/modal state) on any App re-render.
     const appLayout = (
             <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
                 <CssBaseline />
-                <div>
-                    <AppBar position="static" mb={4}>
-                        <Toolbar>
-                            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                                TOMS Dashboard
-                            </Typography>
-                            {isAuthenticated && (<Button variant="contained" color="secondary" onClick={handleOpen}>
-                                Place Order
-                            </Button>)}
-                            {userRoles.includes('ADMIN') && <Button variant="contained" color="success" sx={{ marginLeft: '4px' }} onClick={() => handleMatchOrders("AAPL")}>
-                                Match Orders
-                            </Button>}
-                            {isAuthenticated && <NotificationBell />}
-                            <IconButton color="inherit" onClick={() => dispatch(toggleTheme())} sx={{ ml: 1 }}>
-                                {theme === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-                            </IconButton>
-                            {isAuthenticated && (<Button color='white' onClick={() => toggleDrawer(true)}>
-                                <MenuIcon color='white' />
-                            </Button>)}
-                        </Toolbar>
-                    </AppBar>
-                    <CustomAlert message={alert} type={alertType} onClose={() => dispatch(clearAlert())} />
-                    <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
-                    <Drawer anchor="left" open={drawer} onClose={() => toggleDrawer(false)}>
-                        <MenuList>
-                            <MenuItem >
-
-                                <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/"><HomeIcon /> Home</Link>
-                            </MenuItem>
-                            <MenuItem >
-                                <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/analytics"><BarChartIcon /> Analytics</Link>
-                            </MenuItem>
-                            {userRoles.includes('ADMIN') && (
-                                <MenuItem>
-                                    <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/tenants"><ApartmentIcon /> Tenants</Link>
-                                </MenuItem>
-                            )}
-                            <MenuItem>
-                                <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" to="/profile"><AccountCircleIcon /> Profile</Link>
-                            </MenuItem>
-                            <MenuItem>
-                                <Link variant='button' style={{ color: 'black', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} underline="none" onClick={logoutHandler}><ExitToAppIcon /> Logout</Link>
-                            </MenuItem>
-                        </MenuList>
-                    </Drawer>
-                    {<Outlet />}
-                </div>
+                <CustomAlert message={alert} type={alertType} onClose={() => dispatch(clearAlert())} />
+                {isAuthenticated ? (
+                    <Box display="flex">
+                        <Sidebar
+                            collapsed={sidebarCollapsed}
+                            onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+                            userRoles={userRoles}
+                            username={username}
+                            roleLabel={roleLabel}
+                        />
+                        <Box
+                            component="main"
+                            sx={{
+                                flexGrow: 1,
+                                minWidth: 0,
+                                minHeight: '100vh',
+                            }}
+                        >
+                            <Header
+                                onPlaceOrder={handleOpen}
+                                showMatchOrders={userRoles.includes('ADMIN')}
+                                onMatchOrders={() => handleMatchOrders('AAPL')}
+                                username={username}
+                                roleLabel={roleLabel}
+                                onLogout={logoutHandler}
+                            />
+                            <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose} />
+                            <Outlet />
+                        </Box>
+                    </Box>
+                ) : (
+                    <Outlet />
+                )}
             </ThemeProvider>
     );
     return (

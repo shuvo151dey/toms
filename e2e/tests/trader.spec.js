@@ -14,7 +14,7 @@ const signupAndLogin = async (page, username) => {
 
     await page.getByLabel('Username').fill(username);
     await page.getByLabel('Password').fill(password);
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL('/');
 };
 

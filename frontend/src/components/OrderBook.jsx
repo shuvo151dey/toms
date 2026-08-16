@@ -9,8 +9,11 @@ import {
     TableHead,
     TableRow,
     Button,
+    Box,
 } from "@mui/material";
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import OrderModal from "./OrderModal";
+import EmptyState from "./EmptyState";
 import { useSelector, useDispatch } from "react-redux";
 import { setOrder } from "../redux/OrderSlice";
 import { useCancelOrderMutation } from "../redux/ApiSlice";
@@ -20,12 +23,12 @@ const OrderBook = () => {
     const dispatch = useDispatch();
     const orders = useSelector((state) => state.order.orders);
     const [cancelOrder] = useCancelOrderMutation();
-    
+
     const handleOpen = (order) => {
         dispatch(setOrder(order));
         setOpen(true);
-    }    
-    const handleClose = () =>{ 
+    }
+    const handleClose = () =>{
         dispatch(setOrder({}));
         setOpen(false);
 
@@ -43,11 +46,19 @@ const OrderBook = () => {
 
     return (<>
     <OrderModal open={open} handleOpen={handleOpen} handleClose={handleClose}/>
-        <Card>
+        <Card sx={{ height: '100%' }}>
             <CardContent>
-                <Typography variant="h5" gutterBottom>
-                    Order Book
-                </Typography>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                    <MenuBookOutlinedIcon fontSize="small" color="primary" />
+                    <Typography variant="h6">Order Book</Typography>
+                </Box>
+                {orders.length === 0 ? (
+                    <EmptyState
+                        icon={<MenuBookOutlinedIcon />}
+                        title="No orders to display"
+                        subtitle="Your active orders will appear here"
+                    />
+                ) : (
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -64,8 +75,7 @@ const OrderBook = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        
-                        {orders.length > 0 && orders.map((order, index) => (
+                        {orders.map((order, index) => (
                             <TableRow key={index}>
                                 <TableCell>{order.id}</TableCell>
                                 <TableCell>{order.orderAction}</TableCell>
@@ -84,6 +94,7 @@ const OrderBook = () => {
                         ))}
                     </TableBody>
                 </Table>
+                )}
             </CardContent>
         </Card>
     </>

@@ -7,7 +7,7 @@ test('user can cancel an order', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Username').fill(username);
     await page.getByLabel('Password').fill(password);
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('button', { name: 'Sign In' }).click();
     await expect(page).toHaveURL('/');
 
     // Place a LIMIT order with a limit price far below market so it never
