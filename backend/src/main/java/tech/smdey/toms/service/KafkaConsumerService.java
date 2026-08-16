@@ -36,7 +36,7 @@ public class KafkaConsumerService {
         this.processedKafkaMessageRepository = processedKafkaMessageRepository;
     }
 
-    @KafkaListener(topics = "market-data", groupId = "toms-group", concurrency = "3")
+    @KafkaListener(topics = "market-data", groupId = "toms-group", concurrency = "${kafka.consumer.concurrency:1}")
     public void consumePrice(ConsumerRecord<String, String> record) {
         String tenantId = extractTenantId(record);
         String ticker = new String(record.headers().lastHeader("ticker").value());
@@ -44,7 +44,7 @@ public class KafkaConsumerService {
         messagingTemplate.convertAndSend("/topic/prices/" + tenantId + "/" + ticker, priceUpdate);
     }
 
-    @KafkaListener(topics = "trades", groupId = "toms-group", concurrency = "3")
+    @KafkaListener(topics = "trades", groupId = "toms-group", concurrency = "${kafka.consumer.concurrency:1}")
     public void consumeTrade(ConsumerRecord<String, String> record) {
         if (isDuplicate(record)) return;
         String tenantId = extractTenantId(record);
@@ -56,7 +56,7 @@ public class KafkaConsumerService {
         markProcessed(record);
     }
 
-    @KafkaListener(topics = "orders", groupId = "toms-group", concurrency = "3")
+    @KafkaListener(topics = "orders", groupId = "toms-group", concurrency = "${kafka.consumer.concurrency:1}")
     public void consumeOrder(ConsumerRecord<String, String> record) {
         String tenantId = extractTenantId(record);
         System.out.println("Received order for tenant: " + tenantId);
@@ -69,7 +69,7 @@ public class KafkaConsumerService {
         markProcessed(record);
     }
 
-    @KafkaListener(topics = "notifications", groupId = "toms-group", concurrency = "3")
+    @KafkaListener(topics = "notifications", groupId = "toms-group", concurrency = "${kafka.consumer.concurrency:1}")
     public void consumeNotification(ConsumerRecord<String, String> record) {
         if (isDuplicate(record)) return;
         String username = new String(record.headers().lastHeader("username").value());
