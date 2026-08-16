@@ -11,9 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.config.TopicBuilder;
 
 import io.micrometer.observation.ObservationRegistry;
 
@@ -101,10 +103,44 @@ public class KafkaConfig {
         return new KafkaAdmin(configProps);
     }
 
+    // KafkaAdmin auto-creates any NewTopic beans it finds on startup. Local dev
+    // brokers usually have auto.create.topics.enable=true so this is a no-op
+    // there, but managed providers (Aiven included) don't auto-create topics —
+    // without these, every producer/consumer fails with UNKNOWN_TOPIC_OR_PARTITION.
+    // 3 partitions matches the concurrency="3" on every @KafkaListener in
+    // KafkaConsumerService, so each consumer thread gets its own partition.
+    // replicas=1 is deliberately conservative — safe on any cluster size.
+    @Bean
+    public NewTopic ordersTopic() {
+        return TopicBuilder.name("orders").partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic tradesTopic() {
+        return TopicBuilder.name("trades").partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic notificationsTopic() {
+        return TopicBuilder.name("notifications").partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic marketDataTopic() {
+        return TopicBuilder.name("market-data").partitions(3).replicas(1).build();
+    }
+
+    // Listener containers normally start synchronously during context refresh —
+    // if the broker connection/auth is slow or failing, that blocks the rest of
+    // startup, including Tomcat (which only opens its port as the very last step).
+    // autoStartup=false here + KafkaListenerStarter (starts them on
+    // ApplicationReadyEvent, which fires strictly after the port is already
+    // bound) decouples Kafka connectivity from how fast the app can bind its port.
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        factory.setAutoStartup(false);
         factory.getContainerProperties().setObservationEnabled(true);
         factory.getContainerProperties().setObservationRegistry(observationRegistry);
         return factory;
