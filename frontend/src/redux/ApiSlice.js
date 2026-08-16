@@ -7,9 +7,14 @@ import { setAlert } from "./AppSlice";
 import logger from "../utils/logger";
 
 const baseQuery = fetchBaseQuery({
-    
     baseUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080/api/v1',
     credentials: "include",
+    // Some endpoints (auth/register, auth/logout) return a plain-text body on
+    // success. fetchBaseQuery's default responseHandler always calls
+    // response.json() regardless of Content-Type, which throws on those and
+    // makes RTK Query treat a successful 200 as a failure. 'content-type'
+    // picks .json()/.text() based on the actual response header instead.
+    responseHandler: 'content-type',
     prepareHeaders: (headers, { getState }) => {
         const token = getState().auth.accessToken;
         if (token) {
